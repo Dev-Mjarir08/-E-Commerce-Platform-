@@ -1,11 +1,7 @@
-import React from 'react'
+import Login from "./pages/auth/Login";
 
-const App = () => {
-  return (
-    <div>
-      
-    </div>
-  )
+function App() {
+  return <Login />;
 }
 
-export default App
+export default App;
