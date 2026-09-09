@@ -1,0 +1,307 @@
+/* ==========================================================================
+   M4M FOR MEN - BESPOKE LUXURY MENSWEAR STYLESHEET
+   Design Tokens:
+   Background: #F8F7F4
+   Primary Text: #111111
+   Secondary Text: #666666
+   Border: #E5E3DF
+   Dark Section: #111111
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Inter:wght@200;300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=Italiana&display=swap');
+
+:root {
+  --color-bg: #F8F7F4;
+  --color-primary: #111111;
+  --color-secondary: #666666;
+  --color-border: #E5E3DF;
+  --color-border-dark: #2B2B2B;
+  --color-dark: #111111;
+  --color-card-bg: #FFFFFF;
+  --color-accent: #8E877F;
+  --color-light-stone: #EFECE6;
+  --font-serif: 'Italiana', 'Cormorant Garamond', Georgia, serif;
+  --font-editorial: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --ease-luxury: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---------------- Base & Resets ---------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--color-bg);
+  color: var(--color-primary);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-primary);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Custom Luxury Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: #D4CEC5;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
+}
+
+/* Typography Utilities */
+.font-serif-editorial {
+  font-family: var(--font-serif);
+}
+
+.font-editorial-subtle {
+  font-family: var(--font-editorial);
+}
+
+.font-sans-ui {
+  font-family: var(--font-sans);
+}
+
+/* Selection */
+::selection {
+  background-color: #111111;
+  color: #F8F7F4;
+}
+
+/* ---------------- Image & Media Handling ---------------- */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.img-zoom-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.img-zoom-container img {
+  transition: transform 1.2s var(--ease-out-expo), filter 0.8s ease;
+}
+
+.img-zoom-container:hover img {
+  transform: scale(1.05);
+}
+
+/* ---------------- Custom Editorial Borders & Lines ---------------- */
+.border-subtle {
+  border-color: var(--color-border);
+}
+
+.border-subtle-dark {
+  border-color: var(--color-border-dark);
+}
+
+/* ---------------- Interactive Product Hotspots (Lookbook) ---------------- */
+.hotspot-point {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 20;
+}
+
+.hotspot-dot {
+  width: 28px;
+  height: 28px;
+  background: rgba(17, 17, 17, 0.85);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 13px;
+  transition: all 0.3s var(--ease-luxury);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+.hotspot-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  animation: pulseRadar 2.5s infinite var(--ease-luxury);
+  pointer-events: none;
+}
+
+@keyframes pulseRadar {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.2);
+    opacity: 0;
+  }
+}
+
+.hotspot-card {
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background: #FFFFFF;
+  border: 1px solid var(--color-border);
+  padding: 12px 16px;
+  width: 220px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  transition: all 0.3s var(--ease-luxury);
+  z-index: 30;
+}
+
+.hotspot-point:hover .hotspot-card,
+.hotspot-point.active .hotspot-card {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.hotspot-point:hover .hotspot-dot,
+.hotspot-point.active .hotspot-dot {
+  background: #FFFFFF;
+  color: #111111;
+  border-color: #111111;
+  transform: scale(1.15);
+}
+
+/* ---------------- Drawer & Modal Overlays ---------------- */
+.drawer-backdrop,
+.modal-backdrop {
+  background-color: rgba(17, 17, 17, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: opacity 0.4s var(--ease-luxury), visibility 0.4s;
+}
+
+.drawer-content {
+  transition: transform 0.45s var(--ease-out-expo);
+}
+
+/* ---------------- Product Card Micro-Interactions ---------------- */
+.product-card {
+  transition: transform 0.4s var(--ease-luxury), box-shadow 0.4s var(--ease-luxury);
+}
+
+.product-image-swap .secondary-img {
+  opacity: 0;
+  transition: opacity 0.5s var(--ease-luxury);
+}
+
+.product-image-swap:hover .secondary-img {
+  opacity: 1;
+}
+
+.product-quick-actions {
+  transform: translateY(10px);
+  opacity: 0;
+  transition: all 0.35s var(--ease-luxury);
+}
+
+.product-card:hover .product-quick-actions {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* ---------------- Carousel Smooth Dragging & Hide Scrollbar ---------------- */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ---------------- Marquee Animation ---------------- */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: 200%;
+  animation: marquee 35s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* ---------------- Toast Notification ---------------- */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast-item {
+  pointer-events: auto;
+  background: #111111;
+  color: #F8F7F4;
+  padding: 14px 20px;
+  border-left: 3px solid #D4CEC5;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.4s var(--ease-out-expo);
+}
+
+.toast-item.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* ---------------- Accessibility: Reduced Motion ---------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-marquee {
+    animation: none;
+  }
+}

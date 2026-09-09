@@ -77,7 +77,6 @@ const storeSchema = new mongoose.Schema(
 );
 
 storeSchema.index({ owner: 1 });
-storeSchema.index({ slug: 1 });
 
 const Store = mongoose.model('Store', storeSchema);
 export default Store;
