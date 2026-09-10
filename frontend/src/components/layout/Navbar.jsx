@@ -106,13 +106,14 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
           </button>
 
           {/* Account */}
-          <a
-            href="#account"
-            className="p-1.5 hover:text-[#666666] transition-colors hidden sm:inline-block"
+          <Link
+            to="/login"
+            className="p-1.5 hover:text-[#666666] transition-colors"
             aria-label="Account"
+            title="Sign In / Account"
           >
             <User className="w-4 h-4" />
-          </a>
+          </Link>
 
           {/* Bag */}
           <button
@@ -182,6 +183,14 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
           </div>
 
           <div className="pt-6 border-t border-[#E5E3DF] space-y-3">
+            <Link
+              to="/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full text-left text-xs font-mono uppercase tracking-wider py-2 flex items-center gap-2 text-[#111111] hover:text-[#666666]"
+            >
+              <User className="w-4 h-4" />
+              <span>CLIENT ACCOUNT / SIGN IN</span>
+            </Link>
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
