@@ -4,22 +4,29 @@ import {
   Menu,
   Search,
   Plus,
-  ExternalLink,
   ChevronDown,
-  Package,
-  LogOut,
-  LayoutDashboard
+  Settings as SettingsIcon,
+  LogOut
 } from 'lucide-react';
 
 const AdminNavbar = ({ isCollapsed, setIsMobileOpen }) => {
   const location = useLocation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-  // Dynamic breadcrumb/page title mapping (Dashboard & Products only)
+  // Dynamic breadcrumb/page title mapping
   const getPageTitle = () => {
     const path = location.pathname.toLowerCase();
     if (path.includes('/admin/products')) {
       return { title: 'Product Catalog', category: 'Catalog Management' };
+    }
+    if (path.includes('/admin/stores')) {
+      return { title: 'Tenant Boutiques', category: 'Multi-Store Operations' };
+    }
+    if (path.includes('/admin/coupons')) {
+      return { title: 'Coupons & Promotions', category: 'Discount Engine' };
+    }
+    if (path.includes('/admin/settings')) {
+      return { title: 'Platform Settings', category: 'Administration' };
     }
     return { title: 'Dashboard Overview', category: 'Catalog Analytics' };
   };
@@ -101,26 +108,18 @@ const AdminNavbar = ({ isCollapsed, setIsMobileOpen }) => {
                 <p className="text-[11px] text-slate-500 truncate">admin@m4m-platform.com</p>
               </div>
               <Link
-                to="/admin/dashboard"
-                className="flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                to="/admin/settings"
+                className="flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
               >
-                <LayoutDashboard size={14} className="text-slate-500" />
-                <span>Dashboard</span>
+                <SettingsIcon size={14} className="text-slate-500" />
+                <span>Admin Settings</span>
               </Link>
               <Link
-                to="/admin/products"
-                className="flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                to="/login"
+                className="flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors border-t border-slate-100"
               >
-                <Package size={14} className="text-slate-500" />
-                <span>Products</span>
-              </Link>
-              <Link
-                to="/"
-                target="_blank"
-                className="flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
-              >
-                <ExternalLink size={14} className="text-slate-500" />
-                <span>View Storefront</span>
+                <LogOut size={14} className="text-rose-500" />
+                <span>Log Out</span>
               </Link>
             </div>
           )}

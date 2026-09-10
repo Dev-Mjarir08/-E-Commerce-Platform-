@@ -1,10 +1,11 @@
 import React from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
   LayoutDashboard,
   Package,
-  ExternalLink,
+  Store,
+  TicketPercent,
   ChevronLeft,
   ChevronRight,
   ShieldCheck
@@ -12,10 +13,14 @@ import {
 
 const AdminSidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen }) => {
   const totalProducts = useSelector((state) => state.products.items.length);
+  const totalStores = useSelector((state) => state.stores.items.length);
+  const totalCoupons = useSelector((state) => state.coupons.items.length);
 
   const mainNavItems = [
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Products', path: '/admin/products', icon: Package, badge: `${totalProducts}` }
+    { name: 'Products', path: '/admin/products', icon: Package, badge: `${totalProducts}` },
+    { name: 'Stores', path: '/admin/stores', icon: Store, badge: `${totalStores}` },
+    { name: 'Coupons', path: '/admin/coupons', icon: TicketPercent, badge: `${totalCoupons}` }
   ];
 
   const sidebarContent = (
@@ -95,25 +100,15 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOp
         })}
       </div>
 
-      {/* Footer Navigation */}
-      <div className="p-3 border-t border-slate-800 space-y-1">
-        <Link
-          to="/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-          title={isCollapsed ? 'View Storefront' : undefined}
-        >
-          <ExternalLink size={16} className="text-slate-400 shrink-0" />
-          {!isCollapsed && <span className="truncate">View Public Store</span>}
-        </Link>
-        {!isCollapsed && (
-          <div className="pt-2 px-3 text-[10px] text-slate-500 flex items-center justify-between">
+      {/* Footer Info */}
+      {!isCollapsed && (
+        <div className="p-3 border-t border-slate-800">
+          <div className="px-3 text-[10px] text-slate-500 flex items-center justify-between">
             <span>v2.4.0</span>
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 

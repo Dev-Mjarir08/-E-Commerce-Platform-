@@ -1,15 +1,21 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
   Package,
   AlertTriangle,
   CheckCircle2,
-  DollarSign
+  DollarSign,
+  Store,
+  TicketPercent,
+  ArrowRight
 } from 'lucide-react';
 
 const Dashboard = () => {
   // Real dynamic products from Redux store (persisted in localStorage)
   const products = useSelector((state) => state.products.items);
+  const stores = useSelector((state) => state.stores.items);
+  const coupons = useSelector((state) => state.coupons.items);
 
   // Real metrics calculated from actual store products
   const totalProducts = products.length;
@@ -115,6 +121,69 @@ const Dashboard = () => {
               {uniqueCategories.length} Categories
             </span>
             <span className="text-slate-500">in catalog</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Operations Quick Action Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Stores Card */}
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center font-bold">
+                <Store size={20} />
+              </div>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                {stores.length} Registered
+              </span>
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mt-3">Tenant Boutiques</h3>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Manage multi-tenant boutique storefronts, update brand credentials, and verify vendor partners.
+            </p>
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-600">
+              {stores.filter((s) => s.status === 'active').length} Active Live
+            </span>
+            <Link
+              to="/admin/stores"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+            >
+              <span>Manage Stores</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+        </div>
+
+        {/* Coupons Card */}
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold">
+                <TicketPercent size={20} />
+              </div>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {coupons.length} Campaigns
+              </span>
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mt-3">Promotions & Coupons</h3>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Configure discount codes, cart thresholds, usage limits, and seasonal promotional vouchers.
+            </p>
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-600">
+              {coupons.filter((c) => c.isActive).length} Active Discounts
+            </span>
+            <Link
+              to="/admin/coupons"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-800 transition-colors"
+            >
+              <span>Manage Coupons</span>
+              <ArrowRight size={14} />
+            </Link>
           </div>
         </div>
       </div>
