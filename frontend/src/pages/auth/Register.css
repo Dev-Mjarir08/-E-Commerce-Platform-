@@ -1,0 +1,412 @@
+* {
+    box-sizing: border-box;
+}
+
+/* body {
+    margin: 0;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    background-color: rgb(36, 4, 12);
+    background-image:url(../src/assets/pexels-gustavo-fring-4173117.jpg);
+    background-position: left;
+background-size: 65% 90%;
+background-repeat: no-repeat;
+border-radius:1rem;
+} */
+
+/* body{
+margin: 0;
+
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+
+    min-height: 100vh;
+
+    background-color: rgb(36, 4, 12);
+
+    background-image:
+        linear-gradient(
+            to right,
+            rgba(36, 4, 12, 0.05),
+            rgba(36, 4, 12, 0.55),
+            rgb(36, 4, 12)
+        ),
+        url("../src/assets/pexels-gustavo-fring-4173117.jpg");
+
+    background-position: left center;
+
+    background-size: 65% 90%;
+
+    background-repeat: no-repeat;
+
+    background-attachment: fixed;
+} */
+
+body {
+    margin: 0;
+
+    min-height: 100vh;
+
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+
+    background-color: #24040c;
+
+    background-image:
+        linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.05) 0%,
+            rgba(36, 4, 12, 0.25) 45%,
+            #24040c 100%
+        ),
+        radial-gradient(
+            circle at 20% 50%,
+            rgba(255, 255, 255, 0.08),
+            transparent 40%
+        ),
+        url("../src/assets/pexels-gustavo-fring-4173117.jpg");
+
+    background-position:
+        center,
+        center,
+        left center;
+
+    background-size:
+        cover,
+        cover,
+        60% 80%;
+
+    background-repeat: no-repeat;
+
+    background-attachment: fixed;
+}
+
+/* =========================
+   REGISTER PAGE
+========================= */
+
+.register-page {
+    width: 100%;
+    min-height: 100vh;
+
+    position: relative;
+
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+    padding: 40px 5%;
+
+    overflow: hidden;
+}
+
+
+
+
+
+/* Dark overlay */
+
+.register-page::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background: rgba(0, 0, 0, 0.35);
+
+    z-index: -1;
+}
+
+
+/* =========================
+   REGISTER CARD
+========================= */
+
+.register-card {
+    width: 400px;
+
+    padding: 35px;
+
+    background: rgba(240, 238, 238, 0.16);
+
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+
+    border: 1px solid rgba(255, 255, 255, 0.35);
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.35);
+
+    color: white;
+}
+
+
+/* =========================
+   HEADING
+========================= */
+
+.register-card h2 {
+    margin: 0 0 8px;
+
+    text-align: center;
+
+    font-size: 30px;
+
+    font-weight: 600;
+}
+
+.register-card p {
+    margin: 0 0 25px;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    color: rgba(255, 255, 255, 0.8);
+}
+
+
+/* =========================
+   SOCIAL ICONS
+========================= */
+
+.icons {
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    gap: 18px;
+
+    margin-bottom: 25px;
+}
+
+.icons svg {
+    font-size: 24px;
+
+    cursor: pointer;
+
+    transition: transform 0.2s ease;
+}
+
+.icons svg:hover {
+    transform: scale(1.15);
+}
+
+.icon1 {
+    color: white;
+}
+
+.fb {
+    color: #1877f2;
+}
+
+.icon2 {
+    color: white;
+}
+
+
+/* =========================
+   INPUT ROW
+========================= */
+
+.icon {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 18px;
+
+    padding: 0 12px;
+
+    height: 48px;
+
+    background: rgba(255, 255, 255, 0.12);
+
+    border: 1px solid rgba(255, 255, 255, 0.3);
+
+    border-radius: 8px;
+
+    transition: 0.2s ease;
+}
+
+.icon:focus-within {
+    border-color: white;
+
+    background: rgba(255, 255, 255, 0.18);
+}
+
+
+/* Input icon */
+
+.icon svg {
+    font-size: 21px;
+
+    flex-shrink: 0;
+
+    color: white;
+}
+
+
+/* Input */
+
+.icon input {
+    width: 100%;
+    height: 100%;
+
+    padding: 0;
+
+    border: none;
+
+    outline: none;
+
+    background: transparent;
+
+    color: white;
+
+    font-size: 15px;
+
+    font-family: inherit;
+}
+
+
+/* Placeholder */
+
+.icon input::placeholder {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+
+/* =========================
+   REMEMBER / CHECKBOX
+========================= */
+
+.remember {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin: 5px 0 20px;
+
+    font-size: 14px;
+
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.remember input {
+    width: 15px;
+    height: 15px;
+
+    cursor: pointer;
+}
+
+
+/* =========================
+   REGISTER BUTTON
+========================= */
+
+.register-card button {
+    width: 100%;
+
+    height: 48px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #4caf50;
+
+    color: white;
+
+    font-family: inherit;
+
+    font-size: 16px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: 0.2s ease;
+}
+
+.register-card button:hover {
+    background: #43a047;
+
+    transform: translateY(-1px);
+}
+
+.register-card button:active {
+    transform: translateY(0);
+}
+
+
+/* =========================
+   LOGIN TEXT
+========================= */
+
+.login-text {
+    margin-top: 20px;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.login-text a {
+    color: white;
+
+    font-weight: 600;
+
+    text-decoration: none;
+}
+
+.login-text a:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 900px) {
+
+    .register-page {
+        justify-content: center;
+
+        padding: 25px;
+    }
+
+    .register-card {
+        width: 400px;
+        max-width: 100%;
+    }
+}
+
+
+@media (max-width: 480px) {
+
+    .register-page {
+        padding: 15px;
+    }
+
+    .register-card {
+        padding: 25px 20px;
+
+        border-radius: 14px;
+    }
+
+    .register-card h2 {
+        font-size: 26px;
+    }
+}

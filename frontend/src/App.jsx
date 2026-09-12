@@ -1,6 +1,8 @@
-function App() {
+import Register from './pages/auth/Register'
+
+const  App = ()=>  {
   return (
-    <h1>Hello World</h1>
+    <Register />
   )
 }
 
