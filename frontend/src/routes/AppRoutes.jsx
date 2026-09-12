@@ -5,10 +5,18 @@ import StoreDetails from '../pages/public/StoreDetails';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 
-// Admin imports (Dashboard & Products only)
-import AdminLayout from '../layouts/AdminLayout';
-import Dashboard from '../pages/admin/Dashboard';
-import Products from '../pages/admin/Products';
+// Admin imports
+import AdminLayout from "../layouts/AdminLayout";
+import Dashboard from "../pages/admin/Dashboard";
+import Products from "../pages/admin/Products";
+import AddProduct from '../pages/admin/products/AddProduct';
+import Stores from "../pages/admin/Stores";
+import Coupons from "../pages/admin/Coupons";
+import Orders from "../pages/admin/Orders";
+import Settings from "../pages/admin/Settings";
+import Customers from "../pages/admin/Customers";
+import Categories from "../pages/admin/products/Categories";
+import Inventory from "../pages/admin/products/Inventory"
 
 export const AppRoutes = () => {
   return (
@@ -24,6 +32,14 @@ export const AppRoutes = () => {
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="products" element={<Products />} />
+        <Route path="products/add" element={<AddProduct />} />
+        <Route path="products/categories" element={<Categories />} />
+        <Route path="products/inventory" element={<Inventory />} />
+        <Route path="stores" element={<Stores />} />
+        <Route path="coupons" element={<Coupons />} />
+        <Route path="orders" element={<Orders />} />
+        <Route path="customers" element={<Customers />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
 
       {/* Fallback to Home */}
