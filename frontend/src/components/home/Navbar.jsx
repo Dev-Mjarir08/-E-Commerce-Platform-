@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Search, Heart, User, ShoppingBag, Menu, X, ArrowRight } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, X, ArrowRight, Store } from 'lucide-react';
 import { openCart } from '../../redux/slices/cartSlice';
 
 export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
@@ -17,85 +17,86 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 40);
+      setIsScrolled(window.scrollY > 30);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const navLinks = [
-    { label: 'New Arrivals', href: '#new-arrivals' },
-    { label: 'Men', href: '#category-men' },
-    { label: 'Women', href: '#category-women' },
     { label: 'Collections', href: '#collections' },
-    { label: 'Stores', href: '#featured-stores' },
-    { label: 'Sale', href: '#sale' }
+    { label: 'Catalog', href: '#catalog' },
+    { label: 'Essentials', href: '#curated-essentials' },
+    { label: 'Editorial', href: '#editorial' },
+    { label: 'Lookbook', href: '#lookbook' },
+    { label: 'Ateliers', href: '#featured-stores' }
   ];
 
   return (
     <header
-      className={`sticky top-0 z-40 w-full transition-all duration-300 ${
+      className={`sticky top-0 z-30 w-full transition-all duration-300 ${
         isScrolled
-          ? 'bg-[#F8F7F4]/95 backdrop-blur-md border-b border-[#E5E3DF] shadow-xs py-3.5'
-          : 'bg-[#F8F7F4] border-b border-[#E5E3DF]/50 py-5'
+          ? 'bg-[#F8F7F4]/95 backdrop-blur-md border-b border-[#E5E3DF] shadow-[0_4px_20px_rgba(0,0,0,0.03)] py-3'
+          : 'bg-[#F8F7F4] border-b border-transparent py-5'
       }`}
     >
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between">
-        {/* Left: Platform Logo & Mobile Hamburger */}
-        <div className="flex items-center gap-4 sm:gap-8">
+        {/* Left: Mobile Hamburger & Desktop Nav Links */}
+        <div className="flex items-center gap-6 lg:gap-8">
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
-            className="lg:hidden text-[#111111] hover:text-[#666666] p-1"
+            className="lg:hidden text-[#111111] hover:text-[#666666] p-1.5 transition-colors"
             aria-label="Open mobile navigation"
           >
             <Menu className="w-5 h-5" />
           </button>
 
-          <Link to="/" className="inline-block group">
-            <h1 className="font-serif text-2xl sm:text-3xl tracking-[0.2em] uppercase text-[#111111] font-normal leading-none">
-              ATELIER
-            </h1>
-            <span className="block text-[8px] sm:text-[9px] font-mono tracking-[0.35em] text-[#8E877F] uppercase mt-1 group-hover:text-[#111111] transition-colors">
-              INDEPENDENT FASHION SAAS
-            </span>
-          </Link>
+          {/* Desktop Navigation Links */}
+          <nav className="hidden lg:flex items-center gap-7 text-[11px] uppercase tracking-[0.22em] font-medium text-[#111111]">
+            {navLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="hover:text-[#666666] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-[#111111] hover:after:w-full after:transition-all after:duration-300"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
         </div>
 
-        {/* Center: Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-8 text-[11px] uppercase tracking-[0.22em] font-medium text-[#111111]">
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className={`hover:text-[#666666] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-[#111111] hover:after:w-full after:transition-all after:duration-300 ${
-                link.label === 'Sale' ? 'text-[#8E877F] font-semibold' : ''
-              }`}
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
+        {/* Center: Iconic Brand Wordmark */}
+        <div className="text-center">
+          <a href="#" className="inline-block group">
+            <h1 className="font-serif text-2xl sm:text-3xl tracking-[0.25em] uppercase text-[#111111] font-normal leading-none">
+              M4M
+            </h1>
+            <span className="block text-[8px] sm:text-[9px] font-mono tracking-[0.35em] text-[#666666] uppercase mt-1 group-hover:text-[#111111] transition-colors">
+              FOR MEN • ATELIER
+            </span>
+          </a>
+        </div>
 
-        {/* Right: Actions (Search, Wishlist ♡, Account, Bag) */}
-        <div className="flex items-center gap-3 sm:gap-5 text-[#111111]">
-          {/* Search */}
+        {/* Right: Actions (Search, Wishlist, Account, Bag) */}
+        <div className="flex items-center gap-3 sm:gap-5">
+          {/* Search Trigger */}
           <button
             type="button"
             onClick={onOpenSearch}
-            className="p-1.5 hover:text-[#666666] transition-colors flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider"
-            aria-label="Search garments and stores"
+            className="text-[#111111] hover:text-[#666666] p-1.5 transition-colors flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider"
+            aria-label="Search garments"
           >
             <Search className="w-4 h-4" />
             <span className="hidden xl:inline text-[11px]">Search</span>
           </button>
 
-          {/* Wishlist ♡ */}
+          {/* Wishlist Indicator */}
           <button
             type="button"
             onClick={onOpenWishlist}
-            className="p-1.5 hover:text-[#666666] transition-colors relative"
-            aria-label="Wishlist"
+            className="text-[#111111] hover:text-[#666666] p-1.5 transition-colors relative"
+            aria-label="View saved wishlist"
           >
             <Heart className="w-4 h-4" />
             {totalWishlistCount > 0 && (
@@ -105,22 +106,22 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
             )}
           </button>
 
-          {/* Account */}
+          {/* Account Profile Link */}
           <Link
             to="/login"
-            className="p-1.5 hover:text-[#666666] transition-colors"
-            aria-label="Account"
+            className="text-[#111111] hover:text-[#666666] p-1.5 transition-colors inline-block"
+            aria-label="My Client Profile"
             title="Sign In / Account"
           >
             <User className="w-4 h-4" />
           </Link>
 
-          {/* Bag */}
+          {/* Bag / Cart Trigger */}
           <button
             type="button"
             onClick={() => dispatch(openCart())}
-            className="p-1.5 hover:text-[#666666] transition-colors flex items-center gap-2 relative"
-            aria-label="Bag"
+            className="text-[#111111] hover:text-[#666666] p-1.5 transition-colors flex items-center gap-2 relative"
+            aria-label="Open shopping bag"
           >
             <ShoppingBag className="w-4 h-4" />
             <span className="text-[11px] font-mono font-medium tracking-widest hidden sm:inline uppercase">
@@ -135,7 +136,7 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
         </div>
       </div>
 
-      {/* Mobile Navigation Drawer */}
+      {/* Mobile Drawer Menu */}
       <div
         className={`fixed inset-0 z-50 lg:hidden transition-opacity duration-300 ${
           mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
@@ -151,17 +152,17 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
           }`}
         >
           <div>
-            <div className="flex justify-between items-center pb-5 border-b border-[#E5E3DF] mb-6">
+            <div className="flex justify-between items-center pb-6 border-b border-[#E5E3DF] mb-6">
               <div>
-                <h2 className="font-serif text-xl tracking-widest uppercase">ATELIER</h2>
-                <span className="text-[9px] font-mono tracking-widest text-[#8E877F] uppercase">
-                  INDEPENDENT FASHION
+                <h2 className="font-serif text-xl tracking-widest">M4M FOR MEN</h2>
+                <span className="text-[9px] font-mono tracking-widest text-[#666666] uppercase">
+                  SPRING / SUMMER 2026
                 </span>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-1 text-[#666666] hover:text-[#111111]"
-                aria-label="Close menu"
+                aria-label="Close mobile menu"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -176,12 +177,13 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
                   className="text-xs uppercase font-mono tracking-[0.2em] py-2 border-b border-[#E5E3DF]/50 flex items-center justify-between text-[#111111] hover:text-[#666666]"
                 >
                   <span>{link.label}</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-[#8E877F]" />
+                  <ArrowRight className="w-3.5 h-3.5 text-[#888888]" />
                 </a>
               ))}
             </nav>
           </div>
 
+          {/* Mobile Menu Footer */}
           <div className="pt-6 border-t border-[#E5E3DF] space-y-3">
             <Link
               to="/login"
@@ -194,15 +196,15 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
-                if (onOpenSearch) onOpenSearch();
+                onOpenSearch();
               }}
               className="w-full text-left text-xs font-mono uppercase tracking-wider py-2 flex items-center gap-2 text-[#666666]"
             >
               <Search className="w-4 h-4" />
-              <span>SEARCH ARCHIVE</span>
+              <span>SEARCH CATALOG</span>
             </button>
             <div className="text-[10px] font-mono text-[#8E877F] uppercase tracking-wider">
-              CLIENT SERVICES • CONCIERGE@ATELIER.COM
+              CLIENT SERVICES • CONCIERGE@M4M.COM
             </div>
           </div>
         </div>

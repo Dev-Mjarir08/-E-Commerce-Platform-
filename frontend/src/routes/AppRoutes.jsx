@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "../pages/public/Home";
 import StoreDetails from "../pages/public/StoreDetails";
 import Login from "../pages/auth/Login";
+import Register from "../pages/auth/Register";
 
 // Admin imports
 import AdminLayout from "../layouts/AdminLayout";
@@ -23,6 +24,7 @@ export const AppRoutes = () => {
       {/* Public Client Routes */}
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/store/:slug" element={<StoreDetails />} />
 
       {/* Admin Operations Suite */}

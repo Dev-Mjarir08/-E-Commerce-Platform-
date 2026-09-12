@@ -1,58 +1,176 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { LayoutDashboard, Store, Package, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import Lenis from 'lenis';
+
+// Layout Components
+import { AnnouncementBar } from '../../components/layout/AnnouncementBar';
+import { Navbar } from '../../components/layout/Navbar';
+import { Footer } from '../../components/layout/Footer';
+
+// Homepage Section Components
+import { Hero } from '../../components/home/Hero';
+import { CategorySection } from '../../components/home/CategorySection';
+import { NewArrivals } from '../../components/home/NewArrivals';
+import { FeaturedStores } from '../../components/home/FeaturedStores';
+import { TrendingCollection } from '../../components/home/TrendingCollection';
+import { BestSellers } from '../../components/home/BestSellers';
+import { EditorialBanner } from '../../components/home/EditorialBanner';
+import { PromoSection } from '../../components/home/PromoSection';
+import { TrustSection } from '../../components/home/TrustSection';
+import { Testimonials } from '../../components/home/Testimonials';
+import { Newsletter } from '../../components/home/Newsletter';
+
+// Global Overlays & Modals
+import { CartDrawer } from '../../components/common/CartDrawer';
+import { SearchModal } from '../../components/common/SearchModal';
+import { QuickViewModal } from '../../components/common/QuickViewModal';
+import { Toast } from '../../components/common/Toast';
 
 const Home = () => {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
+  const [toasts, setToasts] = useState([]);
+
+  // Initialize Lenis smooth scrolling with prefers-reduced-motion check
+  useEffect(() => {
+    let animationFrameId;
+    let lenis;
+
+    try {
+      if (typeof window !== 'undefined' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        lenis = new Lenis({
+          duration: 1.1,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          smoothWheel: true,
+          wheelMultiplier: 0.9
+        });
+
+        function raf(time) {
+          if (lenis) {
+            lenis.raf(time);
+            animationFrameId = requestAnimationFrame(raf);
+          }
+        }
+
+        animationFrameId = requestAnimationFrame(raf);
+      }
+    } catch (err) {
+      console.warn('Lenis smooth scroll fallback:', err);
+    }
+
+    return () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      if (lenis) lenis.destroy();
+    };
+  }, []);
+
+  const addToast = (message, type = 'success') => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
+  };
+
+  const removeToast = (id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const handleOpenProduct = (product) => {
+    setQuickViewProduct(product);
+  };
+
+  const scrollToSection = (sectionId) => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col items-center justify-center p-6 text-center font-sans">
-      <div className="max-w-xl mx-auto space-y-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-semibold text-indigo-400">
-          <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
-          <span>Multi-Tenant E-Commerce Platform</span>
-        </div>
+    <div className="min-h-screen bg-[#F8F7F4] text-[#111111] flex flex-col font-sans selection:bg-[#111111] selection:text-[#F8F7F4]">
+      {/* 1. Announcement Bar */}
+      <AnnouncementBar />
 
-        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
-          M4M Luxury Marketplace
-        </h1>
+      {/* 2. Sticky Navbar */}
+      <Navbar
+        onOpenSearch={() => setSearchOpen(true)}
+        onOpenWishlist={() => {
+          scrollToSection('best-sellers');
+          addToast('Saved wishlist items highlight active.', 'info');
+        }}
+      />
 
-        <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
-          Multi-tenant fashion and lifestyle commerce platform with dedicated boutique storefronts, catalogue taxonomy, and enterprise admin operations.
-        </p>
+      <main className="flex-1">
+        {/* 3. Hero Section (with GSAP timeline) */}
+        <Hero
+          onShopNewArrivals={() => scrollToSection('new-arrivals')}
+          onExploreStores={() => scrollToSection('featured-stores')}
+        />
 
-        <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
-          <Link
-            to="/admin/dashboard"
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-lg transition-colors"
-          >
-            <LayoutDashboard size={18} />
-            <span>Open Admin Dashboard</span>
-            <ArrowRight size={16} />
-          </Link>
+        {/* 4. Shop By Category */}
+        <CategorySection onSelectCategory={() => scrollToSection('new-arrivals')} />
 
-          <Link
-            to="/store/urban-fashion"
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-bold transition-colors"
-          >
-            <Store size={18} />
-            <span>View Demo Storefront</span>
-          </Link>
-        </div>
+        {/* 5. New Arrivals */}
+        <NewArrivals
+          onQuickView={handleOpenProduct}
+          onShowToast={addToast}
+          onViewAll={() => scrollToSection('best-sellers')}
+        />
 
-        <div className="pt-8 border-t border-slate-800 grid grid-cols-3 gap-4 text-center">
-          <div>
-            <span className="block text-2xl font-black text-white">28+</span>
-            <span className="text-xs text-slate-500">Curated Styles</span>
-          </div>
-          <div>
-            <span className="block text-2xl font-black text-white">4</span>
-            <span className="text-xs text-slate-500">Tenant Boutiques</span>
-          </div>
-          <div>
-            <span className="block text-2xl font-black text-white">6</span>
-            <span className="text-xs text-slate-500">Editorial Taxonomies</span>
-          </div>
-        </div>
-      </div>
+        {/* 6. Discover Our Stores (Multi-Tenant SaaS Highlight) */}
+        <FeaturedStores />
+
+        {/* 7. Trending Collection (Asymmetric Editorial) */}
+        <TrendingCollection
+          onShopCollection={() => scrollToSection('new-arrivals')}
+        />
+
+        {/* 8. Best Sellers */}
+        <BestSellers
+          onQuickView={handleOpenProduct}
+          onShowToast={addToast}
+        />
+
+        {/* 9. Editorial Campaign Banner */}
+        <EditorialBanner
+          onShopEdit={() => scrollToSection('new-arrivals')}
+        />
+
+        {/* 10. Sale / Promotion Section */}
+        <PromoSection
+          onShopSale={() => scrollToSection('new-arrivals')}
+        />
+
+        {/* 11. Customer Trust Section (Why Shop With Us) */}
+        <TrustSection />
+
+        {/* 12. Customer Reviews (Testimonials) */}
+        <Testimonials />
+
+        {/* 13. Newsletter Section */}
+        <Newsletter onShowToast={addToast} />
+      </main>
+
+      {/* 14. Large Premium Footer */}
+      <Footer />
+
+      {/* Global Modals & Drawers */}
+      <CartDrawer />
+
+      <SearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelectProduct={handleOpenProduct}
+      />
+
+      <QuickViewModal
+        product={quickViewProduct}
+        isOpen={Boolean(quickViewProduct)}
+        onClose={() => setQuickViewProduct(null)}
+        onShowToast={addToast}
+      />
+
+      <Toast toasts={toasts} onDismiss={removeToast} />
     </div>
   );
 };
