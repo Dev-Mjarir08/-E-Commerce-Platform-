@@ -24,21 +24,7 @@ function Register() {
     return (
         <div className="register-page">
 
-            {/* Background Video */}
-            <video
-                className="background-video"
-                autoPlay
-                muted
-                loop
-                playsInline
-            >
-                <source
-                    src="/summer-mountain-paradise.3840x2160.mp4"
-                    type="video/mp4"
-                />
-
-                Your browser does not support the video tag.
-            </video>
+          
 
 
             {/* Register Card */}

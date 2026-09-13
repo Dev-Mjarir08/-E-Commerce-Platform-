@@ -53,8 +53,8 @@ body {
         linear-gradient(
             90deg,
             rgba(0, 0, 0, 0.05) 0%,
-            rgba(36, 4, 12, 0.25) 45%,
-            #24040c 100%
+            rgba(18, 2, 6, 0.25) 45%,
+            #120407 100%
         ),
         radial-gradient(
             circle at 20% 50%,
@@ -66,7 +66,7 @@ body {
     background-position:
         center,
         center,
-        left center;
+        2rem;
 
     background-size:
         cover,
@@ -253,6 +253,10 @@ body {
     color: white;
 }
 
+input{
+    background-color: black;
+}
+
 
 /* Input */
 
@@ -275,11 +279,21 @@ body {
     font-family: inherit;
 }
 
+.icon input:-webkit-autofill,
+.icon input:-webkit-autofill:hover,
+.icon input:-webkit-autofill:focus,
+.icon input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px rgba(36, 4, 12, 0.001) inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+
 
 /* Placeholder */
 
 .icon input::placeholder {
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(238, 234, 234, 0.75);
 }
 
 
