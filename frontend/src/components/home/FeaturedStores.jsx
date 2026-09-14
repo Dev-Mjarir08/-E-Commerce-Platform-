@@ -1,4 +1,3 @@
-import React from 'react';
 import { stores } from '../../data/marketplaceData';
 import { StoreCard } from '../store/StoreCard';
 import { Store, ArrowRight } from 'lucide-react';

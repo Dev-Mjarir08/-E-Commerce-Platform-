@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle2, Info, X } from 'lucide-react';
 
 export const Toast = ({ toasts, onDismiss }) => {

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Users, Mail, Phone, Calendar, ShieldCheck } from 'lucide-react';
 
 const Customers = () => {

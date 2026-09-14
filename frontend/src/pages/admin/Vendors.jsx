@@ -1,19 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Store,
   Plus,
   Search,
-  CheckCircle2,
-  AlertCircle,
   ExternalLink,
   MapPin,
   Star,
   ShieldCheck,
   Edit2,
   Trash2,
-  X,
-  Clock
+  X
 } from 'lucide-react';
 import { stores as initialStores } from '../../data/stores';
 
@@ -123,15 +120,15 @@ const Vendors = () => {
         prev.map((v) =>
           v.id === editingVendor.id
             ? {
-                ...v,
-                name: formData.name,
-                slug: formData.slug.toLowerCase().replace(/\s+/g, '-'),
-                ownerEmail: formData.ownerEmail,
-                city: formData.city,
-                category: formData.category,
-                tagline: formData.tagline,
-                status: formData.status
-              }
+              ...v,
+              name: formData.name,
+              slug: formData.slug.toLowerCase().replace(/\s+/g, '-'),
+              ownerEmail: formData.ownerEmail,
+              city: formData.city,
+              category: formData.category,
+              tagline: formData.tagline,
+              status: formData.status
+            }
             : v
         )
       );
@@ -237,11 +234,10 @@ const Vendors = () => {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1.5 ${
-                activeTab === tab.id
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1.5 ${activeTab === tab.id
                   ? 'bg-white text-indigo-600 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
-              }`}
+                }`}
             >
               <span>{tab.label}</span>
               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700">
@@ -350,13 +346,12 @@ const Vendors = () => {
                       <select
                         value={vendor.status}
                         onChange={(e) => handleToggleStatus(vendor.id, e.target.value)}
-                        className={`text-xs font-bold px-2.5 py-1 rounded-full border focus:outline-none ${
-                          vendor.status === 'active'
+                        className={`text-xs font-bold px-2.5 py-1 rounded-full border focus:outline-none ${vendor.status === 'active'
                             ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                             : vendor.status === 'pending'
-                            ? 'bg-amber-50 text-amber-800 border-amber-200'
-                            : 'bg-rose-50 text-rose-800 border-rose-200'
-                        }`}
+                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              : 'bg-rose-50 text-rose-800 border-rose-200'
+                          }`}
                       >
                         <option value="active">Active (Live)</option>
                         <option value="pending">Pending Approval</option>

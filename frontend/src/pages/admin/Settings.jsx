@@ -1,4 +1,3 @@
-import React from 'react';
 import { Settings as SettingsIcon, Shield, Bell, Key, Database, Globe } from 'lucide-react';
 
 const Settings = () => {

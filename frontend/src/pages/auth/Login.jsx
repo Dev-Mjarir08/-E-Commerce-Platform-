@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ArrowRight, Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { authStart, authSuccess, authFailure, clearError } from '../../redux/slices/authSlice';
-import authApi from '../../services/authApi';
+import { loginUser, clearError } from '../../redux/slices/authSlice';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
+
+  const searchParams = new URLSearchParams(location.search);
+  const redirectParam = searchParams.get('redirect');
 
   const [formData, setFormData] = useState({
     email: '',
@@ -53,37 +56,53 @@ const Login = () => {
     e.preventDefault();
     if (!validate()) return;
 
-    dispatch(authStart());
     try {
-      const data = await authApi.login({
-        email: formData.email.trim(),
-        password: formData.password
-      });
+      const data = await dispatch(
+        loginUser({
+          email: formData.email.trim(),
+          password: formData.password
+        })
+      ).unwrap();
 
-      dispatch(authSuccess({
-        user: data.data?.user || { email: formData.email, name: 'Client' },
-        token: data.data?.accessToken || 'token'
-      }));
+      const user = data.user || { email: formData.email, name: 'User', role: 'customer' };
 
-      setSuccessMessage('Welcome back. Redirecting to boutique...');
+      // Determine target destination based on role
+      let targetPath = '/';
+      if (user.role === 'admin') {
+        targetPath = '/admin/dashboard';
+        setSuccessMessage(`Welcome, Administrator ${user.name}. Opening Admin Suite...`);
+      } else if (user.role === 'vendor' || user.role === 'seller') {
+        targetPath = '/';
+        setSuccessMessage(`Welcome, Partner ${user.name}. Opening Portal...`);
+      } else {
+        targetPath = redirectParam ? decodeURIComponent(redirectParam) : '/';
+        setSuccessMessage(`Welcome back, ${user.name}. Redirecting to boutique...`);
+      }
+
       setTimeout(() => {
-        navigate('/');
-      }, 1200);
+        navigate(targetPath);
+      }, 900);
     } catch (err) {
-      dispatch(authFailure(err.message || 'Invalid credentials. Please try again.'));
+      console.warn('Login rejected:', err);
     }
   };
 
   const fillDemoAccount = (role = 'customer') => {
-    if (role === 'customer') {
+    if (role === 'admin') {
       setFormData({
-        email: 'client@atelier.com',
-        password: 'password123',
+        email: 'admin@atelier.com',
+        password: 'admin123',
+        rememberMe: true
+      });
+    } else if (role === 'vendor') {
+      setFormData({
+        email: 'vendor@atelier.com',
+        password: 'vendor123',
         rememberMe: true
       });
     } else {
       setFormData({
-        email: 'vendor@atelier.com',
+        email: 'client@atelier.com',
         password: 'password123',
         rememberMe: true
       });
@@ -316,7 +335,14 @@ const Login = () => {
               <span className="text-[10px] font-mono uppercase tracking-widest text-[#8E877F] block mb-2.5">
                 QUICK DEMO ACCESS
               </span>
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => fillDemoAccount('admin')}
+                  className="text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 border border-indigo-500 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 transition-colors font-semibold"
+                >
+                  Admin Demo
+                </button>
                 <button
                   type="button"
                   onClick={() => fillDemoAccount('customer')}

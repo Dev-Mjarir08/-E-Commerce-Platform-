@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Menu,
   Search,
@@ -8,14 +9,32 @@ import {
   Settings as SettingsIcon,
   LogOut
 } from 'lucide-react';
+import { logoutUser } from '../../redux/slices/authSlice';
 
-const AdminNavbar = ({ isCollapsed, setIsMobileOpen }) => {
+const AdminNavbar = ({ setIsMobileOpen }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  const handleLogout = () => {
+    dispatch(logoutUser());
+    navigate('/login');
+  };
 
   // Dynamic breadcrumb/page title mapping
   const getPageTitle = () => {
     const path = location.pathname.toLowerCase();
+    if (path.includes('/admin/products/inventory')) {
+      return { title: 'Inventory Control', category: 'Catalog Management' };
+    }
+    if (path.includes('/admin/products/categories')) {
+      return { title: 'Product Categories', category: 'Catalog Management' };
+    }
+    if (path.includes('/admin/products/add')) {
+      return { title: 'Add Product', category: 'Catalog Management' };
+    }
     if (path.includes('/admin/products')) {
       return { title: 'Product Catalog', category: 'Catalog Management' };
     }
@@ -25,6 +44,12 @@ const AdminNavbar = ({ isCollapsed, setIsMobileOpen }) => {
     if (path.includes('/admin/coupons')) {
       return { title: 'Coupons & Promotions', category: 'Discount Engine' };
     }
+    if (path.includes('/admin/orders')) {
+      return { title: 'Order Fulfillment', category: 'Sales & Logistics' };
+    }
+    if (path.includes('/admin/customers')) {
+      return { title: 'Client Directory', category: 'Customer Relations' };
+    }
     if (path.includes('/admin/settings')) {
       return { title: 'Platform Settings', category: 'Administration' };
     }
@@ -32,6 +57,13 @@ const AdminNavbar = ({ isCollapsed, setIsMobileOpen }) => {
   };
 
   const { title, category } = getPageTitle();
+
+  const userInitials = (user?.name || 'AD')
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <header className="sticky top-0 z-20 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6">
@@ -72,7 +104,7 @@ const AdminNavbar = ({ isCollapsed, setIsMobileOpen }) => {
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Quick Add Product Button */}
         <Link
-          to="/admin/products"
+          to="/admin/products/add"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-colors"
         >
           <Plus size={15} />
@@ -89,11 +121,15 @@ const AdminNavbar = ({ isCollapsed, setIsMobileOpen }) => {
             className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-100 transition-colors"
           >
             <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-              AD
+              {userInitials}
             </div>
             <div className="hidden sm:flex flex-col text-left">
-              <span className="text-xs font-bold text-slate-900 leading-tight">Admin</span>
-              <span className="text-[10px] text-slate-500">Store Manager</span>
+              <span className="text-xs font-bold text-slate-900 leading-tight">
+                {user?.name || 'Admin'}
+              </span>
+              <span className="text-[10px] text-slate-500">
+                {user?.role ? `${user.role.toUpperCase()} PORTAL` : 'Store Manager'}
+              </span>
             </div>
             <ChevronDown size={14} className="text-slate-400 hidden sm:block" />
           </button>
@@ -104,8 +140,8 @@ const AdminNavbar = ({ isCollapsed, setIsMobileOpen }) => {
               onClick={() => setShowProfileMenu(false)}
             >
               <div className="px-3 py-2 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-900">Admin</p>
-                <p className="text-[11px] text-slate-500 truncate">admin@m4m-platform.com</p>
+                <p className="text-xs font-bold text-slate-900">{user?.name || 'Admin'}</p>
+                <p className="text-[11px] text-slate-500 truncate">{user?.email || 'admin@atelier.com'}</p>
               </div>
               <Link
                 to="/admin/settings"
@@ -114,13 +150,14 @@ const AdminNavbar = ({ isCollapsed, setIsMobileOpen }) => {
                 <SettingsIcon size={14} className="text-slate-500" />
                 <span>Admin Settings</span>
               </Link>
-              <Link
-                to="/login"
-                className="flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors border-t border-slate-100"
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors border-t border-slate-100 text-left"
               >
                 <LogOut size={14} className="text-rose-500" />
                 <span>Log Out</span>
-              </Link>
+              </button>
             </div>
           )}
         </div>

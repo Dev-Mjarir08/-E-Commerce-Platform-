@@ -19,7 +19,9 @@ export const storeService = {
 
   // GET /api/stores/:slug/products
   async getStoreProducts(slug) {
-    // For mock demonstration, all products or filtered products are returned
-    return Promise.resolve([...products]);
+    const storeProds = products.filter(p => p.storeSlug === slug);
+    return Promise.resolve(storeProds.length > 0 ? storeProds : [...products]);
   }
 };
+
+export default storeService;

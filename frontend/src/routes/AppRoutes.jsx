@@ -1,4 +1,3 @@
-import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Home from '../pages/public/Home';
 import StoreDetails from '../pages/public/StoreDetails';
@@ -15,8 +14,11 @@ import Coupons from "../pages/admin/Coupons";
 import Orders from "../pages/admin/Orders";
 import Settings from "../pages/admin/Settings";
 import Customers from "../pages/admin/Customers";
-import Categories from "../pages/admin/products/Categories";
-import Inventory from "../pages/admin/products/Inventory"
+import Categories from "../pages/admin/Categories";
+import Inventory from "../pages/admin/products/Inventory";
+
+// Security & Auth
+import ProtectedRoute from "../components/common/ProtectedRoute";
 
 export const AppRoutes = () => {
   return (
@@ -27,19 +29,21 @@ export const AppRoutes = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/store/:slug" element={<StoreDetails />} />
 
-      {/* Admin Operations Suite */}
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="products" element={<Products />} />
-        <Route path="products/add" element={<AddProduct />} />
-        <Route path="products/categories" element={<Categories />} />
-        <Route path="products/inventory" element={<Inventory />} />
-        <Route path="stores" element={<Stores />} />
-        <Route path="coupons" element={<Coupons />} />
-        <Route path="orders" element={<Orders />} />
-        <Route path="customers" element={<Customers />} />
-        <Route path="settings" element={<Settings />} />
+      {/* Admin Operations Suite - Protected for 'admin' role only */}
+      <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="products" element={<Products />} />
+          <Route path="products/add" element={<AddProduct />} />
+          <Route path="products/categories" element={<Categories />} />
+          <Route path="products/inventory" element={<Inventory />} />
+          <Route path="stores" element={<Stores />} />
+          <Route path="coupons" element={<Coupons />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
       </Route>
 
       {/* Fallback to Home */}

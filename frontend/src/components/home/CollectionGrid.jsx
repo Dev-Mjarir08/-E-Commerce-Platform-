@@ -1,4 +1,3 @@
-import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { categories } from '../../data/categories';
 
@@ -27,6 +26,7 @@ export const CollectionGrid = ({ onSelectCategory }) => {
             key={cat.id}
             href="#catalog"
             onClick={(e) => {
+              e.preventDefault();
               if (onSelectCategory) {
                 onSelectCategory(cat.id);
               }

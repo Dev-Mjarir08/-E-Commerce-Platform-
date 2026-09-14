@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ArrowRight, Lock, Mail, User, Phone, Store, Eye, EyeOff, ShieldCheck, ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { authStart, authSuccess, authFailure, clearError } from '../../redux/slices/authSlice';
-import authApi from '../../services/authApi';
+import { registerUser, registerVendorUser, clearError } from '../../redux/slices/authSlice';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -74,38 +73,35 @@ const Register = () => {
     e.preventDefault();
     if (!validate()) return;
 
-    dispatch(authStart());
     try {
-      let data;
       if (accountType === 'customer') {
-        data = await authApi.register({
-          name: formData.name.trim(),
-          email: formData.email.trim(),
-          password: formData.password,
-          phone: formData.phone.trim() || undefined
-        });
+        await dispatch(
+          registerUser({
+            name: formData.name.trim(),
+            email: formData.email.trim(),
+            password: formData.password,
+            phone: formData.phone.trim() || undefined
+          })
+        ).unwrap();
       } else {
-        data = await authApi.registerVendor({
-          name: formData.name.trim(),
-          email: formData.email.trim(),
-          password: formData.password,
-          phone: formData.phone.trim() || undefined,
-          storeName: formData.storeName.trim(),
-          storeDescription: formData.storeDescription.trim() || undefined
-        });
+        await dispatch(
+          registerVendorUser({
+            name: formData.name.trim(),
+            email: formData.email.trim(),
+            password: formData.password,
+            phone: formData.phone.trim() || undefined,
+            storeName: formData.storeName.trim(),
+            storeDescription: formData.storeDescription.trim() || undefined
+          })
+        ).unwrap();
       }
-
-      dispatch(authSuccess({
-        user: data.data?.user || { name: formData.name, email: formData.email, role: accountType },
-        token: data.data?.accessToken || 'token'
-      }));
 
       setSuccessMessage('Registration successful! Directing to boutique...');
       setTimeout(() => {
         navigate('/');
-      }, 1300);
+      }, 1200);
     } catch (err) {
-      dispatch(authFailure(err.message || 'Registration failed. Please try again.'));
+      console.warn('Registration failed:', err);
     }
   };
 

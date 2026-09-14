@@ -1,4 +1,3 @@
-import React from 'react';
 import { ArrowRight, Tag } from 'lucide-react';
 
 export const PromoSection = ({ onShopSale }) => {

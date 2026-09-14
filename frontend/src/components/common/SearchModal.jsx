@@ -1,17 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search as SearchIcon, X, ArrowRight, Store, Tag } from 'lucide-react';
-import { products, stores, categories } from '../../data/marketplaceData';
+import { useState, useEffect, useRef } from 'react';
+import { Search as SearchIcon, X, ArrowRight, Store } from 'lucide-react';
+import { products, stores } from '../../data/marketplaceData';
 import { Link } from 'react-router-dom';
 
 export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const inputRef = useRef(null);
 
+  const handleClose = () => {
+    setSearchTerm('');
+    onClose();
+  };
+
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    } else {
-      setSearchTerm('');
+      const timer = setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -56,7 +60,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
     >
       <div
         className="absolute inset-0 bg-[#111111]/80 backdrop-blur-md transition-opacity"
-        onClick={onClose}
+        onClick={handleClose}
       />
 
       <div
@@ -71,7 +75,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
               UNIFIED MARKETPLACE SEARCH
             </span>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-[#666666] hover:text-[#111111] p-1 transition-colors"
               aria-label="Close search"
             >
