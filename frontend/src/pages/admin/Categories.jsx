@@ -1,15 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
-  FolderTree,
   Plus,
   Search,
   Edit2,
   Trash2,
-  CheckCircle2,
-  X,
-  Layers,
-  Sparkles,
-  ArrowUpDown
+  X
 } from 'lucide-react';
 import { categories as initialCategories } from '../../data/categories';
 
@@ -104,16 +99,16 @@ const Categories = () => {
         prev.map((c) =>
           c.id === editingCategory.id
             ? {
-                ...c,
-                name: formData.name,
-                id: formData.slug.toLowerCase().replace(/\s+/g, '-'),
-                tagline: formData.tagline,
-                badge: formData.badge,
-                itemCount: formData.itemCount,
-                displayOrder: Number(formData.displayOrder),
-                isActive: formData.isActive,
-                image: formData.image
-              }
+              ...c,
+              name: formData.name,
+              id: formData.slug.toLowerCase().replace(/\s+/g, '-'),
+              tagline: formData.tagline,
+              badge: formData.badge,
+              itemCount: formData.itemCount,
+              displayOrder: Number(formData.displayOrder),
+              isActive: formData.isActive,
+              image: formData.image
+            }
             : c
         )
       );
@@ -226,11 +221,10 @@ const Categories = () => {
                 <button
                   type="button"
                   onClick={() => handleToggleActive(cat.id)}
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shadow ${
-                    cat.isActive
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shadow ${cat.isActive
                       ? 'bg-emerald-600 text-white border-emerald-500'
                       : 'bg-slate-700 text-slate-200 border-slate-600'
-                  }`}
+                    }`}
                 >
                   {cat.isActive ? 'Active' : 'Hidden'}
                 </button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { X, Star, Shield, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -7,19 +7,23 @@ import { addToCart } from '../../redux/slices/cartSlice';
 export const QuickViewModal = ({ product, isOpen, onClose, onShowToast }) => {
   const dispatch = useDispatch();
 
-  const [selectedImage, setSelectedImage] = useState('');
-  const [selectedColor, setSelectedColor] = useState(null);
-  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedImageOverride, setSelectedImageOverride] = useState('');
+  const [selectedColorOverride, setSelectedColorOverride] = useState(null);
+  const [selectedSizeOverride, setSelectedSizeOverride] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [prevProduct, setPrevProduct] = useState(product);
 
-  useEffect(() => {
-    if (product) {
-      setSelectedImage(product.images ? product.images[0] : '');
-      setSelectedColor(product.colors ? product.colors[0] : null);
-      setSelectedSize(product.sizes ? product.sizes[0] : 'M');
-      setQuantity(1);
-    }
-  }, [product]);
+  if (product !== prevProduct) {
+    setPrevProduct(product);
+    setSelectedImageOverride('');
+    setSelectedColorOverride(null);
+    setSelectedSizeOverride('');
+    setQuantity(1);
+  }
+
+  const selectedImage = selectedImageOverride || (product?.images ? product.images[0] : '');
+  const selectedColor = selectedColorOverride !== null ? selectedColorOverride : (product?.colors ? product.colors[0] : null);
+  const selectedSize = selectedSizeOverride || (product?.sizes ? product.sizes[0] : 'M');
 
   if (!isOpen || !product) return null;
 
@@ -79,7 +83,7 @@ export const QuickViewModal = ({ product, isOpen, onClose, onShowToast }) => {
                 {product.images.map((img, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setSelectedImage(img)}
+                    onClick={() => setSelectedImageOverride(img)}
                     className={`w-14 h-18 border overflow-hidden transition-all ${
                       selectedImage === img
                         ? 'border-[#111111] ring-1 ring-[#111111]'
@@ -149,7 +153,7 @@ export const QuickViewModal = ({ product, isOpen, onClose, onShowToast }) => {
                     {product.colors.map((c, idx) => (
                       <button
                         key={idx}
-                        onClick={() => setSelectedColor(c)}
+                        onClick={() => setSelectedColorOverride(c)}
                         className={`w-7 h-7 rounded-full border p-0.5 transition-all flex items-center justify-center ${
                           selectedColor?.name === c.name ? 'border-[#111111] scale-110' : 'border-[#E5E3DF]'
                         }`}
@@ -180,7 +184,7 @@ export const QuickViewModal = ({ product, isOpen, onClose, onShowToast }) => {
                     {product.sizes.map((s) => (
                       <button
                         key={s}
-                        onClick={() => setSelectedSize(s)}
+                        onClick={() => setSelectedSizeOverride(s)}
                         className={`px-3 py-2 text-xs font-mono uppercase tracking-wider border transition-all ${
                           selectedSize === s
                             ? 'bg-[#111111] text-[#F8F7F4] border-[#111111]'

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Truck, RotateCcw, ShieldCheck, Store } from 'lucide-react';
 
 export const TrustSection = () => {

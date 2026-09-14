@@ -1,68 +1,39 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
+import api from './api';
 
 export const authApi = {
-  // Login
+  // Login (returns { success, message, data: { user, accessToken, refreshToken } })
   async login({ email, password }) {
-    try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Login failed. Please verify credentials.');
-      }
-      return data;
-    } catch (err) {
-      // If backend server is unreachable (NetworkError), provide structured message
-      if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        throw new Error('Unable to connect to authentication server. Please ensure backend is running.');
-      }
-      throw err;
-    }
+    return api.post('/auth/login', { email, password });
   },
 
-  // Customer Register
+  // Customer Registration
   async register({ name, email, password, phone }) {
+    return api.post('/auth/register', { name, email, password, phone });
+  },
+
+  // Vendor Registration
+  async registerVendor(vendorData) {
+    return api.post('/auth/vendor/register', vendorData);
+  },
+
+  // Get Current Authenticated Profile via JWT
+  async getMe() {
+    return api.get('/auth/me');
+  },
+
+  // Logout
+  async logout() {
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, phone })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Registration failed. Please check inputs.');
-      }
-      return data;
-    } catch (err) {
-      if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        throw new Error('Unable to connect to authentication server. Please ensure backend is running.');
-      }
-      throw err;
+      return await api.post('/auth/logout');
+    } catch {
+      // Even if backend logout fails, client will clear local session
+      return { success: true };
     }
   },
 
-  // Vendor Register
-  async registerVendor(vendorData) {
-    try {
-      const res = await fetch(`${API_BASE_URL}/auth/vendor/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(vendorData)
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Vendor registration failed.');
-      }
-      return data;
-    } catch (err) {
-      if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        throw new Error('Unable to connect to authentication server. Please ensure backend is running.');
-      }
-      throw err;
-    }
+  // Refresh Token
+  async refreshToken(refreshToken) {
+    return api.post('/auth/refresh-token', { refreshToken });
   }
 };
 

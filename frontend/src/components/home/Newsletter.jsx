@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export const Newsletter = ({ onShowToast }) => {

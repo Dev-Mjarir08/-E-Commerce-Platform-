@@ -1,4 +1,3 @@
-import React from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
 export const TrendingCollection = ({ onShopCollection }) => {
