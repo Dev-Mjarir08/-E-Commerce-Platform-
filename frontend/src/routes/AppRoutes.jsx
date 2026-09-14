@@ -7,6 +7,7 @@ import Register from '../pages/auth/Register';
 // Customer imports
 import CustomerLayout from '../layouts/CustomerLayout';
 import Profile from '../pages/customer/Profile';
+import Cart from '../pages/customer/Cart';
 
 // Admin imports
 import AdminLayout from "../layouts/AdminLayout";
@@ -38,6 +39,8 @@ export const AppRoutes = () => {
         <Route element={<CustomerLayout />}>
           <Route path="/profile" element={<Profile />} />
           <Route path="/customer/profile" element={<Navigate to="/profile" replace />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/customer/cart" element={<Navigate to="/cart" replace />} />
         </Route>
       </Route>
 
