@@ -16,6 +16,12 @@ export const authApi = {
     return api.post('/auth/vendor/register', vendorData);
   },
 
+  // Admin Registration
+  async registerAdmin(adminData) {
+    return api.post('/auth/admin/register', adminData);
+  },
+
+
   // Get Current Authenticated Profile via JWT
   async getMe() {
     return api.get('/auth/me');

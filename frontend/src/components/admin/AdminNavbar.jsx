@@ -140,8 +140,9 @@ const AdminNavbar = ({ setIsMobileOpen }) => {
               onClick={() => setShowProfileMenu(false)}
             >
               <div className="px-3 py-2 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-900">{user?.name || 'Admin'}</p>
-                <p className="text-[11px] text-slate-500 truncate">{user?.email || 'admin@atelier.com'}</p>
+                <p className="text-xs font-bold text-slate-900">{user?.name || 'Administrator'}</p>
+                <p className="text-[11px] text-slate-500 truncate">{user?.email || ''}</p>
+
               </div>
               <Link
                 to="/admin/settings"

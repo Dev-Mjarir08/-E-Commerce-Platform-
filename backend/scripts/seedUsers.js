@@ -9,34 +9,14 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const defaultUsers = [
-  {
-    name: 'Atelier Administrator',
-    email: 'admin@atelier.com',
-    password: 'admin123',
-    role: 'admin',
-    phone: '+91 98765 43210',
-    isVerified: true,
-    status: 'active'
-  },
-  {
-    name: 'Maison Luxe Vendor',
-    email: 'vendor@atelier.com',
-    password: 'vendor123',
-    role: 'vendor',
-    phone: '+91 98765 43211',
-    isVerified: true,
-    status: 'active'
-  },
-  {
-    name: 'Eleanor Vance',
-    email: 'client@atelier.com',
-    password: 'password123',
-    role: 'customer',
-    phone: '+91 98765 43212',
-    isVerified: true,
-    status: 'active'
-  }
+// Demo users list removed as requested
+const defaultUsers = [];
+
+// Demo user emails to delete from database
+const demoEmails = [
+  'admin@atelier.com',
+  'vendor@atelier.com',
+  'client@atelier.com'
 ];
 
 const seedUsers = async () => {
@@ -46,27 +26,36 @@ const seedUsers = async () => {
     await mongoose.connect(mongoUri);
     console.log(`✅ MongoDB Connected.`);
 
-    for (const u of defaultUsers) {
-      const existing = await User.findOne({ email: u.email });
-      if (existing) {
-        // Ensure role, verification, and status are correct
-        existing.role = u.role;
-        existing.isVerified = true;
-        existing.status = 'active';
-        existing.password = u.password; // pre-save hook will hash if modified
-        await existing.save();
-        console.log(`Updated existing user: ${u.email} [Role: ${u.role}]`);
-      } else {
-        const newUser = new User(u);
-        await newUser.save();
-        console.log(`Created new user: ${u.email} [Role: ${u.role}]`);
+    // Automatically remove existing demo users from database
+    const deleteResult = await User.deleteMany({ email: { $in: demoEmails } });
+    if (deleteResult.deletedCount > 0) {
+      console.log(`🧹 Removed ${deleteResult.deletedCount} demo user(s) from database: ${demoEmails.join(', ')}`);
+    } else {
+      console.log(`✨ No demo users found in database.`);
+    }
+
+    if (defaultUsers.length > 0) {
+      for (const u of defaultUsers) {
+        const existing = await User.findOne({ email: u.email });
+        if (existing) {
+          existing.role = u.role;
+          existing.isVerified = true;
+          existing.status = 'active';
+          existing.password = u.password;
+          await existing.save();
+          console.log(`Updated user: ${u.email} [Role: ${u.role}]`);
+        } else {
+          const newUser = new User(u);
+          await newUser.save();
+          console.log(`Created user: ${u.email} [Role: ${u.role}]`);
+        }
       }
     }
 
-    console.log('🎉 Default users seeded successfully!');
+    console.log('✅ User database is clean without demo accounts.');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error seeding users:', error);
+    console.error('❌ Error in seed script:', error);
     process.exit(1);
   }
 };

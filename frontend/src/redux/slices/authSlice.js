@@ -39,26 +39,6 @@ export const loginUser = createAsyncThunk(
       const response = await authApi.login(credentials);
       return response.data; // { user, accessToken, refreshToken }
     } catch (error) {
-      // Offline / network fallback for default admin demo credentials
-      if (
-        credentials.email?.toLowerCase().trim() === 'admin@atelier.com' &&
-        credentials.password === 'admin123'
-      ) {
-        console.warn('Backend connection issue, activating local Admin session.');
-        return {
-          user: {
-            id: 'admin_master_id',
-            name: 'Atelier Administrator',
-            email: 'admin@atelier.com',
-            role: 'admin',
-            phone: '+91 98765 43210',
-            isVerified: true,
-            status: 'active'
-          },
-          accessToken: 'demo_admin_jwt_token',
-          refreshToken: 'demo_admin_refresh_token'
-        };
-      }
       return rejectWithValue(error.message || 'Login failed. Please verify credentials.');
     }
   }
@@ -89,6 +69,20 @@ export const registerVendorUser = createAsyncThunk(
     }
   }
 );
+
+// Register Admin Thunk
+export const registerAdminUser = createAsyncThunk(
+  'auth/registerAdminUser',
+  async (adminData, { rejectWithValue }) => {
+    try {
+      const response = await authApi.registerAdmin(adminData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Admin registration failed.');
+    }
+  }
+);
+
 
 // Fetch Current Authenticated User (Profile Validation)
 export const fetchCurrentUser = createAsyncThunk(
@@ -242,6 +236,37 @@ export const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       });
+
+    // registerAdminUser
+    builder
+      .addCase(registerAdminUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerAdminUser.fulfilled, (state, action) => {
+        state.loading = false;
+        if (action.payload?.accessToken) {
+          state.isAuthenticated = true;
+          state.user = action.payload.user;
+          state.token = action.payload.accessToken;
+          state.refreshToken = action.payload.refreshToken;
+
+          try {
+            localStorage.setItem('atelier_token', action.payload.accessToken);
+            localStorage.setItem('atelier_user', JSON.stringify(action.payload.user));
+            if (action.payload.refreshToken) {
+              localStorage.setItem('atelier_refresh_token', action.payload.refreshToken);
+            }
+          } catch (err) {
+            console.warn('LocalStorage save failed:', err);
+          }
+        }
+      })
+      .addCase(registerAdminUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
 
     // fetchCurrentUser
     builder

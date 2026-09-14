@@ -87,29 +87,7 @@ const Login = () => {
     }
   };
 
-  const fillDemoAccount = (role = 'customer') => {
-    if (role === 'admin') {
-      setFormData({
-        email: 'admin@atelier.com',
-        password: 'admin123',
-        rememberMe: true
-      });
-    } else if (role === 'vendor') {
-      setFormData({
-        email: 'vendor@atelier.com',
-        password: 'vendor123',
-        rememberMe: true
-      });
-    } else {
-      setFormData({
-        email: 'client@atelier.com',
-        password: 'password123',
-        rememberMe: true
-      });
-    }
-    setFormErrors({});
-    if (error) dispatch(clearError());
-  };
+
 
   return (
     <div className="min-h-screen bg-[#F8F7F4] text-[#111111] flex flex-col font-sans selection:bg-[#111111] selection:text-[#F8F7F4]">
@@ -330,35 +308,6 @@ const Login = () => {
               </button>
             </form>
 
-            {/* Quick Demo Login Preset Helper */}
-            <div className="mt-6 pt-6 border-t border-[#E5E3DF] text-center">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#8E877F] block mb-2.5">
-                QUICK DEMO ACCESS
-              </span>
-              <div className="flex items-center justify-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => fillDemoAccount('admin')}
-                  className="text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 border border-indigo-500 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 transition-colors font-semibold"
-                >
-                  Admin Demo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fillDemoAccount('customer')}
-                  className="text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 border border-[#E5E3DF] hover:border-[#111111] hover:text-[#111111] text-[#666666] bg-[#FAF9F6] transition-colors"
-                >
-                  Customer Demo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fillDemoAccount('vendor')}
-                  className="text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 border border-[#E5E3DF] hover:border-[#111111] hover:text-[#111111] text-[#666666] bg-[#FAF9F6] transition-colors"
-                >
-                  Vendor Demo
-                </button>
-              </div>
-            </div>
 
             {/* Register Switch Link */}
             <div className="mt-8 pt-6 border-t border-[#E5E3DF] text-center space-y-3">

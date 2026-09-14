@@ -9,7 +9,8 @@ import {
   resetPassword,
   verifyEmail,
   resendVerification,
-  refreshToken
+  refreshToken,
+  createAdmin
 } from '../controllers/auth.controller.js';
 import { protect } from '../middlewares/auth.middleware.js';
 
@@ -18,8 +19,13 @@ const authRouter = Router();
 // Customer Registration
 authRouter.post('/register', registerCustomer);
 
+// Admin Registration
+authRouter.post('/admin/register', createAdmin);
+authRouter.post('/admin/create', createAdmin);
+
 // Vendor Registration (Multi-Tenant)
 authRouter.post('/vendor/register', registerVendor);
+
 
 // Login & Logout
 authRouter.post('/login', login);
