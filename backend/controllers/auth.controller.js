@@ -3,6 +3,8 @@ import User from '../models/User.js';
 import Store from '../models/Store.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/token.utils.js';
 import sendEmail from '../utils/sendEmail.js';
+export { createAdmin, createAdmin as registerAdmin } from './admin.controller.js';
+
 
 /**
  * Helper: Generate clean store slug

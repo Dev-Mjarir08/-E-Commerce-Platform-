@@ -35,16 +35,18 @@ const productSlice = createSlice({
       saveProductsToStorage(state.items);
     },
     updateProduct: (state, action) => {
-      const index = state.items.findIndex((p) => p.id === action.payload.id);
+      const targetId = action.payload.id || action.payload._id;
+      const index = state.items.findIndex((p) => (p.id === targetId || p._id === targetId));
       if (index !== -1) {
         state.items[index] = { ...state.items[index], ...action.payload };
         saveProductsToStorage(state.items);
       }
     },
     deleteProduct: (state, action) => {
-      state.items = state.items.filter((p) => p.id !== action.payload);
+      state.items = state.items.filter((p) => p.id !== action.payload && p._id !== action.payload);
       saveProductsToStorage(state.items);
     },
+
     clearAllProducts: (state) => {
       state.items = [];
       saveProductsToStorage([]);

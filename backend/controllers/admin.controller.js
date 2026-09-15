@@ -1,0 +1,176 @@
+import User from '../models/User.js';
+import Product from '../models/Product.js';
+import Store from '../models/Store.js';
+import Category from '../models/Category.js';
+import { generateAccessToken, generateRefreshToken } from '../utils/token.utils.js';
+
+/**
+ * @desc    Create / Register a new Admin
+ * @route   POST /api/admin/create OR POST /api/auth/admin/register
+ * @access  Public (or protected with ADMIN_SECRET_KEY if configured in .env)
+ */
+export const createAdmin = async (req, res) => {
+  try {
+    const { name, email, password, phone, secretKey } = req.body;
+
+    // Validation
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide name, email, and password.'
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long.'
+      });
+    }
+
+    // Check optional admin secret key if configured in .env
+    const configuredSecret = process.env.ADMIN_SECRET_KEY;
+    if (configuredSecret && secretKey !== configuredSecret) {
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid Admin Secret Key. Unauthorized to create admin.'
+      });
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: 'An account with this email address already exists.'
+      });
+    }
+
+    // Create user with admin role
+    const adminUser = new User({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password,
+      phone: phone ? phone.trim() : null,
+      role: 'admin',
+      isVerified: true, // Pre-verified so admin can login immediately
+      status: 'active'
+    });
+
+    const accessToken = generateAccessToken(adminUser);
+    const refreshToken = generateRefreshToken(adminUser);
+
+    adminUser.refreshToken = refreshToken;
+    await adminUser.save();
+
+    return res.status(201).json({
+      success: true,
+      message: 'Admin account created successfully.',
+      data: {
+        user: {
+          id: adminUser._id,
+          name: adminUser.name,
+          email: adminUser.email,
+          role: adminUser.role,
+          phone: adminUser.phone,
+          isVerified: adminUser.isVerified,
+          status: adminUser.status,
+          createdAt: adminUser.createdAt
+        },
+        accessToken,
+        refreshToken
+      }
+    });
+  } catch (error) {
+    console.error('Create admin error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Internal server error while creating admin.'
+    });
+  }
+};
+
+/**
+ * @desc    Get all admins
+ * @route   GET /api/admin
+ * @access  Private / Admin
+ */
+export const getAllAdmins = async (req, res) => {
+  try {
+    const admins = await User.find({ role: 'admin' }).select('-password -refreshToken');
+    return res.status(200).json({
+      success: true,
+      count: admins.length,
+      data: admins
+    });
+  } catch (error) {
+    console.error('Get admins error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Internal server error while fetching admins.'
+    });
+  }
+};
+
+/**
+ * @desc    Get real-time live dynamic dashboard statistics from MongoDB
+ * @route   GET /api/admin/stats OR GET /api/admin/dashboard
+ * @access  Public / Admin
+ */
+export const getDashboardStats = async (req, res) => {
+  try {
+    const [
+      totalProducts,
+      inStockCount,
+      lowStockCount,
+      outOfStockCount,
+      totalStores,
+      totalCategories,
+      recentProducts,
+      valuationAgg
+    ] = await Promise.all([
+      Product.countDocuments(),
+      Product.countDocuments({ stock: { $gt: 8 } }),
+      Product.countDocuments({ stock: { $gt: 0, $lte: 8 } }),
+      Product.countDocuments({ stock: 0 }),
+      Store.countDocuments(),
+      Category.countDocuments(),
+      Product.find()
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .populate('category', 'name slug')
+        .populate('store', 'name slug'),
+      Product.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalValue: {
+              $sum: { $multiply: ['$basePrice', '$stock'] }
+            }
+          }
+        }
+      ])
+    ]);
+
+    const totalInventoryValue = valuationAgg[0]?.totalValue || 0;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalProducts,
+        inStockCount,
+        lowStockCount,
+        outOfStockCount,
+        totalStores,
+        totalCategories,
+        totalInventoryValue,
+        recentProducts
+      }
+    });
+  } catch (error) {
+    console.error('getDashboardStats error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching dashboard statistics.'
+    });
+  }
+};

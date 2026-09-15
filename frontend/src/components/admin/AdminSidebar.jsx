@@ -18,12 +18,14 @@ const AdminSidebar = ({
   isCollapsed,
   setIsCollapsed,
   isMobileOpen,
-  setIsMobileOpen,
 }) => {
+  const user = useSelector((state) => state.auth.user);
   const totalProducts = useSelector((state) => state.products.items.length);
+
   const totalStores = useSelector((state) => state.stores.items.length);
   const totalCoupons = useSelector((state) => state.coupons.items.length);
   const [productsOpen, setProductsOpen] = useState(false);
+
 
   const mainNavItems = [
     { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
@@ -88,21 +90,22 @@ const AdminSidebar = ({
       {!isCollapsed && (
         <div className="p-4 mx-3 my-3 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
-            SA
+            {user?.name ? user.name.slice(0, 2).toUpperCase() : 'AD'}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-semibold text-white truncate">
-                Administrator
+                {user?.name || 'Administrator'}
               </span>
               <ShieldCheck size={14} className="text-emerald-400 shrink-0" />
             </div>
             <span className="text-[11px] text-slate-400 block truncate">
-              admin@m4m-platform.com
+              {user?.email || 'admin@domain.com'}
             </span>
           </div>
         </div>
       )}
+
 
       {/* Navigation List */}
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5 font-sans">

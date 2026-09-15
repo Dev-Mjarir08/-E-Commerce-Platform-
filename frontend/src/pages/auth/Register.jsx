@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ArrowRight, Lock, Mail, User, Phone, Store, Eye, EyeOff, ShieldCheck, ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { registerUser, registerVendorUser, clearError } from '../../redux/slices/authSlice';
+import { registerUser, registerVendorUser, registerAdminUser, clearError } from '../../redux/slices/authSlice';
 
 const Register = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
 
-  const [accountType, setAccountType] = useState('customer'); // 'customer' | 'vendor'
+  const [accountType, setAccountType] = useState('customer'); // 'customer' | 'vendor' | 'admin'
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,8 +18,10 @@ const Register = () => {
     confirmPassword: '',
     storeName: '',
     storeDescription: '',
+    secretKey: '',
     agreeTerms: true
   });
+
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -74,7 +76,23 @@ const Register = () => {
     if (!validate()) return;
 
     try {
-      if (accountType === 'customer') {
+      if (accountType === 'admin') {
+        await dispatch(
+          registerAdminUser({
+            name: formData.name.trim(),
+            email: formData.email.trim(),
+            password: formData.password,
+            phone: formData.phone.trim() || undefined,
+            secretKey: formData.secretKey?.trim() || undefined
+          })
+        ).unwrap();
+
+        setSuccessMessage('Administrator account created! Directing to Admin Suite...');
+        setTimeout(() => {
+          navigate('/admin/dashboard');
+        }, 1200);
+        return;
+      } else if (accountType === 'customer') {
         await dispatch(
           registerUser({
             name: formData.name.trim(),
@@ -103,6 +121,7 @@ const Register = () => {
     } catch (err) {
       console.warn('Registration failed:', err);
     }
+
   };
 
   return (
@@ -202,11 +221,11 @@ const Register = () => {
             </div>
 
             {/* Account Type Tabs */}
-            <div className="grid grid-cols-2 gap-2 p-1 bg-[#FAF9F6] border border-[#E5E3DF] mb-6">
+            <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#FAF9F6] border border-[#E5E3DF] mb-6">
               <button
                 type="button"
                 onClick={() => setAccountType('customer')}
-                className={`py-2.5 text-[11px] font-mono uppercase tracking-[0.18em] transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.14em] transition-all flex items-center justify-center gap-1.5 ${
                   accountType === 'customer'
                     ? 'bg-[#111111] text-[#F8F7F4] shadow-xs'
                     : 'text-[#666666] hover:text-[#111111]'
@@ -219,16 +238,30 @@ const Register = () => {
               <button
                 type="button"
                 onClick={() => setAccountType('vendor')}
-                className={`py-2.5 text-[11px] font-mono uppercase tracking-[0.18em] transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.14em] transition-all flex items-center justify-center gap-1.5 ${
                   accountType === 'vendor'
                     ? 'bg-[#111111] text-[#F8F7F4] shadow-xs'
                     : 'text-[#666666] hover:text-[#111111]'
                 }`}
               >
                 <Store className="w-3.5 h-3.5" />
-                <span>Store / Vendor</span>
+                <span>Vendor</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAccountType('admin')}
+                className={`py-2 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.14em] transition-all flex items-center justify-center gap-1.5 ${
+                  accountType === 'admin'
+                    ? 'bg-indigo-900 text-white shadow-xs'
+                    : 'text-[#666666] hover:text-[#111111]'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Admin</span>
               </button>
             </div>
+
 
             {/* Error Notification */}
             {error && (
@@ -367,8 +400,37 @@ const Register = () => {
                 </div>
               )}
 
+              {/* Admin Specific Notice & Optional Key */}
+              {accountType === 'admin' && (
+                <div className="p-4 bg-indigo-50/70 border border-indigo-200 rounded space-y-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-indigo-700" />
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-indigo-950 font-bold">
+                      Platform Administrator Role
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-indigo-900 leading-relaxed font-sans">
+                    Creating an Administrator account grants full access to marketplace analytics, vendor approvals, product management, and platform configurations.
+                  </p>
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-indigo-900 mb-1">
+                      Admin Passkey / Secret Key (Optional)
+                    </label>
+                    <input
+                      type="password"
+                      name="secretKey"
+                      value={formData.secretKey || ''}
+                      onChange={handleChange}
+                      placeholder="OPTIONAL ADMIN SECRET KEY"
+                      className="w-full bg-[#FFFFFF] border border-indigo-200 focus:border-indigo-600 text-xs font-sans text-[#111111] px-3.5 py-2.5 outline-none transition-colors placeholder:text-slate-400 placeholder:font-mono placeholder:text-[10px]"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Password & Confirm Password */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
                 <div>
                   <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-[#666666] mb-1.5">
                     Password *
