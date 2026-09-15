@@ -23,6 +23,8 @@ import Settings from "../pages/admin/Settings";
 import Customers from "../pages/admin/Customers";
 import Categories from "../pages/admin/Categories";
 import Inventory from "../pages/admin/products/Inventory";
+import Vendors from "../pages/admin/Vendors";
+import VendorDetails from "../pages/admin/vendors/VendorDetails";
 
 // Security & Auth
 import ProtectedRoute from "../components/common/ProtectedRoute";
@@ -71,6 +73,8 @@ export const AppRoutes = () => {
           <Route path="products/categories" element={<Categories />} />
           <Route path="products/inventory" element={<Inventory />} />
           <Route path="stores" element={<Stores />} />
+          <Route path="vendors" element={<Vendors />} />
+          <Route path="vendor-details" element={<VendorDetails />} />
           <Route path="coupons" element={<Coupons />} />
           <Route path="orders" element={<Orders />} />
           <Route path="customers" element={<Customers />} />
