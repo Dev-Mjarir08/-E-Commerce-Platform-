@@ -10,6 +10,7 @@ import Profile from '../pages/customer/Profile';
 import Cart from '../pages/customer/Cart';
 import Wishlist from '../pages/customer/Wishlist';
 import Addresses from '../pages/customer/Addresses';
+import CustomerOrders from '../pages/customer/Orders';
 
 // Admin imports
 import AdminLayout from "../layouts/AdminLayout";
@@ -47,6 +48,8 @@ export const AppRoutes = () => {
           <Route path="/customer/wishlist" element={<Navigate to="/wishlist" replace />} />
           <Route path="/addresses" element={<Addresses />} />
           <Route path="/customer/addresses" element={<Navigate to="/addresses" replace />} />
+          <Route path="/orders" element={<CustomerOrders />} />
+          <Route path="/customer/orders" element={<Navigate to="/orders" replace />} />
         </Route>
       </Route>
 
