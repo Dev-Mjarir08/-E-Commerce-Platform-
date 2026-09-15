@@ -12,6 +12,7 @@ import Wishlist from '../pages/customer/Wishlist';
 import Addresses from '../pages/customer/Addresses';
 import CustomerOrders from '../pages/customer/Orders';
 import OrderDetails from '../pages/customer/OrderDetails';
+import Checkout from '../pages/customer/Checkout';
 
 // Admin imports
 import AdminLayout from "../layouts/AdminLayout";
@@ -53,6 +54,8 @@ export const AppRoutes = () => {
           <Route path="/customer/orders" element={<Navigate to="/orders" replace />} />
           <Route path="/orders/:id" element={<OrderDetails />} />
           <Route path="/customer/orders/:id" element={<Navigate to="/orders/:id" replace />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/customer/checkout" element={<Navigate to="/checkout" replace />} />
         </Route>
       </Route>
 
