@@ -7,20 +7,37 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../uploads/products');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+const productUploadDir = path.join(__dirname, '../uploads/products');
+if (!fs.existsSync(productUploadDir)) {
+  fs.mkdirSync(productUploadDir, { recursive: true });
 }
 
-// Configure disk storage
+const categoryUploadDir = path.join(__dirname, '../uploads/categories');
+if (!fs.existsSync(categoryUploadDir)) {
+  fs.mkdirSync(categoryUploadDir, { recursive: true });
+}
+
+// Configure disk storage for products
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir);
+    cb(null, productUploadDir);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     cb(null, `prod-${uniqueSuffix}${ext}`);
+  }
+});
+
+// Configure disk storage for categories
+const categoryStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, categoryUploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `cat-${uniqueSuffix}${ext}`);
   }
 });
 
@@ -44,6 +61,14 @@ export const uploadProductMedia = multer({
   { name: 'images', maxCount: 10 },
   { name: 'image', maxCount: 1 }
 ]);
+
+export const uploadCategoryImage = multer({
+  storage: categoryStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5 MB limit
+  },
+  fileFilter
+}).single('image');
 
 /**
  * Utility helper to delete an image file from disk / Cloudinary

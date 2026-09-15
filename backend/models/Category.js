@@ -39,11 +39,42 @@ const categorySchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
 
+// Indexes for optimal query performance
 categorySchema.index({ parentCategory: 1 });
+categorySchema.index({ isActive: 1, displayOrder: 1 });
+
+// Auto-generate slug before validation if not explicitly provided
+categorySchema.pre('validate', function () {
+  if (this.name && !this.slug) {
+    this.slug = this.name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]+/g, '')
+      .replace(/--+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+});
+
+// Virtual populate for subcategories
+categorySchema.virtual('subCategories', {
+  ref: 'Category',
+  localField: '_id',
+  foreignField: 'parentCategory'
+});
+
+// Virtual populate for products count/list
+categorySchema.virtual('products', {
+  ref: 'Product',
+  localField: '_id',
+  foreignField: 'category'
+});
 
 const Category = mongoose.model('Category', categorySchema);
 export default Category;
