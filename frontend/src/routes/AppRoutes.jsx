@@ -11,6 +11,7 @@ import Cart from '../pages/customer/Cart';
 import Wishlist from '../pages/customer/Wishlist';
 import Addresses from '../pages/customer/Addresses';
 import CustomerOrders from '../pages/customer/Orders';
+import OrderDetails from '../pages/customer/OrderDetails';
 
 // Admin imports
 import AdminLayout from "../layouts/AdminLayout";
@@ -50,6 +51,8 @@ export const AppRoutes = () => {
           <Route path="/customer/addresses" element={<Navigate to="/addresses" replace />} />
           <Route path="/orders" element={<CustomerOrders />} />
           <Route path="/customer/orders" element={<Navigate to="/orders" replace />} />
+          <Route path="/orders/:id" element={<OrderDetails />} />
+          <Route path="/customer/orders/:id" element={<Navigate to="/orders/:id" replace />} />
         </Route>
       </Route>
 

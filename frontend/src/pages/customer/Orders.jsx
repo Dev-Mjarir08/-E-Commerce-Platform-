@@ -541,6 +541,13 @@ export const Orders = () => {
 
                   <div className="flex items-center gap-3">
                     {renderStatusBadge(order.orderStatus)}
+                    <Link
+                      to={`/orders/${order._id}`}
+                      className="px-3 py-1 bg-[#111111] text-[#F8F7F4] text-[10px] font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors flex items-center gap-1"
+                    >
+                      <span>View Details</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </Link>
                   </div>
                 </div>
 
