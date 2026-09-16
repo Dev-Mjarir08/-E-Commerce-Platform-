@@ -15,6 +15,7 @@ import OrderDetails from '../pages/customer/OrderDetails';
 import Checkout from '../pages/customer/Checkout';
 import OrderSuccess from '../pages/customer/OrderSuccess';
 import OrderFailed from '../pages/customer/OrderFailed';
+import CustomerSettings from '../pages/customer/Settings';
 
 // Admin imports
 import AdminLayout from "../layouts/AdminLayout";
@@ -66,6 +67,8 @@ export const AppRoutes = () => {
           <Route path="/orders/failed" element={<OrderFailed />} />
           <Route path="/customer/order-failed" element={<Navigate to="/order-failed" replace />} />
           <Route path="/customer/orders/failed" element={<Navigate to="/order-failed" replace />} />
+          <Route path="/settings" element={<CustomerSettings />} />
+          <Route path="/customer/settings" element={<Navigate to="/settings" replace />} />
         </Route>
       </Route>
 
