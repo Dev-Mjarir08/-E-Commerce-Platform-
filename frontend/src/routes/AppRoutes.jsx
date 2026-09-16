@@ -21,6 +21,7 @@ import Coupons from "../pages/admin/Coupons";
 import Orders from "../pages/admin/Orders";
 import Settings from "../pages/admin/Settings";
 import Customers from "../pages/admin/Customers";
+import Payment from "../pages/admin/Payment";
 import Categories from "../pages/admin/Categories";
 import Inventory from "../pages/admin/products/Inventory";
 import Vendors from "../pages/admin/Vendors";
@@ -67,17 +68,36 @@ export const AppRoutes = () => {
       <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
+
           <Route path="dashboard" element={<Dashboard />} />
+
+          {/* Products */}
           <Route path="products" element={<Products />} />
           <Route path="products/add" element={<AddProduct />} />
           <Route path="products/categories" element={<Categories />} />
           <Route path="products/inventory" element={<Inventory />} />
+
+          {/* Stores */}
           <Route path="stores" element={<Stores />} />
+
+          {/* Vendors */}
           <Route path="vendors" element={<Vendors />} />
           <Route path="vendor-details" element={<VendorDetails />} />
+
+          {/* Coupons */}
           <Route path="coupons" element={<Coupons />} />
+
+          {/* Orders */}
           <Route path="orders" element={<Orders />} />
+
+          {/* Payments */}
+          <Route path="payments" element={<Payment />} />
+          <Route path="payment" element={<Payment />} />
+
+          {/* Customers */}
           <Route path="customers" element={<Customers />} />
+
+          {/* Settings */}
           <Route path="settings" element={<Settings />} />
         </Route>
       </Route>

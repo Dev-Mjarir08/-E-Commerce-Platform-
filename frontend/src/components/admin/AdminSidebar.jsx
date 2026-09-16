@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   ShoppingBag,
   Users,
+  CreditCard,
 } from "lucide-react";
 
 const AdminSidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen }) => {
@@ -43,6 +44,12 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen }) => {
       path: "/admin/orders",
       icon: ShoppingBag,
       badge: "5",
+    },
+    {
+      name: "Payments",
+      path: "/admin/payments",
+      icon: CreditCard,
+      badge: "8",
     },
     {
       name: "Customers",
