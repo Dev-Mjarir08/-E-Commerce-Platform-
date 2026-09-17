@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   Users,
   CreditCard,
+  BarChart3,
 } from "lucide-react";
 
 const AdminSidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen }) => {
@@ -56,6 +57,11 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen }) => {
       path: "/admin/customers",
       icon: Users,
       badge: "4",
+    },
+    {
+      name: "Analytics",
+      path: "/admin/analytics",
+      icon: BarChart3,
     },
   ];
 

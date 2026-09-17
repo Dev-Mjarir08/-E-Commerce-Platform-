@@ -26,6 +26,7 @@ import Categories from "../pages/admin/Categories";
 import Inventory from "../pages/admin/products/Inventory";
 import Vendors from "../pages/admin/Vendors";
 import VendorDetails from "../pages/admin/vendors/VendorDetails";
+import Analytics from "../pages/admin/Analytics";
 
 // Security & Auth
 import ProtectedRoute from "../components/common/ProtectedRoute";
@@ -92,13 +93,15 @@ export const AppRoutes = () => {
 
           {/* Payments */}
           <Route path="payments" element={<Payment />} />
-          <Route path="payment" element={<Payment />} />
 
           {/* Customers */}
           <Route path="customers" element={<Customers />} />
 
           {/* Settings */}
           <Route path="settings" element={<Settings />} />
+
+          {/* Analytics */}
+          <Route path="analytics" element={<Analytics />} />
         </Route>
       </Route>
 
