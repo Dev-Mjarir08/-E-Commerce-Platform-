@@ -4,6 +4,12 @@ import StoreDetails from '../pages/public/StoreDetails';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 
+// Customer imports
+import CustomerLayout from '../layouts/CustomerLayout';
+import Profile from '../pages/customer/Profile';
+import Cart from '../pages/customer/Cart';
+import Wishlist from '../pages/customer/Wishlist';
+
 // Admin imports
 import AdminLayout from "../layouts/AdminLayout";
 import Dashboard from "../pages/admin/Dashboard";
@@ -29,6 +35,18 @@ export const AppRoutes = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/store/:slug" element={<StoreDetails />} />
 
+      {/* Customer Routes - Protected for authenticated users */}
+      <Route element={<ProtectedRoute allowedRoles={['customer', 'seller', 'admin']} />}>
+        <Route element={<CustomerLayout />}>
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/customer/profile" element={<Navigate to="/profile" replace />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/customer/cart" element={<Navigate to="/cart" replace />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/customer/wishlist" element={<Navigate to="/wishlist" replace />} />
+        </Route>
+      </Route>
+
       {/* Admin Operations Suite - Protected for 'admin' role only */}
       <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
         <Route path="/admin" element={<AdminLayout />}>
@@ -53,3 +71,4 @@ export const AppRoutes = () => {
 };
 
 export default AppRoutes;
+
