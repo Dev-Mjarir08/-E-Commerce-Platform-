@@ -10,6 +10,13 @@ import CustomerLayout from "../layouts/CustomerLayout";
 import Profile from "../pages/customer/Profile";
 import Cart from "../pages/customer/Cart";
 import Wishlist from "../pages/customer/Wishlist";
+import Addresses from "../pages/customer/Addresses";
+import CustomerOrders from "../pages/customer/Orders";
+import OrderDetails from "../pages/customer/OrderDetails";
+import Checkout from "../pages/customer/Checkout";
+import OrderSuccess from "../pages/customer/OrderSuccess";
+import OrderFailed from "../pages/customer/OrderFailed";
+import CustomerSettings from "../pages/customer/Settings";
 
 // Admin imports
 import AdminLayout from "../layouts/AdminLayout";
@@ -61,6 +68,53 @@ export const AppRoutes = () => {
           <Route
             path="/customer/wishlist"
             element={<Navigate to="/wishlist" replace />}
+          />
+          <Route path="/addresses" element={<Addresses />} />
+          <Route
+            path="/customer/addresses"
+            element={<Navigate to="/addresses" replace />}
+          />
+          <Route path="/orders" element={<CustomerOrders />} />
+          <Route
+            path="/customer/orders"
+            element={<Navigate to="/orders" replace />}
+          />
+          <Route path="/orders/:id" element={<OrderDetails />} />
+          <Route
+            path="/customer/orders/:id"
+            element={<Navigate to="/orders/:id" replace />}
+          />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route
+            path="/customer/checkout"
+            element={<Navigate to="/checkout" replace />}
+          />
+          <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/order/success/:id" element={<OrderSuccess />} />
+          <Route path="/orders/success" element={<OrderSuccess />} />
+          <Route
+            path="/customer/order-success"
+            element={<Navigate to="/order-success" replace />}
+          />
+          <Route
+            path="/customer/orders/success"
+            element={<Navigate to="/order-success" replace />}
+          />
+          <Route path="/order-failed" element={<OrderFailed />} />
+          <Route path="/order/failed" element={<OrderFailed />} />
+          <Route path="/orders/failed" element={<OrderFailed />} />
+          <Route
+            path="/customer/order-failed"
+            element={<Navigate to="/order-failed" replace />}
+          />
+          <Route
+            path="/customer/orders/failed"
+            element={<Navigate to="/order-failed" replace />}
+          />
+          <Route path="/settings" element={<CustomerSettings />} />
+          <Route
+            path="/customer/settings"
+            element={<Navigate to="/settings" replace />}
           />
         </Route>
       </Route>
