@@ -9,6 +9,13 @@ import CustomerLayout from '../layouts/CustomerLayout';
 import Profile from '../pages/customer/Profile';
 import Cart from '../pages/customer/Cart';
 import Wishlist from '../pages/customer/Wishlist';
+import Addresses from '../pages/customer/Addresses';
+import Orders from '../pages/customer/Orders';
+import OrderDetails from '../pages/customer/OrderDetails';
+import Checkout from '../pages/customer/Checkout';
+import OrderSuccess from '../pages/customer/OrderSuccess';
+import OrderFailed from '../pages/customer/OrderFailed';
+import CustomerSettings from '../pages/customer/Settings';
 
 // Admin imports
 import AdminLayout from "../layouts/AdminLayout";
@@ -17,8 +24,8 @@ import Products from "../pages/admin/Products";
 import AddProduct from '../pages/admin/products/AddProduct';
 import Stores from "../pages/admin/Stores";
 import Coupons from "../pages/admin/Coupons";
-import Orders from "../pages/admin/Orders";
-import Settings from "../pages/admin/Settings";
+import OrdersAdmin from "../pages/admin/Orders";
+import SettingsAdmin from "../pages/admin/Settings";
 import Customers from "../pages/admin/Customers";
 import Categories from "../pages/admin/Categories";
 import Inventory from "../pages/admin/products/Inventory";
@@ -44,6 +51,18 @@ export const AppRoutes = () => {
           <Route path="/customer/cart" element={<Navigate to="/cart" replace />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/customer/wishlist" element={<Navigate to="/wishlist" replace />} />
+          <Route path="/addresses" element={<Addresses />} />
+          <Route path="/customer/addresses" element={<Navigate to="/addresses" replace />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/customer/checkout" element={<Navigate to="/checkout" replace />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/customer/orders" element={<Navigate to="/orders" replace />} />
+          <Route path="/orders/:id" element={<OrderDetails />} />
+          <Route path="/customer/orders/:id" element={<OrderDetails />} />
+          <Route path="/order/success/:id" element={<OrderSuccess />} />
+          <Route path="/order/failed" element={<OrderFailed />} />
+          <Route path="/settings" element={<CustomerSettings />} />
+          <Route path="/customer/settings" element={<Navigate to="/settings" replace />} />
         </Route>
       </Route>
 
@@ -58,9 +77,9 @@ export const AppRoutes = () => {
           <Route path="products/inventory" element={<Inventory />} />
           <Route path="stores" element={<Stores />} />
           <Route path="coupons" element={<Coupons />} />
-          <Route path="orders" element={<Orders />} />
+          <Route path="orders" element={<OrdersAdmin />} />
           <Route path="customers" element={<Customers />} />
-          <Route path="settings" element={<Settings />} />
+          <Route path="settings" element={<SettingsAdmin />} />
         </Route>
       </Route>
 

@@ -230,6 +230,17 @@ export const Profile = () => {
                   </div>
                   <ArrowRight className="w-3.5 h-3.5 text-[#8E877F]" />
                 </Link>
+
+                <Link
+                  to="/settings"
+                  className="flex items-center justify-between p-3 hover:bg-[#F8F7F4] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Lock className="w-4 h-4 text-[#8E877F]" />
+                    <span>Security & Settings</span>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#8E877F]" />
+                </Link>
               </nav>
             </div>
           </div>

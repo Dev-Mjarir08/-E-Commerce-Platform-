@@ -87,3 +87,33 @@ export const authorize = (...roles) => {
     next();
   };
 };
+
+/**
+ * Optional authentication - sets req.user if valid token provided, but proceeds either way
+ */
+export const optionalAuth = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  try {
+    const decoded = verifyAccessToken(token);
+    const user = await User.findById(decoded.id);
+    if (user && user.status !== 'banned' && user.status !== 'suspended') {
+      req.user = user;
+    } else {
+      req.user = null;
+    }
+  } catch {
+    req.user = null;
+  }
+
+  next();
+};
