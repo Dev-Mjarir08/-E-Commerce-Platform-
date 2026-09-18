@@ -8,6 +8,7 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
   const dispatch = useDispatch();
   const cartItems = useSelector((state) => state.cart.items);
   const wishlistItems = useSelector((state) => state.wishlist.items);
+  const { user, isAuthenticated } = useSelector((state) => state.auth || {});
 
   const totalCartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const totalWishlistCount = wishlistItems.length;
@@ -91,11 +92,11 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
           </button>
 
           {/* Wishlist ♡ */}
-          <button
-            type="button"
-            onClick={onOpenWishlist}
+          <Link
+            to="/wishlist"
             className="p-1.5 hover:text-[#666666] transition-colors relative"
             aria-label="Wishlist"
+            title="Wishlist Archive"
           >
             <Heart className="w-4 h-4" />
             {totalWishlistCount > 0 && (
@@ -103,14 +104,14 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
                 {totalWishlistCount}
               </span>
             )}
-          </button>
+          </Link>
 
           {/* Account */}
           <Link
-            to="/login"
+            to={user ? '/profile' : '/login'}
             className="p-1.5 hover:text-[#666666] transition-colors"
             aria-label="Account"
-            title="Sign In / Account"
+            title={user ? `Signed in as ${user.name}` : 'Sign In / Account'}
           >
             <User className="w-4 h-4" />
           </Link>

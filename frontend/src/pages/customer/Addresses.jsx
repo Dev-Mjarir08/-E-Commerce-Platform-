@@ -1,87 +1,36 @@
 import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import {
   MapPin,
   Plus,
-  Edit3,
   Trash2,
+  Edit2,
   CheckCircle2,
   AlertCircle,
+  ShieldCheck,
+  Building,
   Home,
   Briefcase,
-  Globe,
-  Star,
-  ShieldCheck,
   ArrowRight,
   ArrowLeft,
-  User,
-  Package,
-  Heart,
-  ShoppingBag,
+  RefreshCw,
   X,
   Check
 } from 'lucide-react';
-
-// Default initial mock addresses matching backend/models/Address.js schema
-const INITIAL_DEFAULT_ADDRESSES = [
-  {
-    _id: 'addr_101',
-    recipientName: 'Jarir Multani',
-    phone: '+91 45678 91230',
-    street: 'Gujrat',
-    apartment: 'Suite 4B',
-    city: 'Mumbai',
-    state: 'Gujrat',
-    postalCode: '400001',
-    country: 'India',
-    addressType: 'home',
-    isDefaultShipping: true,
-    isDefaultBilling: true
-  },
-  {
-    _id: 'addr_102',
-    recipientName: 'Ayaan Ali (Atelier Studio)',
-    phone: '+91- 13245 67890',
-    street: 'Hafiz Babanagar Bandlaguda',
-    city: 'Hyderabad',
-    state: 'Telangana',
-    postalCode: '400051',
-    country: 'India',
-    addressType: 'work',
-    isDefaultShipping: false,
-    isDefaultBilling: false
-  }
-];
+import addressApi from '../../services/addressApi';
 
 export const Addresses = () => {
-  const { user } = useSelector((state) => state.auth);
-  const userId = user?.id || user?._id || 'guest_client';
-  const storageKey = `atelier_addresses_${userId}`;
-
-  // Addresses state initialized from localStorage or initial mock data
-  const [addresses, setAddresses] = useState(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.warn('Failed to parse saved addresses from localStorage:', e);
-    }
-    return INITIAL_DEFAULT_ADDRESSES;
-  });
-
-  // Modal & feedback state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingAddress, setEditingAddress] = useState(null); // null when adding new
-  const [addressToDelete, setAddressToDelete] = useState(null);
+  const [addresses, setAddresses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
-  const [formErrors, setFormErrors] = useState({});
 
-  // Form State matching Address model schema
-  const [formData, setFormData] = useState({
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
+  // Form State
+  const initialForm = {
     recipientName: '',
     phone: '',
     street: '',
@@ -89,51 +38,44 @@ export const Addresses = () => {
     city: '',
     state: '',
     postalCode: '',
-    country: 'India',
+    country: 'US',
     addressType: 'home',
     isDefaultShipping: false,
     isDefaultBilling: false
-  });
+  };
+  const [formData, setFormData] = useState(initialForm);
 
-  // Persist address list to localStorage on updates
-  useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(addresses));
-    } catch (e) {
-      console.warn('Failed to save addresses to localStorage:', e);
-    }
-  }, [addresses, storageKey]);
-
-  // Toast feedback trigger helper
   const showToast = (type, text) => {
     setToastMessage({ type, text });
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Open modal for Adding a new address
-  const handleOpenAddModal = () => {
-    setEditingAddress(null);
-    setFormErrors({});
-    setFormData({
-      recipientName: user?.name || '',
-      phone: user?.phone || '',
-      street: '',
-      apartment: '',
-      city: '',
-      state: '',
-      postalCode: '',
-      country: 'India',
-      addressType: 'home',
-      isDefaultShipping: addresses.length === 0,
-      isDefaultBilling: addresses.length === 0
-    });
+  const fetchAddresses = async () => {
+    setLoading(true);
+    try {
+      const response = await addressApi.getAddresses();
+      if (response && response.data) {
+        setAddresses(response.data);
+      }
+    } catch (error) {
+      showToast('error', error.message || 'Failed to load addresses.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  const openAddModal = () => {
+    setEditingId(null);
+    setFormData(initialForm);
     setIsModalOpen(true);
   };
 
-  // Open modal for Editing an existing address
-  const handleOpenEditModal = (addr) => {
-    setEditingAddress(addr);
-    setFormErrors({});
+  const openEditModal = (addr) => {
+    setEditingId(addr._id);
     setFormData({
       recipientName: addr.recipientName || '',
       phone: addr.phone || '',
@@ -142,7 +84,7 @@ export const Addresses = () => {
       city: addr.city || '',
       state: addr.state || '',
       postalCode: addr.postalCode || '',
-      country: addr.country || 'India',
+      country: addr.country || 'US',
       addressType: addr.addressType || 'home',
       isDefaultShipping: Boolean(addr.isDefaultShipping),
       isDefaultBilling: Boolean(addr.isDefaultBilling)
@@ -150,192 +92,122 @@ export const Addresses = () => {
     setIsModalOpen(true);
   };
 
-  // Input change handler
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingId(null);
+    setFormData(initialForm);
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    if (formErrors[name]) {
-      setFormErrors((prev) => ({ ...prev, [name]: null }));
-    }
   };
 
-  // Validate address form
-  const validateForm = () => {
-    const errors = {};
-    if (!formData.recipientName.trim()) errors.recipientName = 'Recipient name is required';
-    if (!formData.phone.trim()) errors.phone = 'Phone number is required';
-    if (!formData.street.trim()) errors.street = 'Street address is required';
-    if (!formData.city.trim()) errors.city = 'City is required';
-    if (!formData.state.trim()) errors.state = 'State/Province is required';
-    if (!formData.postalCode.trim()) errors.postalCode = 'Postal code is required';
-    if (!formData.country.trim()) errors.country = 'Country is required';
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  // Submit Add/Edit Address Form
-  const handleFormSubmit = (e) => {
+  const handleSubmitAddress = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
-
-    if (editingAddress) {
-      // Update existing address
-      setAddresses((prev) =>
-        prev.map((item) => {
-          if (item._id === editingAddress._id) {
-            return {
-              ...item,
-              ...formData
-            };
-          }
-          // If setting as default, unset on others
-          return {
-            ...item,
-            isDefaultShipping: formData.isDefaultShipping ? false : item.isDefaultShipping,
-            isDefaultBilling: formData.isDefaultBilling ? false : item.isDefaultBilling
-          };
-        })
-      );
-      showToast('success', 'Address details updated successfully.');
-    } else {
-      // Create new address
-      const newAddress = {
-        _id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-        ...formData
-      };
-
-      setAddresses((prev) => {
-        let updated = [...prev];
-        if (formData.isDefaultShipping) {
-          updated = updated.map((a) => ({ ...a, isDefaultShipping: false }));
-        }
-        if (formData.isDefaultBilling) {
-          updated = updated.map((a) => ({ ...a, isDefaultBilling: false }));
-        }
-        return [newAddress, ...updated];
-      });
-      showToast('success', 'New address added to your address book.');
-    }
-
-    setIsModalOpen(false);
-  };
-
-  // Delete address
-  const confirmDeleteAddress = () => {
-    if (!addressToDelete) return;
-    const deletedId = addressToDelete._id;
-    setAddresses((prev) => {
-      const remaining = prev.filter((a) => a._id !== deletedId);
-      // If deleted address was default, set first remaining as default
-      if (remaining.length > 0) {
-        if (addressToDelete.isDefaultShipping && !remaining.some((a) => a.isDefaultShipping)) {
-          remaining[0].isDefaultShipping = true;
-        }
-        if (addressToDelete.isDefaultBilling && !remaining.some((a) => a.isDefaultBilling)) {
-          remaining[0].isDefaultBilling = true;
-        }
+    setSubmitting(true);
+    try {
+      if (editingId) {
+        await addressApi.updateAddress(editingId, formData);
+        showToast('success', 'Address details updated.');
+      } else {
+        await addressApi.createAddress(formData);
+        showToast('success', 'New address saved to your address book.');
       }
-      return remaining;
-    });
-    showToast('info', 'Address removed from your address book.');
-    setAddressToDelete(null);
-  };
-
-  // Set Default Shipping Address
-  const handleSetDefaultShipping = (id) => {
-    setAddresses((prev) =>
-      prev.map((a) => ({
-        ...a,
-        isDefaultShipping: a._id === id
-      }))
-    );
-    showToast('success', 'Default shipping location updated.');
-  };
-
-  // Set Default Billing Address
-  const handleSetDefaultBilling = (id) => {
-    setAddresses((prev) =>
-      prev.map((a) => ({
-        ...a,
-        isDefaultBilling: a._id === id
-      }))
-    );
-    showToast('success', 'Default billing location updated.');
-  };
-
-  // Address Type Icon Helper
-  const renderTypeBadge = (type) => {
-    const formatted = (type || 'home').toUpperCase();
-    if (type === 'work') {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-900 text-[10px] font-mono uppercase tracking-wider">
-          <Briefcase className="w-3 h-3 text-amber-700" />
-          <span>WORK</span>
-        </span>
-      );
+      closeModal();
+      await fetchAddresses();
+    } catch (error) {
+      showToast('error', error.message || 'Failed to save address.');
+    } finally {
+      setSubmitting(false);
     }
-    if (type === 'other') {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-50 border border-purple-200 text-purple-900 text-[10px] font-mono uppercase tracking-wider">
-          <Globe className="w-3 h-3 text-purple-700" />
-          <span>OTHER</span>
-        </span>
-      );
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to remove this delivery address?')) return;
+    try {
+      await addressApi.deleteAddress(id);
+      showToast('success', 'Address removed successfully.');
+      setAddresses((prev) => prev.filter((a) => a._id !== id));
+    } catch (error) {
+      showToast('error', error.message || 'Failed to delete address.');
     }
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-900 text-[10px] font-mono uppercase tracking-wider">
-        <Home className="w-3 h-3 text-blue-700" />
-        <span>HOME</span>
-      </span>
-    );
+  };
+
+  const handleSetDefault = async (id, type) => {
+    try {
+      await addressApi.setDefaultAddress(id, type);
+      showToast('success', `Default ${type} address updated.`);
+      await fetchAddresses();
+    } catch (error) {
+      showToast('error', error.message || 'Failed to set default.');
+    }
+  };
+
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case 'work':
+        return <Briefcase className="w-3.5 h-3.5" />;
+      case 'other':
+        return <Building className="w-3.5 h-3.5" />;
+      default:
+        return <Home className="w-3.5 h-3.5" />;
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#F8F7F4] text-[#111111] py-10 md:py-16 px-4 sm:px-6 lg:px-12 font-sans">
       <div className="max-w-6xl mx-auto">
-        {/* Page Header / Breadcrumb */}
+        {/* Navigation & Header */}
         <div className="mb-10 pb-6 border-b border-[#E5E3DF] flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#8E877F] block mb-2">
-              CLIENT PORTAL • DELIVERY & BILLING LOCATIONS
-            </span>
-            <h1 className="font-serif text-3xl sm:text-4xl text-[#111111] tracking-tight uppercase flex items-center gap-3">
-              <span>Saved Address Book</span>
-              <span className="text-sm font-mono bg-[#111111] text-[#F8F7F4] px-3 py-1 rounded-none">
-                {addresses.length} {addresses.length === 1 ? 'LOCATION' : 'LOCATIONS'}
+            <div className="flex items-center gap-2 mb-2">
+              <Link
+                to="/profile"
+                className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8E877F] hover:text-[#111111] flex items-center gap-1 transition-colors"
+              >
+                <ArrowLeft className="w-3 h-3" />
+                <span>Account Archive</span>
+              </Link>
+              <span className="text-[10px] font-mono text-[#8E877F]">•</span>
+              <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#111111]">
+                Address Book
               </span>
+            </div>
+            <h1 className="font-serif text-3xl sm:text-4xl text-[#111111] tracking-tight uppercase">
+              Saved Addresses
             </h1>
+            <p className="text-xs text-[#8E877F] font-sans mt-1">
+              Manage your personal shipping destinations and billing references for seamless checkout.
+            </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleOpenAddModal}
-              className="inline-flex items-center gap-2 bg-[#111111] text-[#F8F7F4] px-5 py-2.5 text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-all rounded-none shadow-xs"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add New Address</span>
-            </button>
-          </div>
+          <button
+            onClick={openAddModal}
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#111111] hover:bg-[#222222] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider transition-all shadow-xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Address</span>
+          </button>
         </div>
 
-        {/* Toast Notification Banner */}
+        {/* Toast Feedback */}
         {toastMessage && (
           <div
-            className={`mb-8 p-4 border flex items-center justify-between text-xs font-mono uppercase tracking-wider transition-all ${toastMessage.type === 'success'
-                ? 'bg-emerald-50/80 border-emerald-300 text-emerald-900'
-                : toastMessage.type === 'error'
-                  ? 'bg-rose-50/80 border-rose-300 text-rose-900'
-                  : 'bg-amber-50/80 border-amber-300 text-amber-900'
-              }`}
+            className={`mb-8 p-4 border flex items-center justify-between text-xs font-mono uppercase tracking-wider ${
+              toastMessage.type === 'success'
+                ? 'bg-emerald-50/90 border-emerald-300 text-emerald-900'
+                : 'bg-rose-50/90 border-rose-300 text-rose-900'
+            }`}
           >
             <div className="flex items-center gap-3">
               {toastMessage.type === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               ) : (
-                <AlertCircle className="w-4 h-4 text-rose-600" />
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
               )}
               <span>{toastMessage.text}</span>
             </div>
@@ -348,268 +220,143 @@ export const Addresses = () => {
           </div>
         )}
 
-        {/* Main Grid Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Main Saved Addresses List (8 Cols) */}
-          <div className="lg:col-span-8 space-y-6">
-            {addresses.length === 0 ? (
-              /* Empty Address State */
-              <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-8 sm:p-12 text-center space-y-6 shadow-xs">
-                <div className="w-20 h-20 mx-auto rounded-full bg-[#F8F7F4] border border-[#E5E3DF] flex items-center justify-center text-[#8E877F]">
-                  <MapPin className="w-10 h-10 stroke-[1.25] text-[#8E877F]" />
-                </div>
-
-                <div className="max-w-md mx-auto space-y-2">
-                  <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#8E877F]">
-                    NO SAVED LOCATIONS
-                  </span>
-                  <h2 className="font-serif text-2xl sm:text-3xl uppercase tracking-wider text-[#111111]">
-                    Your Address Book is Empty
-                  </h2>
-                  <p className="text-xs text-[#666666] font-sans leading-relaxed">
-                    Save delivery locations and billing details for express checkout, order fulfillment tracking, and regional concierge delivery options.
-                  </p>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={handleOpenAddModal}
-                    className="inline-flex items-center gap-2 bg-[#111111] text-[#F8F7F4] px-7 py-3 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#333333] transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Your First Address</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* Address Cards List */
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {addresses.map((addr) => (
-                  <div
-                    key={addr._id}
-                    className={`bg-[#FFFFFF] border p-6 flex flex-col justify-between space-y-5 shadow-xs relative transition-all ${addr.isDefaultShipping || addr.isDefaultBilling
-                        ? 'border-[#111111] ring-1 ring-[#111111]'
-                        : 'border-[#E5E3DF] hover:border-[#8E877F]'
-                      }`}
-                  >
-                    {/* Header Badges & Type */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        {renderTypeBadge(addr.addressType)}
-
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {addr.isDefaultShipping && (
-                            <span className="px-2 py-0.5 bg-[#111111] text-[#F8F7F4] text-[9px] font-mono uppercase tracking-widest flex items-center gap-1">
-                              <Star className="w-2.5 h-2.5 fill-current" />
-                              <span>DEFAULT SHIPPING</span>
-                            </span>
-                          )}
-                          {addr.isDefaultBilling && (
-                            <span className="px-2 py-0.5 bg-[#8E877F] text-[#F8F7F4] text-[9px] font-mono uppercase tracking-widest flex items-center gap-1">
-                              <span>DEFAULT BILLING</span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Recipient Details */}
-                      <div>
-                        <h3 className="font-serif text-lg uppercase text-[#111111] font-medium tracking-tight">
-                          {addr.recipientName}
-                        </h3>
-                        <p className="text-xs font-mono text-[#8E877F] mt-0.5">{addr.phone}</p>
-                      </div>
-
-                      {/* Address Lines */}
-                      <div className="text-xs text-[#444444] font-sans leading-relaxed space-y-0.5 pt-2 border-t border-[#E5E3DF]">
-                        <p className="font-medium text-[#111111]">{addr.street}</p>
-                        {addr.apartment && <p>{addr.apartment}</p>}
-                        <p>
-                          {addr.city}, {addr.state} {addr.postalCode}
-                        </p>
-                        <p className="font-mono text-[11px] text-[#8E877F] uppercase tracking-wider pt-1">
-                          {addr.country}
-                        </p>
-                      </div>
+        {/* Content Body */}
+        {loading ? (
+          <div className="py-24 text-center">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-[#8E877F] mb-4" />
+            <p className="text-xs font-mono uppercase tracking-widest text-[#8E877F]">
+              Loading Saved Addresses...
+            </p>
+          </div>
+        ) : addresses.length === 0 ? (
+          <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-12 text-center max-w-xl mx-auto space-y-4 shadow-xs">
+            <div className="w-14 h-14 mx-auto rounded-full bg-[#F8F7F4] flex items-center justify-center text-[#8E877F] border border-[#E5E3DF]">
+              <MapPin className="w-6 h-6" />
+            </div>
+            <h3 className="font-serif text-xl text-[#111111] uppercase">No Addresses On Record</h3>
+            <p className="text-xs text-[#8E877F] leading-relaxed">
+              You have not stored any delivery destinations yet. Add an address now to accelerate your future checkouts.
+            </p>
+            <button
+              onClick={openAddModal}
+              className="mt-2 inline-flex items-center gap-2 px-6 py-2.5 bg-[#111111] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider hover:bg-[#222222] transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create First Address</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {addresses.map((addr) => (
+              <div
+                key={addr._id}
+                className={`bg-[#FFFFFF] border p-6 flex flex-col justify-between relative transition-all shadow-xs ${
+                  addr.isDefaultShipping
+                    ? 'border-[#111111] ring-1 ring-[#111111]'
+                    : 'border-[#E5E3DF] hover:border-[#8E877F]'
+                }`}
+              >
+                <div>
+                  {/* Card Header & Badges */}
+                  <div className="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-[#E5E3DF]">
+                    <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#111111]">
+                      {getTypeIcon(addr.addressType)}
+                      <span className="font-semibold">{addr.addressType || 'Home'}</span>
                     </div>
 
-                    {/* Actions Footer */}
-                    <div className="pt-4 border-t border-[#E5E3DF] space-y-3">
-                      {/* Set Default Buttons */}
-                      <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono">
-                        {!addr.isDefaultShipping && (
-                          <button
-                            type="button"
-                            onClick={() => handleSetDefaultShipping(addr._id)}
-                            className="px-2.5 py-1 border border-[#E5E3DF] text-[#666666] hover:text-[#111111] hover:border-[#111111] transition-colors uppercase tracking-wider"
-                          >
-                            Set Default Shipping
-                          </button>
-                        )}
-                        {!addr.isDefaultBilling && (
-                          <button
-                            type="button"
-                            onClick={() => handleSetDefaultBilling(addr._id)}
-                            className="px-2.5 py-1 border border-[#E5E3DF] text-[#666666] hover:text-[#111111] hover:border-[#111111] transition-colors uppercase tracking-wider"
-                          >
-                            Set Default Billing
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Edit & Delete Action Buttons */}
-                      <div className="flex items-center justify-between pt-1">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditModal(addr)}
-                          className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#111111] hover:underline"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                          <span>Edit Details</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setAddressToDelete(addr)}
-                          className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-rose-700 hover:text-rose-900 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Remove</span>
-                        </button>
-                      </div>
+                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                      {addr.isDefaultShipping && (
+                        <span className="text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 bg-[#111111] text-[#F8F7F4]">
+                          Default Shipping
+                        </span>
+                      )}
+                      {addr.isDefaultBilling && (
+                        <span className="text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 bg-[#F8F7F4] border border-[#111111] text-[#111111]">
+                          Default Billing
+                        </span>
+                      )}
                     </div>
                   </div>
-                ))}
+
+                  {/* Recipient Details */}
+                  <div className="space-y-1.5 mb-5">
+                    <h4 className="font-serif text-lg font-medium text-[#111111]">
+                      {addr.recipientName}
+                    </h4>
+                    <p className="text-xs text-[#666666] font-mono">{addr.phone}</p>
+                    <p className="text-xs text-[#444444] font-sans leading-relaxed pt-1">
+                      {addr.street}
+                      {addr.apartment ? `, ${addr.apartment}` : ''}
+                      <br />
+                      {addr.city}, {addr.state} {addr.postalCode}
+                      <br />
+                      {addr.country}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Card Actions */}
+                <div className="pt-4 border-t border-[#E5E3DF] space-y-3">
+                  <div className="flex items-center justify-between text-xs font-mono uppercase">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openEditModal(addr)}
+                        className="inline-flex items-center gap-1 text-[#666666] hover:text-[#111111] transition-colors py-1"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        <span>Edit</span>
+                      </button>
+                      <span className="text-[#E5E3DF]">|</span>
+                      <button
+                        onClick={() => handleDelete(addr._id)}
+                        className="inline-flex items-center gap-1 text-rose-600 hover:text-rose-800 transition-colors py-1"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete</span>
+                      </button>
+                    </div>
+
+                    {!addr.isDefaultShipping && (
+                      <button
+                        onClick={() => handleSetDefault(addr._id, 'shipping')}
+                        className="text-[10px] text-[#8E877F] hover:text-[#111111] underline tracking-wider"
+                      >
+                        Make Default
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
-
-            {/* Quick Navigation Menu (Matches Profile, Cart & Wishlist pages) */}
-            <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-6 space-y-3 shadow-xs">
-              <h3 className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#8E877F] mb-4">
-                CLIENT ACCOUNT NAVIGATION
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                <Link
-                  to="/profile"
-                  className="flex items-center gap-2.5 p-3 hover:bg-[#F8F7F4] border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
-                >
-                  <User className="w-4 h-4 text-[#8E877F]" />
-                  <span>Profile</span>
-                </Link>
-
-                <Link
-                  to="/orders"
-                  className="flex items-center gap-2.5 p-3 hover:bg-[#F8F7F4] border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
-                >
-                  <Package className="w-4 h-4 text-[#8E877F]" />
-                  <span>Orders</span>
-                </Link>
-
-                <Link
-                  to="/wishlist"
-                  className="flex items-center gap-2.5 p-3 hover:bg-[#F8F7F4] border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
-                >
-                  <Heart className="w-4 h-4 text-[#8E877F]" />
-                  <span>Wishlist</span>
-                </Link>
-
-                <Link
-                  to="/cart"
-                  className="flex items-center gap-2.5 p-3 hover:bg-[#F8F7F4] border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
-                >
-                  <ShoppingBag className="w-4 h-4 text-[#8E877F]" />
-                  <span>Active Bag</span>
-                </Link>
-              </div>
-            </div>
+            ))}
           </div>
-
-          {/* Right Column: Address Book Guidelines & Information (4 Cols) */}
-          <div className="lg:col-span-4 space-y-6">
-            {/* Overview Summary Box */}
-            <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-6 space-y-6 shadow-xs sticky top-8">
-              <div className="pb-4 border-b border-[#E5E3DF] flex items-center justify-between">
-                <h3 className="font-serif text-xl uppercase tracking-wider text-[#111111]">
-                  Delivery Summary
-                </h3>
-                <span className="text-[10px] font-mono text-[#8E877F] uppercase tracking-widest">
-                  PORTAL CONFIG
-                </span>
-              </div>
-
-              {/* Statistics */}
-              <div className="space-y-4 text-xs font-mono">
-                <div className="flex justify-between items-center pb-3 border-b border-[#E5E3DF]/50">
-                  <span className="text-[#666666]">Total Locations</span>
-                  <span className="font-semibold text-[#111111]">{addresses.length}</span>
-                </div>
-
-                <div className="flex justify-between items-center pb-3 border-b border-[#E5E3DF]/50">
-                  <span className="text-[#666666]">Default Shipping</span>
-                  <span className="font-semibold text-[#111111] truncate max-w-[150px]">
-                    {addresses.find((a) => a.isDefaultShipping)?.recipientName || 'Not Set'}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center pb-3 border-b border-[#E5E3DF]/50">
-                  <span className="text-[#666666]">Default Billing</span>
-                  <span className="font-semibold text-[#111111] truncate max-w-[150px]">
-                    {addresses.find((a) => a.isDefaultBilling)?.recipientName || 'Not Set'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Quick Action Button */}
-              <button
-                type="button"
-                onClick={handleOpenAddModal}
-                className="w-full bg-[#111111] text-[#F8F7F4] py-3.5 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#333333] transition-all flex items-center justify-center gap-2 group"
-              >
-                <Plus className="w-4 h-4" />
-                <span>ADD NEW ADDRESS</span>
-              </button>
-
-              {/* Delivery Protocol Information */}
-              <div className="pt-4 border-t border-[#E5E3DF] space-y-3 text-[11px] font-mono text-[#666666]">
-                <div className="flex items-center gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-[#111111] shrink-0" />
-                  <span>Encrypted Identity & Address Vault</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <MapPin className="w-4 h-4 text-[#111111] shrink-0" />
-                  <span>Global Express & Concierge Shipping</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Add / Edit Address Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111111]/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-[#FFFFFF] border border-[#E5E3DF] max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative my-8">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-[#8E877F] hover:text-[#111111] p-1"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="pb-4 border-b border-[#E5E3DF]">
-              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#8E877F] block mb-1">
-                {editingAddress ? 'EDIT ADDRESS LOCATION' : 'NEW DELIVERY LOCATION'}
-              </span>
-              <h2 className="font-serif text-2xl uppercase tracking-wider text-[#111111]">
-                {editingAddress ? 'Update Saved Address' : 'Add New Address'}
-              </h2>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#FFFFFF] border border-[#111111] w-full max-w-xl p-6 sm:p-8 my-8 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-4 mb-6 border-b border-[#E5E3DF]">
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8E877F] block">
+                  DELIVERY SPECIFICATIONS
+                </span>
+                <h3 className="font-serif text-xl sm:text-2xl text-[#111111] uppercase">
+                  {editingId ? 'Edit Address Record' : 'Create New Destination'}
+                </h3>
+              </div>
+              <button
+                onClick={closeModal}
+                className="p-1.5 hover:bg-[#F8F7F4] text-[#8E877F] hover:text-[#111111] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="space-y-4">
-              {/* Recipient Name & Phone */}
+            <form onSubmit={handleSubmitAddress} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-[#111111] block">
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-[#8E877F] mb-1">
                     Recipient Full Name *
                   </label>
                   <input
@@ -617,74 +364,30 @@ export const Addresses = () => {
                     name="recipientName"
                     value={formData.recipientName}
                     onChange={handleInputChange}
-                    placeholder="e.g. Ayaan Ali"
-                    className={`w-full bg-[#F8F7F4] border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${formErrors.recipientName ? 'border-rose-500' : 'border-[#E5E3DF]'
-                      }`}
+                    required
+                    placeholder="e.g. Lord Alexander Wright"
+                    className="w-full px-3 py-2 border border-[#E5E3DF] focus:border-[#111111] outline-none text-xs font-sans rounded-none"
                   />
-                  {formErrors.recipientName && (
-                    <span className="text-[10px] font-mono text-rose-600 block">
-                      {formErrors.recipientName}
-                    </span>
-                  )}
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-[#111111] block">
-                    Phone Number *
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-[#8E877F] mb-1">
+                    Phone Contact *
                   </label>
                   <input
-                    type="text"
+                    type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    placeholder="e.g. +91 98765 43210"
-                    className={`w-full bg-[#F8F7F4] border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${formErrors.phone ? 'border-rose-500' : 'border-[#E5E3DF]'
-                      }`}
+                    required
+                    placeholder="+1 (555) 019-2834"
+                    className="w-full px-3 py-2 border border-[#E5E3DF] focus:border-[#111111] outline-none text-xs font-mono rounded-none"
                   />
-                  {formErrors.phone && (
-                    <span className="text-[10px] font-mono text-rose-600 block">
-                      {formErrors.phone}
-                    </span>
-                  )}
                 </div>
               </div>
 
-              {/* Address Type Selector */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-mono uppercase tracking-wider text-[#111111] block">
-                  Address Tag / Label
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { id: 'home', label: 'HOME', icon: Home },
-                    { id: 'work', label: 'WORK', icon: Briefcase },
-                    { id: 'other', label: 'OTHER', icon: Globe }
-                  ].map((typeItem) => {
-                    const IconComp = typeItem.icon;
-                    const isSelected = formData.addressType === typeItem.id;
-                    return (
-                      <button
-                        type="button"
-                        key={typeItem.id}
-                        onClick={() =>
-                          setFormData((prev) => ({ ...prev, addressType: typeItem.id }))
-                        }
-                        className={`flex items-center justify-center gap-2 py-2.5 border text-xs font-mono uppercase tracking-wider transition-all ${isSelected
-                            ? 'bg-[#111111] border-[#111111] text-[#F8F7F4]'
-                            : 'bg-[#F8F7F4] border-[#E5E3DF] text-[#666666] hover:border-[#111111]'
-                          }`}
-                      >
-                        <IconComp className="w-3.5 h-3.5" />
-                        <span>{typeItem.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Street Address & Apartment */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-mono uppercase tracking-wider text-[#111111] block">
+              <div>
+                <label className="block text-[10px] font-mono uppercase tracking-wider text-[#8E877F] mb-1">
                   Street Address *
                 </label>
                 <input
@@ -692,35 +395,29 @@ export const Addresses = () => {
                   name="street"
                   value={formData.street}
                   onChange={handleInputChange}
-                  placeholder="House number, street name, locality"
-                  className={`w-full bg-[#F8F7F4] border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${formErrors.street ? 'border-rose-500' : 'border-[#E5E3DF]'
-                    }`}
-                />
-                {formErrors.street && (
-                  <span className="text-[10px] font-mono text-rose-600 block">
-                    {formErrors.street}
-                  </span>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-mono uppercase tracking-wider text-[#111111] block">
-                  Apartment, Suite, Unit (Optional)
-                </label>
-                <input
-                  type="text"
-                  name="apartment"
-                  value={formData.apartment}
-                  onChange={handleInputChange}
-                  placeholder="Apt 4B, Floor 3, Building B"
-                  className="w-full bg-[#F8F7F4] border border-[#E5E3DF] px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111]"
+                  required
+                  placeholder="e.g. 742 Evergreen Terrace"
+                  className="w-full px-3 py-2 border border-[#E5E3DF] focus:border-[#111111] outline-none text-xs font-sans rounded-none"
                 />
               </div>
 
-              {/* City, State & Postal Code */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-[#111111] block">
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-[#8E877F] mb-1">
+                    Suite / Apt / Unit
+                  </label>
+                  <input
+                    type="text"
+                    name="apartment"
+                    value={formData.apartment}
+                    onChange={handleInputChange}
+                    placeholder="e.g. Penthouse B"
+                    className="w-full px-3 py-2 border border-[#E5E3DF] focus:border-[#111111] outline-none text-xs font-sans rounded-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-[#8E877F] mb-1">
                     City *
                   </label>
                   <input
@@ -728,163 +425,131 @@ export const Addresses = () => {
                     name="city"
                     value={formData.city}
                     onChange={handleInputChange}
-                    placeholder="Mumbai"
-                    className={`w-full bg-[#F8F7F4] border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${formErrors.city ? 'border-rose-500' : 'border-[#E5E3DF]'
-                      }`}
+                    required
+                    placeholder="New York"
+                    className="w-full px-3 py-2 border border-[#E5E3DF] focus:border-[#111111] outline-none text-xs font-sans rounded-none"
                   />
-                  {formErrors.city && (
-                    <span className="text-[10px] font-mono text-rose-600 block">
-                      {formErrors.city}
-                    </span>
-                  )}
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-[#111111] block">
-                    State / Province *
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-[#8E877F] mb-1">
+                    State / Region *
                   </label>
                   <input
                     type="text"
                     name="state"
                     value={formData.state}
                     onChange={handleInputChange}
-                    placeholder="Maharashtra"
-                    className={`w-full bg-[#F8F7F4] border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${formErrors.state ? 'border-rose-500' : 'border-[#E5E3DF]'
-                      }`}
+                    required
+                    placeholder="NY"
+                    className="w-full px-3 py-2 border border-[#E5E3DF] focus:border-[#111111] outline-none text-xs font-sans rounded-none"
                   />
-                  {formErrors.state && (
-                    <span className="text-[10px] font-mono text-rose-600 block">
-                      {formErrors.state}
-                    </span>
-                  )}
                 </div>
+              </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-[#111111] block">
-                    Postal Code *
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-[#8E877F] mb-1">
+                    Postal / ZIP Code *
                   </label>
                   <input
                     type="text"
                     name="postalCode"
                     value={formData.postalCode}
                     onChange={handleInputChange}
-                    placeholder="400001"
-                    className={`w-full bg-[#F8F7F4] border px-3 py-2.5 text-xs font-mono text-[#111111] focus:outline-none focus:border-[#111111] ${formErrors.postalCode ? 'border-rose-500' : 'border-[#E5E3DF]'
-                      }`}
+                    required
+                    placeholder="10001"
+                    className="w-full px-3 py-2 border border-[#E5E3DF] focus:border-[#111111] outline-none text-xs font-mono rounded-none"
                   />
-                  {formErrors.postalCode && (
-                    <span className="text-[10px] font-mono text-rose-600 block">
-                      {formErrors.postalCode}
-                    </span>
-                  )}
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-[#8E877F] mb-1">
+                    Country *
+                  </label>
+                  <input
+                    type="text"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="United States"
+                    className="w-full px-3 py-2 border border-[#E5E3DF] focus:border-[#111111] outline-none text-xs font-sans rounded-none"
+                  />
                 </div>
               </div>
 
-              {/* Country */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-mono uppercase tracking-wider text-[#111111] block">
-                  Country *
+              <div>
+                <label className="block text-[10px] font-mono uppercase tracking-wider text-[#8E877F] mb-1">
+                  Address Classification
                 </label>
-                <select
-                  name="country"
-                  value={formData.country}
-                  onChange={handleInputChange}
-                  className="w-full bg-[#F8F7F4] border border-[#E5E3DF] px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111]"
-                >
-                  <option value="India">India</option>
-                  <option value="United States">United States</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                  <option value="United Arab Emirates">United Arab Emirates</option>
-                  <option value="Canada">Canada</option>
-                  <option value="France">France</option>
-                  <option value="Italy">Italy</option>
-                </select>
+                <div className="flex items-center gap-3 pt-1">
+                  {['home', 'work', 'other'].map((type) => (
+                    <label
+                      key={type}
+                      className={`flex-1 py-2 px-3 border cursor-pointer text-center text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                        formData.addressType === type
+                          ? 'border-[#111111] bg-[#111111] text-[#F8F7F4]'
+                          : 'border-[#E5E3DF] hover:border-[#8E877F] text-[#444444]'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="addressType"
+                        value={type}
+                        checked={formData.addressType === type}
+                        onChange={handleInputChange}
+                        className="hidden"
+                      />
+                      {getTypeIcon(type)}
+                      <span>{type}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
-              {/* Default Flags Checkboxes */}
-              <div className="pt-2 border-t border-[#E5E3DF] space-y-2">
-                <label className="flex items-center gap-2.5 cursor-pointer">
+              <div className="pt-2 space-y-2 border-t border-[#E5E3DF]">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-sans text-[#444444]">
                   <input
                     type="checkbox"
                     name="isDefaultShipping"
                     checked={formData.isDefaultShipping}
                     onChange={handleInputChange}
-                    className="w-4 h-4 rounded-none accent-[#111111]"
+                    className="accent-[#111111] w-4 h-4"
                   />
-                  <span className="text-xs font-mono text-[#111111] uppercase tracking-wider">
-                    Set as default shipping address
-                  </span>
+                  <span>Set as primary default shipping destination</span>
                 </label>
 
-                <label className="flex items-center gap-2.5 cursor-pointer">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-sans text-[#444444]">
                   <input
                     type="checkbox"
                     name="isDefaultBilling"
                     checked={formData.isDefaultBilling}
                     onChange={handleInputChange}
-                    className="w-4 h-4 rounded-none accent-[#111111]"
+                    className="accent-[#111111] w-4 h-4"
                   />
-                  <span className="text-xs font-mono text-[#111111] uppercase tracking-wider">
-                    Set as default billing address
-                  </span>
+                  <span>Set as primary default billing address</span>
                 </label>
               </div>
 
-              {/* Modal Actions */}
-              <div className="pt-4 border-t border-[#E5E3DF] flex items-center justify-end gap-3">
+              <div className="pt-4 flex items-center justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  onClick={closeModal}
+                  className="px-5 py-2.5 border border-[#E5E3DF] hover:border-[#111111] text-xs font-mono uppercase tracking-wider transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-[#111111] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors flex items-center gap-2"
+                  disabled={submitting}
+                  className="px-6 py-2.5 bg-[#111111] hover:bg-[#222222] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider transition-colors disabled:opacity-50 inline-flex items-center gap-2"
                 >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>{editingAddress ? 'Save Changes' : 'Add Address'}</span>
+                  {submitting && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{editingId ? 'Save Modifications' : 'Confirm & Save'}</span>
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {addressToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111111]/60 backdrop-blur-xs">
-          <div className="bg-[#FFFFFF] border border-[#E5E3DF] max-w-md w-full p-6 space-y-5 shadow-2xl relative">
-            <div className="flex items-center gap-3 text-rose-600">
-              <AlertCircle className="w-6 h-6 shrink-0" />
-              <h3 className="font-serif text-lg uppercase tracking-wider text-[#111111]">
-                Confirm Address Removal
-              </h3>
-            </div>
-
-            <p className="text-xs text-[#666666] font-sans leading-relaxed">
-              Are you sure you want to remove the address for{' '}
-              <strong className="text-[#111111]">{addressToDelete.recipientName}</strong> (
-              {addressToDelete.street}, {addressToDelete.city}) from your saved address book?
-            </p>
-
-            <div className="pt-3 border-t border-[#E5E3DF] flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setAddressToDelete(null)}
-                className="px-4 py-2 border border-[#E5E3DF] text-xs font-mono uppercase text-[#666666] hover:text-[#111111]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmDeleteAddress}
-                className="px-5 py-2 bg-rose-700 text-white text-xs font-mono uppercase tracking-wider hover:bg-rose-800 transition-colors"
-              >
-                Remove Address
-              </button>
-            </div>
           </div>
         </div>
       )}

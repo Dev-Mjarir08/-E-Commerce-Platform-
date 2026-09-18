@@ -25,8 +25,8 @@ import Products from "../pages/admin/Products";
 import AddProduct from "../pages/admin/products/AddProduct";
 import Stores from "../pages/admin/Stores";
 import Coupons from "../pages/admin/Coupons";
-import Orders from "../pages/admin/Orders";
-import Settings from "../pages/admin/Settings";
+import OrdersAdmin from "../pages/admin/Orders";
+import SettingsAdmin from "../pages/admin/Settings";
 import Customers from "../pages/admin/Customers";
 import Payment from "../pages/admin/Payment";
 import Categories from "../pages/admin/Categories";
@@ -82,7 +82,7 @@ export const AppRoutes = () => {
           <Route path="/orders/:id" element={<OrderDetails />} />
           <Route
             path="/customer/orders/:id"
-            element={<Navigate to="/orders/:id" replace />}
+            element={<OrderDetails />}
           />
           <Route path="/checkout" element={<Checkout />} />
           <Route
@@ -143,7 +143,7 @@ export const AppRoutes = () => {
           <Route path="coupons" element={<Coupons />} />
 
           {/* Orders */}
-          <Route path="orders" element={<Orders />} />
+          <Route path="orders" element={<OrdersAdmin />} />
 
           {/* Payments */}
           <Route path="payments" element={<Payment />} />
@@ -152,7 +152,7 @@ export const AppRoutes = () => {
           <Route path="customers" element={<Customers />} />
 
           {/* Settings */}
-          <Route path="settings" element={<Settings />} />
+          <Route path="settings" element={<SettingsAdmin />} />
 
           {/* Analytics */}
           <Route path="analytics" element={<Analytics />} />
