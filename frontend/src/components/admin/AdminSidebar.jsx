@@ -25,6 +25,7 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen }) => {
   const totalCoupons = useSelector((state) => state.coupons.items.length);
   const [productsOpen, setProductsOpen] = useState(false);
   const [vendorsOpen, setVendorsOpen] = useState(false);
+  const [ordersOpen, setOrdersOpen] = useState(false);
 
   const mainNavItems = [
     { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },

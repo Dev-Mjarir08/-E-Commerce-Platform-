@@ -26,8 +26,10 @@ import AddProduct from "../pages/admin/products/AddProduct";
 import Stores from "../pages/admin/Stores";
 import Coupons from "../pages/admin/Coupons";
 import OrdersAdmin from "../pages/admin/Orders";
+import AdminOrderDetails from "../pages/admin/orders/OrderDetails";
 import SettingsAdmin from "../pages/admin/Settings";
 import Customers from "../pages/admin/Customers";
+import CustomerDetails from "../pages/admin/customers/CustomerDetails";
 import Payment from "../pages/admin/Payment";
 import Categories from "../pages/admin/Categories";
 import Inventory from "../pages/admin/products/Inventory";
@@ -144,12 +146,14 @@ export const AppRoutes = () => {
 
           {/* Orders */}
           <Route path="orders" element={<OrdersAdmin />} />
+          <Route path="orders/:id" element={<AdminOrderDetails />} />
 
           {/* Payments */}
           <Route path="payments" element={<Payment />} />
 
           {/* Customers */}
           <Route path="customers" element={<Customers />} />
+          <Route path="customers/:id" element={<CustomerDetails />} />
 
           {/* Settings */}
           <Route path="settings" element={<SettingsAdmin />} />
