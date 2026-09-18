@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Package,
   Store,
+  BriefcaseBusiness,
   TicketPercent,
   ChevronLeft,
   ChevronRight,
@@ -12,20 +13,18 @@ import {
   ShieldCheck,
   ShoppingBag,
   Users,
+  CreditCard,
+  BarChart3,
 } from "lucide-react";
 
-const AdminSidebar = ({
-  isCollapsed,
-  setIsCollapsed,
-  isMobileOpen,
-}) => {
+const AdminSidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen }) => {
   const user = useSelector((state) => state.auth.user);
   const totalProducts = useSelector((state) => state.products.items.length);
 
   const totalStores = useSelector((state) => state.stores.items.length);
   const totalCoupons = useSelector((state) => state.coupons.items.length);
   const [productsOpen, setProductsOpen] = useState(false);
-
+  const [vendorsOpen, setVendorsOpen] = useState(false);
 
   const mainNavItems = [
     { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
@@ -48,10 +47,21 @@ const AdminSidebar = ({
       badge: "5",
     },
     {
+      name: "Payments",
+      path: "/admin/payments",
+      icon: CreditCard,
+      badge: "8",
+    },
+    {
       name: "Customers",
       path: "/admin/customers",
       icon: Users,
       badge: "4",
+    },
+    {
+      name: "Analytics",
+      path: "/admin/analytics",
+      icon: BarChart3,
     },
   ];
 
@@ -90,22 +100,21 @@ const AdminSidebar = ({
       {!isCollapsed && (
         <div className="p-4 mx-3 my-3 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
-            {user?.name ? user.name.slice(0, 2).toUpperCase() : 'AD'}
+            {user?.name ? user.name.slice(0, 2).toUpperCase() : "AD"}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-semibold text-white truncate">
-                {user?.name || 'Administrator'}
+                {user?.name || "Administrator"}
               </span>
               <ShieldCheck size={14} className="text-emerald-400 shrink-0" />
             </div>
             <span className="text-[11px] text-slate-400 block truncate">
-              {user?.email || 'admin@domain.com'}
+              {user?.email || "admin@domain.com"}
             </span>
           </div>
         </div>
       )}
-
 
       {/* Navigation List */}
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5 font-sans">
@@ -222,6 +231,70 @@ const AdminSidebar = ({
                 }
               >
                 Inventory
+              </NavLink>
+            </div>
+          )}
+        </div>
+
+        {/* Vendors Dropdown */}
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={() => setVendorsOpen((prev) => !prev)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+             text-xs font-medium leading-4 font-inherit
+             text-slate-300 hover:bg-slate-800 hover:text-white
+             transition-colors appearance-none border-0"
+            title={isCollapsed ? "Vendors" : undefined}
+          >
+            <BriefcaseBusiness size={18} className="shrink-0" />
+
+            {!isCollapsed && (
+              <>
+                <span className="truncate flex-1 text-left text-xs font-medium leading-4">
+                  Vendors
+                </span>
+
+                <ChevronDown
+                  size={15}
+                  strokeWidth={2}
+                  className={`shrink-0 transition-transform duration-200 ${
+                    vendorsOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </>
+            )}
+          </button>
+
+          {/* Vendor Submenu */}
+          {!isCollapsed && vendorsOpen && (
+            <div className="ml-8 space-y-1">
+              <NavLink
+                to="/admin/vendors"
+                onClick={() => setIsMobileOpen && setIsMobileOpen(false)}
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-lg text-xs transition-colors ${
+                    isActive
+                      ? "bg-indigo-600/20 text-indigo-400 font-semibold"
+                      : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                  }`
+                }
+              >
+                All Vendors
+              </NavLink>
+
+              <NavLink
+                to="/admin/vendor-details"
+                onClick={() => setIsMobileOpen && setIsMobileOpen(false)}
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-lg text-xs transition-colors ${
+                    isActive
+                      ? "bg-indigo-600/20 text-indigo-400 font-semibold"
+                      : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                  }`
+                }
+              >
+                Vendor Details
               </NavLink>
             </div>
           )}
