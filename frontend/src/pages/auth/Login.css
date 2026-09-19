@@ -1,0 +1,431 @@
+
+body {
+    margin: 0;
+min-height: 100vh;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+
+    background-color: #24040c;
+}
+
+
+/* =========================
+   LOGIN PAGE
+========================= */
+
+.login-page {
+    width: 100%;
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+    padding: 40px 5%;
+
+    position: relative;
+    overflow: hidden;
+
+    background-color: #24040c;
+
+    background-image:
+        linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.05) 0%,
+            rgba(18, 2, 6, 0.25) 45%,
+            #120407 100%
+        ),
+        radial-gradient(
+            circle at 20% 50%,
+            rgba(255 , 255 , 255  , 0.08), 
+            transparent 40%
+        ),
+        url("../src/assets/pexels-gustavo-fring-4173117.jpg");
+
+    background-position: center , center , 2rem;
+    background-size: cover , cover , 60% 80%;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/*dark overlay */
+
+.Login-page::before{
+content:"";
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height: 100%;
+background: rgba(0,0,0,0.35);
+z-index: -1;
+
+}
+
+/* =========================
+   LOGIN CARD
+========================= */
+
+.login-card {
+    width: 400px;
+
+    padding: 35px;
+
+    background: rgba(240, 238, 238, 0.16);
+
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+
+    border: 1px solid rgba(255, 255, 255, 0.35);
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.35);
+
+    color: white;
+}
+
+
+/* =========================
+   HEADING
+========================= */
+
+.login-card h2 {
+    margin: 0 0 8px;
+
+    text-align: center;
+
+    font-size: 30px;
+
+    color: white;
+    font-weight: 600;
+}
+
+.login-card  p {
+    margin: 0 0 25px;
+
+    text-align: center;
+
+    color: rgba(255, 255, 255, 0.8);
+
+    font-size: 14px;
+}
+
+
+/* =========================
+   SOCIAL ICONS
+========================= */
+
+.icons {
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    gap: 18px;
+
+    margin-bottom: 25px;
+}
+
+.icon1,
+.fb,
+.icon2 {
+    font-size: 24px;
+
+    cursor: pointer;
+
+    transition: transform 0.2s ease;
+}
+
+.icon1:hover,
+.fb:hover,
+.icon2:hover {
+    transform: scale(1.15);
+}
+
+.fb {
+    color: #1877f2;
+}
+
+
+/* =========================
+   INPUT ROW
+========================= */
+
+.icon {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 18px;
+    padding: 0 12px;
+
+    height: 48px;
+
+    background: rgba(240, 238, 238, 0.16);
+
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+
+    border: 1px solid rgba(255, 255, 255, 0.3);
+
+    border-radius: 8px;
+}
+
+
+
+/* =========================
+   INPUT ICON
+========================= */
+
+.icon svg {
+    flex-shrink: 0;
+
+    color: white;
+
+    font-size: 21px;
+}
+/* =========================
+   INPUT
+========================= */
+
+.icon input {
+    width: 100%;
+    height: 100%;
+
+    padding: 0;
+    margin: 0;
+
+    border: none !important;
+    outline: none !important;
+
+    border-radius: 0 !important;
+
+    background: transparent !important;
+    background-color: transparent !important;
+
+    color: white !important;
+
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-size: 15px;
+
+    box-shadow: none !important;
+
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+
+
+
+
+.icon-email{
+     background-color: transparent !important;
+}
+
+
+.icon input::placeholder {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+
+
+/* =========================
+   WHEN CLICKED / TYPING
+========================= */
+
+.icon input:focus,
+.icon input:active {
+    background: transparent !important;
+    background-color: transparent !important;
+
+    border: none !important;
+    outline: none !important;
+
+    box-shadow: none !important;
+
+    color: white !important;
+}
+
+
+/* =========================
+   REMOVE AUTOFILL YELLOW
+========================= */
+
+
+
+.icon input:-webkit-autofill,
+.icon input:-webkit-autofill:hover,
+.icon input:-webkit-autofill:focus,
+.icon input:-webkit-autofill:active {
+
+    -webkit-text-fill-color: white !important;
+
+    caret-color: white !important;
+
+    color: white !important;
+
+    border: none !important;
+    outline: none !important;
+
+    /*
+       IMPORTANT:
+       Same color as .icon
+    */
+    -webkit-box-shadow:
+        0 0 0 1000px rgba(240, 238, 238, 0.16) inset !important;
+
+    box-shadow:
+        0 0 0 1000px rgba(240, 238, 238, 0.16) inset !important;
+
+    background: transparent !important;
+}
+
+
+
+
+/* =========================
+   REMEMBER + FORGOT
+========================= */
+
+.remember {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin: 5px 0 20px;
+
+    font-size: 14px;
+}
+
+.remember label {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    color: rgba(255, 255, 255, 0.85);
+
+    cursor: pointer;
+}
+
+.remember input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+
+    cursor: pointer;
+}
+
+.remember a {
+    color: white;
+
+    text-decoration: none;
+}
+
+.remember a:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================
+   LOGIN BUTTON
+========================= */
+
+.login-card button {
+    width: 100%;
+
+    height: 42px;
+
+    margin-top: 5px;
+
+    border: none;
+
+    border-radius: 6px;
+
+    background: #4caf50;
+
+    color: white;
+
+    font-family: inherit;
+
+    font-size: 16px;
+
+    cursor: pointer;
+}
+
+.login-card button:hover {
+    background: #43a047;
+}
+
+
+/* =========================
+   REGISTER LINK
+========================= */
+
+.login-text {
+    margin-top: 22px;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.login-text a {
+    color: white;
+
+    font-weight: bold;
+
+    text-decoration: none;
+}
+
+.login-text a:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================
+   MOBILE RESPONSIVE
+========================= */
+
+@media (max-width: 768px) {
+
+    .login-page {
+        justify-content: center;
+
+        padding: 25px;
+
+        background-size: cover;
+
+        background-position: center;
+    }
+
+    .login-card {
+        width: 100%;
+
+        max-width: 400px;
+
+        padding: 30px;
+    }
+}
+
+
+@media (max-width: 450px) {
+
+    .login-page {
+        padding: 15px;
+    }
+
+    .login-card {
+        padding: 25px 20px;
+    }
+
+    .login-card h2 {
+        font-size: 26px;
+    }
+}
