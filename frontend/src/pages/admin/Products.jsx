@@ -36,6 +36,7 @@ import {
 } from '../../redux/slices/productSlice';
 import { categories } from '../../data/categories';
 import adminApi from '../../services/adminApi';
+import { useConfirm } from '../../context/ModalContext';
 
 /**
  * Generate clean URL-friendly slug
@@ -54,6 +55,7 @@ const slugify = (text) => {
 
 const Products = () => {
   const dispatch = useDispatch();
+  const { confirm, alert: modalAlert } = useConfirm();
   const reduxProducts = useSelector((state) => state.products.items || []);
   const storeList = useSelector((state) => state.stores?.items || []);
   const fileInputRef = useRef(null);
@@ -404,9 +406,14 @@ const Products = () => {
 
   // Delete Product Permanently (Live in DB + Disk Cleanup)
   const handleDeleteProduct = async (id) => {
-    if (!window.confirm('Are you sure you want to permanently delete this product and all associated media from database?')) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Permanent Product Deletion',
+      message: 'Are you sure you want to permanently delete this product and all associated media from the database? This action cannot be undone.',
+      confirmText: 'Delete Product',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    if (!ok) return;
 
     try {
       await adminApi.deleteProduct(id);
@@ -454,9 +461,14 @@ const Products = () => {
 
   // 1-Click Seed 50+ Products into MongoDB
   const handleSeedFiftyProducts = async () => {
-    if (!window.confirm('This will seed/upsert 50+ curated luxury products with high-resolution imagery into your MongoDB database. Continue?')) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Seed Curated Database Catalog',
+      message: 'This will seed/upsert 50+ curated luxury products with high-resolution imagery into your MongoDB database. Continue?',
+      confirmText: 'Seed Catalog',
+      cancelText: 'Cancel',
+      type: 'database'
+    });
+    if (!ok) return;
     setIsSeeding(true);
     setApiNotice(null);
     try {
@@ -483,20 +495,32 @@ const Products = () => {
   // Submit Bulk JSON Import
   const handleBulkSubmit = async () => {
     if (!bulkJsonInput.trim()) {
-      alert('Please enter or paste JSON product data.');
+      modalAlert({
+        title: 'Input Required',
+        message: 'Please enter or paste JSON product data.',
+        type: 'warning'
+      });
       return;
     }
     let parsed;
     try {
       parsed = JSON.parse(bulkJsonInput);
     } catch (e) {
-      alert('Invalid JSON format. Please verify valid JSON syntax.');
+      modalAlert({
+        title: 'Invalid JSON Format',
+        message: 'Please verify valid JSON syntax before proceeding.',
+        type: 'error'
+      });
       return;
     }
 
     const items = Array.isArray(parsed) ? parsed : (parsed.products || [parsed]);
     if (!Array.isArray(items) || items.length === 0) {
-      alert('JSON must be an array of products or an object containing a "products" array.');
+      modalAlert({
+        title: 'Invalid Product Array',
+        message: 'JSON must be an array of products or an object containing a "products" array.',
+        type: 'warning'
+      });
       return;
     }
 
@@ -551,7 +575,11 @@ const Products = () => {
           text: `Loaded file "${file.name}" with ${count} product(s).`
         });
       } catch (err) {
-        alert('Uploaded file is not valid JSON.');
+        modalAlert({
+          title: 'File Upload Error',
+          message: 'Uploaded file is not valid JSON syntax.',
+          type: 'error'
+        });
       }
     };
     reader.readAsText(file);
@@ -598,9 +626,14 @@ const Products = () => {
     const count = selectedIds.size;
     if (count === 0) return;
 
-    if (!window.confirm(`Are you sure you want to permanently delete ${count} selected products from the database? This action cannot be undone.`)) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Bulk Deletion',
+      message: `Are you sure you want to permanently delete ${count} selected products from the database? This action cannot be undone.`,
+      confirmText: `Delete ${count} Products`,
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    if (!ok) return;
 
     setIsBulkDeleting(true);
     setApiNotice(null);
@@ -633,7 +666,11 @@ const Products = () => {
   // Purge / Clear all products from catalog
   const handleClearAllProducts = async () => {
     if (productList.length === 0) {
-      alert('Catalog is already empty.');
+      modalAlert({
+        title: 'Catalog Empty',
+        message: 'The product catalog is already empty.',
+        type: 'info'
+      });
       return;
     }
 

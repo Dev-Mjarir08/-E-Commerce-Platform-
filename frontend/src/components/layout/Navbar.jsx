@@ -25,12 +25,13 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
   }, []);
 
   const navLinks = [
-    { label: 'New Arrivals', href: '#new-arrivals' },
-    { label: 'Men', href: '#category-men' },
-    { label: 'Women', href: '#category-women' },
-    { label: 'Collections', href: '#collections' },
+    { label: 'All Departments', href: '#category-section' },
+    { label: 'Electronics', href: '#category-section' },
+    { label: 'Fashion', href: '#category-section' },
+    { label: 'Footwear', href: '#category-section' },
+    { label: 'Watches', href: '#category-section' },
     { label: 'Stores', href: '#featured-stores' },
-    { label: 'Sale', href: '#sale' }
+    { label: 'Deals', href: '#sale' }
   ];
 
   return (
@@ -58,7 +59,7 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
               ATELIER
             </h1>
             <span className="block text-[8px] sm:text-[9px] font-mono tracking-[0.35em] text-[#8E877F] uppercase mt-1 group-hover:text-[#111111] transition-colors">
-              INDEPENDENT FASHION SAAS
+              GLOBAL MULTI-CATEGORY MARKETPLACE
             </span>
           </Link>
         </div>

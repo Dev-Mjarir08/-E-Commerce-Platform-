@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   MapPin,
@@ -18,12 +18,15 @@ import {
   Check
 } from 'lucide-react';
 import addressApi from '../../services/addressApi';
+import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ModalContext';
 
 export const Addresses = () => {
+  const { showToast: triggerToast } = useToast();
+  const { confirm } = useConfirm();
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,12 +48,11 @@ export const Addresses = () => {
   };
   const [formData, setFormData] = useState(initialForm);
 
-  const showToast = (type, text) => {
-    setToastMessage({ type, text });
-    setTimeout(() => setToastMessage(null), 4000);
-  };
+  const showToast = useCallback((type, text) => {
+    triggerToast(text, type);
+  }, [triggerToast]);
 
-  const fetchAddresses = async () => {
+  const fetchAddresses = useCallback(async () => {
     setLoading(true);
     try {
       const response = await addressApi.getAddresses();
@@ -62,11 +64,11 @@ export const Addresses = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     fetchAddresses();
-  }, []);
+  }, [fetchAddresses]);
 
   const openAddModal = () => {
     setEditingId(null);
@@ -127,7 +129,15 @@ export const Addresses = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to remove this delivery address?')) return;
+    const ok = await confirm({
+      title: 'Remove Delivery Address',
+      message: 'Are you sure you want to remove this delivery address from your profile?',
+      confirmText: 'Remove Address',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    if (!ok) return;
+
     try {
       await addressApi.deleteAddress(id);
       showToast('success', 'Address removed successfully.');

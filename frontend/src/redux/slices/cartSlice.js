@@ -1,23 +1,28 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+const loadCartFromStorage = () => {
+  try {
+    const saved = localStorage.getItem('atelier_cart_items');
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveCartToStorage = (items) => {
+  try {
+    localStorage.setItem('atelier_cart_items', JSON.stringify(items));
+  } catch (err) {
+    console.warn('Could not save cart to storage:', err);
+  }
+};
+
 const initialState = {
-  items: [
-    // Pre-seed with 1 item as shown in the reference Bag (1) or (2)
-    {
-      id: 'm4m-01',
-      name: 'Double-Breasted Cashmere Greatcoat',
-      subtitle: 'Onyx Black / 48 (M)',
-      price: 980,
-      image: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=600&q=85',
-      size: '48 (M)',
-      color: 'Onyx Black',
-      quantity: 1
-    }
-  ],
+  items: loadCartFromStorage(),
   isOpen: false,
-  currency: 'USD',
+  currency: 'INR',
   promoCode: null,
-  discountPercent: 0,
+  discountPercent: 0
 };
 
 const cartSlice = createSlice({
@@ -27,11 +32,15 @@ const cartSlice = createSlice({
     addToCart: (state, action) => {
       const { product, size, color, quantity = 1 } = action.payload;
       const selectedSize = size || (product.sizes && product.sizes[0]) || 'Standard';
-      const selectedColor = (typeof color === 'string' ? color : color?.name) || (product.colors && product.colors[0]?.name) || 'Classic';
-      const selectedImage = (color && color.image) || (product.images && product.images[0]) || product.image;
+      const selectedColor =
+        (typeof color === 'string' ? color : color?.name) ||
+        (product.colors && product.colors[0]?.name) ||
+        'Classic';
+      const selectedImage =
+        (color && color.image) || (product.images && product.images[0]) || product.image;
 
       const existingIndex = state.items.findIndex(
-        item => item.id === product.id && item.size === selectedSize && item.color === selectedColor
+        (item) => item.id === product.id && item.size === selectedSize && item.color === selectedColor
       );
 
       if (existingIndex > -1) {
@@ -49,27 +58,30 @@ const cartSlice = createSlice({
         });
       }
       state.isOpen = true;
+      saveCartToStorage(state.items);
     },
     removeFromCart: (state, action) => {
       const { id, size, color } = action.payload;
       state.items = state.items.filter(
-        item => !(item.id === id && item.size === size && item.color === color)
+        (item) => !(item.id === id && item.size === size && item.color === color)
       );
+      saveCartToStorage(state.items);
     },
     updateQuantity: (state, action) => {
       const { id, size, color, quantity } = action.payload;
       const item = state.items.find(
-        i => i.id === id && i.size === size && i.color === color
+        (i) => i.id === id && i.size === size && i.color === color
       );
       if (item) {
         if (quantity <= 0) {
           state.items = state.items.filter(
-            i => !(i.id === id && i.size === size && i.color === color)
+            (i) => !(i.id === id && i.size === size && i.color === color)
           );
         } else {
           item.quantity = quantity;
         }
       }
+      saveCartToStorage(state.items);
     },
     toggleCart: (state, action) => {
       if (typeof action.payload === 'boolean') {
@@ -86,7 +98,7 @@ const cartSlice = createSlice({
     },
     applyPromo: (state, action) => {
       const code = action.payload.trim().toUpperCase();
-      if (code === 'M4M10' || code === 'WELCOME10') {
+      if (code === 'M4M10' || code === 'WELCOME10' || code === 'ATELIER10') {
         state.promoCode = code;
         state.discountPercent = 10;
       } else if (code === 'PRIVILEGE20' || code === 'VIP20') {
@@ -106,6 +118,7 @@ const cartSlice = createSlice({
     },
     clearCart: (state) => {
       state.items = [];
+      saveCartToStorage([]);
     }
   }
 });

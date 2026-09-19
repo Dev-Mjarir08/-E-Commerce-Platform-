@@ -13,6 +13,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 import customerApi from '../../services/customerApi';
 
 export const Settings = () => {
@@ -34,11 +35,10 @@ export const Settings = () => {
     smsAlerts: false
   });
 
-  const [toastMessage, setToastMessage] = useState(null);
+  const { showToast: triggerToast } = useToast();
 
   const showToast = (type, text) => {
-    setToastMessage({ type, text });
-    setTimeout(() => setToastMessage(null), 4000);
+    triggerToast(text, type);
   };
 
   const handlePasswordSubmit = async (e) => {
@@ -99,32 +99,6 @@ export const Settings = () => {
             </p>
           </div>
         </div>
-
-        {/* Toast Feedback */}
-        {toastMessage && (
-          <div
-            className={`p-4 border flex items-center justify-between text-xs font-mono uppercase tracking-wider ${
-              toastMessage.type === 'success'
-                ? 'bg-emerald-50/90 border-emerald-300 text-emerald-900'
-                : 'bg-rose-50/90 border-rose-300 text-rose-900'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              {toastMessage.type === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-              )}
-              <span>{toastMessage.text}</span>
-            </div>
-            <button
-              onClick={() => setToastMessage(null)}
-              className="text-xs text-[#8E877F] hover:text-[#111111]"
-            >
-              ✕
-            </button>
-          </div>
-        )}
 
         {/* Section 1: Security & Password */}
         <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-6 sm:p-8 space-y-6 shadow-xs">

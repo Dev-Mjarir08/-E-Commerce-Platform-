@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import Lenis from 'lenis';
+import { useToast } from '../../context/ToastContext';
 
 // Layout Components
 import { AnnouncementBar } from '../../components/layout/AnnouncementBar';
@@ -21,14 +22,15 @@ import { Newsletter } from '../../components/home/Newsletter';
 
 // Global Overlays & Modals
 import { CartDrawer } from '../../components/common/CartDrawer';
-import { SearchModal } from '../../components/common/SearchModal';
-import { QuickViewModal } from '../../components/common/QuickViewModal';
-import { Toast } from '../../components/common/Toast';
+
+// Lazy loaded modals to keep initial page bundle lean
+const SearchModal = lazy(() => import('../../components/common/SearchModal').then(m => ({ default: m.SearchModal || m.default })));
+const QuickViewModal = lazy(() => import('../../components/common/QuickViewModal').then(m => ({ default: m.QuickViewModal || m.default })));
 
 const Home = () => {
+  const { showToast } = useToast();
   const [searchOpen, setSearchOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
-  const [toasts, setToasts] = useState([]);
 
   // Initialize Lenis smooth scrolling with prefers-reduced-motion check
   useEffect(() => {
@@ -63,18 +65,6 @@ const Home = () => {
     };
   }, []);
 
-  const addToast = (message, type = 'success') => {
-    const id = Date.now() + Math.random();
-    setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
-  };
-
-  const removeToast = (id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
-
   const handleOpenProduct = (product) => {
     setQuickViewProduct(product);
   };
@@ -96,7 +86,7 @@ const Home = () => {
         onOpenSearch={() => setSearchOpen(true)}
         onOpenWishlist={() => {
           scrollToSection('best-sellers');
-          addToast('Saved wishlist items highlight active.', 'info');
+          showToast('Saved wishlist items highlight active.', 'info');
         }}
       />
 
@@ -113,7 +103,7 @@ const Home = () => {
         {/* 5. New Arrivals */}
         <NewArrivals
           onQuickView={handleOpenProduct}
-          onShowToast={addToast}
+          onShowToast={showToast}
           onViewAll={() => scrollToSection('best-sellers')}
         />
 
@@ -128,7 +118,7 @@ const Home = () => {
         {/* 8. Best Sellers */}
         <BestSellers
           onQuickView={handleOpenProduct}
-          onShowToast={addToast}
+          onShowToast={showToast}
         />
 
         {/* 9. Editorial Campaign Banner */}
@@ -148,7 +138,7 @@ const Home = () => {
         <Testimonials />
 
         {/* 13. Newsletter Section */}
-        <Newsletter onShowToast={addToast} />
+        <Newsletter onShowToast={showToast} />
       </main>
 
       {/* 14. Large Premium Footer */}
@@ -157,20 +147,24 @@ const Home = () => {
       {/* Global Modals & Drawers */}
       <CartDrawer />
 
-      <SearchModal
-        isOpen={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        onSelectProduct={handleOpenProduct}
-      />
+      <Suspense fallback={null}>
+        {searchOpen && (
+          <SearchModal
+            isOpen={searchOpen}
+            onClose={() => setSearchOpen(false)}
+            onSelectProduct={handleOpenProduct}
+          />
+        )}
 
-      <QuickViewModal
-        product={quickViewProduct}
-        isOpen={Boolean(quickViewProduct)}
-        onClose={() => setQuickViewProduct(null)}
-        onShowToast={addToast}
-      />
-
-      <Toast toasts={toasts} onDismiss={removeToast} />
+        {quickViewProduct && (
+          <QuickViewModal
+            product={quickViewProduct}
+            isOpen={Boolean(quickViewProduct)}
+            onClose={() => setQuickViewProduct(null)}
+            onShowToast={showToast}
+          />
+        )}
+      </Suspense>
     </div>
   );
 };

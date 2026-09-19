@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Search, Eye, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../context/ToastContext";
 
 const Orders = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [search, setSearch] = useState("");
   const orders = [
     {
@@ -84,7 +86,7 @@ const Orders = () => {
         </div>
         <button
           type="button"
-          onClick={() => alert("Exporting orders CSV")}
+          onClick={() => showToast("Preparing marketplace orders export CSV archive...", "info")}
           className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
         >
           <Download size={14} />

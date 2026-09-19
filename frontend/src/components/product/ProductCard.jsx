@@ -49,24 +49,29 @@ export const ProductCard = ({ product, onQuickView, onShowToast }) => {
   return (
     <div className="group flex flex-col bg-[#FFFFFF] border border-[#E5E3DF] transition-all duration-300 hover:shadow-lg">
       {/* Product Image Frame */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#F2EFE9] cursor-pointer">
-        {/* Primary Image */}
-        <img
-          src={primaryImage}
-          alt={product.name}
-          className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-          loading="lazy"
-        />
-
-        {/* Secondary Image cross-fade */}
-        {secondaryImage && secondaryImage !== primaryImage && (
+      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#F2EFE9]">
+        {/* Primary Image with Link */}
+        <Link
+          to={`/product/${product.id || product._id || product.slug}`}
+          className="block w-full h-full cursor-pointer"
+        >
           <img
-            src={secondaryImage}
-            alt={`${product.name} alternate`}
-            className="absolute inset-0 w-full h-full object-cover object-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-in-out pointer-events-none"
+            src={primaryImage}
+            alt={product.name}
+            className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04]"
             loading="lazy"
           />
-        )}
+
+          {/* Secondary Image cross-fade */}
+          {secondaryImage && secondaryImage !== primaryImage && (
+            <img
+              src={secondaryImage}
+              alt={`${product.name} alternate`}
+              className="absolute inset-0 w-full h-full object-cover object-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-in-out pointer-events-none"
+              loading="lazy"
+            />
+          )}
+        </Link>
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
@@ -143,12 +148,12 @@ export const ProductCard = ({ product, onQuickView, onShowToast }) => {
           </div>
 
           {/* Product Name */}
-          <h3
-            onClick={() => onQuickView && onQuickView(product)}
-            className="font-serif text-base sm:text-lg font-normal text-[#111111] hover:underline cursor-pointer line-clamp-1 mb-1"
+          <Link
+            to={`/product/${product.id || product._id || product.slug}`}
+            className="block font-serif text-base sm:text-lg font-normal text-[#111111] hover:underline line-clamp-1 mb-1"
           >
             {product.name}
-          </h3>
+          </Link>
 
           {/* Fabric Specification */}
           <p className="text-[11px] text-[#666666] font-sans line-clamp-1 mb-3">

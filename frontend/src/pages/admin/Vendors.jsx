@@ -13,8 +13,10 @@ import {
   X
 } from 'lucide-react';
 import { stores as initialStores } from '../../data/stores';
+import { useConfirm } from '../../context/ModalContext';
 
 const Vendors = () => {
+  const { confirm, alert: modalAlert } = useConfirm();
   const [vendorList, setVendorList] = useState(
     initialStores.map((s, idx) => ({
       ...s,
@@ -96,8 +98,15 @@ const Vendors = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteVendor = (id) => {
-    if (window.confirm('Are you sure you want to deactivate and remove this vendor tenant?')) {
+  const handleDeleteVendor = async (id) => {
+    const ok = await confirm({
+      title: 'Deactivate Vendor Tenant',
+      message: 'Are you sure you want to deactivate and remove this vendor tenant from the marketplace?',
+      confirmText: 'Deactivate Vendor',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    if (ok) {
       setVendorList((prev) => prev.filter((v) => v.id !== id));
     }
   };
@@ -111,7 +120,11 @@ const Vendors = () => {
   const handleSubmitForm = (e) => {
     e.preventDefault();
     if (!formData.name || !formData.slug) {
-      alert('Please provide store name and slug.');
+      modalAlert({
+        title: 'Missing Fields',
+        message: 'Please provide store name and URL slug before saving.',
+        type: 'warning'
+      });
       return;
     }
 

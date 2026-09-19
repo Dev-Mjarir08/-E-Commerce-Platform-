@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import Product from '../models/Product.js';
 import Store from '../models/Store.js';
 import Category from '../models/Category.js';
+import Order from '../models/Order.js';
 import { generateAccessToken, generateRefreshToken } from '../utils/token.utils.js';
 
 /**
@@ -125,8 +126,13 @@ export const getDashboardStats = async (req, res) => {
       outOfStockCount,
       totalStores,
       totalCategories,
+      totalCustomers,
+      activeCustomers,
+      totalOrders,
       recentProducts,
-      valuationAgg
+      recentCustomers,
+      valuationAgg,
+      revenueAgg
     ] = await Promise.all([
       Product.countDocuments(),
       Product.countDocuments({ stock: { $gt: 8 } }),
@@ -134,11 +140,19 @@ export const getDashboardStats = async (req, res) => {
       Product.countDocuments({ stock: 0 }),
       Store.countDocuments(),
       Category.countDocuments(),
+      User.countDocuments({ role: 'customer' }),
+      User.countDocuments({ role: 'customer', status: 'active' }),
+      Order.countDocuments(),
       Product.find()
         .sort({ createdAt: -1 })
         .limit(6)
         .populate('category', 'name slug')
         .populate('store', 'name slug'),
+      User.find({ role: 'customer' })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('name email phone status avatar createdAt')
+        .lean(),
       Product.aggregate([
         {
           $group: {
@@ -148,10 +162,20 @@ export const getDashboardStats = async (req, res) => {
             }
           }
         }
+      ]),
+      Order.aggregate([
+        { $match: { orderStatus: { $ne: 'cancelled' } } },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: '$totalPrice' }
+          }
+        }
       ])
     ]);
 
     const totalInventoryValue = valuationAgg[0]?.totalValue || 0;
+    const totalOrderRevenue = revenueAgg[0]?.totalRevenue || 0;
 
     return res.status(200).json({
       success: true,
@@ -162,8 +186,13 @@ export const getDashboardStats = async (req, res) => {
         outOfStockCount,
         totalStores,
         totalCategories,
+        totalCustomers,
+        activeCustomers,
+        totalOrders,
+        totalOrderRevenue,
         totalInventoryValue,
-        recentProducts
+        recentProducts,
+        recentCustomers
       }
     });
   } catch (error) {

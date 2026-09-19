@@ -18,9 +18,13 @@ import {
   toggleStoreStatus,
   toggleStoreVerification
 } from '../../redux/slices/storeSlice';
+import { useConfirm } from '../../context/ModalContext';
+import { useToast } from '../../context/ToastContext';
 
 const Stores = () => {
   const dispatch = useDispatch();
+  const { confirm, alert: modalAlert } = useConfirm();
+  const { showToast } = useToast();
   const storeList = useSelector((state) => state.stores.items);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -108,16 +112,28 @@ const Stores = () => {
     }
   };
 
-  const handleDeleteStore = (id, name) => {
-    if (window.confirm(`Are you sure you want to remove the boutique "${name}"?`)) {
+  const handleDeleteStore = async (id, name) => {
+    const ok = await confirm({
+      title: 'Remove Boutique Store',
+      message: `Are you sure you want to remove the boutique "${name}"? This will disable boutique inventory and routing.`,
+      confirmText: 'Remove Boutique',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    if (ok) {
       dispatch(deleteStore(id));
+      showToast(`Boutique "${name}" has been removed.`, 'info');
     }
   };
 
   const handleSubmitForm = (e) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.slug.trim()) {
-      alert('Please provide boutique name and URL slug.');
+      modalAlert({
+        title: 'Required Information',
+        message: 'Please provide boutique name and URL slug before proceeding.',
+        type: 'warning'
+      });
       return;
     }
 
