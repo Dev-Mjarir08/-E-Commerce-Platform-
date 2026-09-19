@@ -22,7 +22,6 @@ const Register = () => {
     agreeTerms: true
   });
 
-
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formErrors, setFormErrors] = useState({});
@@ -121,7 +120,6 @@ const Register = () => {
     } catch (err) {
       console.warn('Registration failed:', err);
     }
-
   };
 
   return (
@@ -261,7 +259,6 @@ const Register = () => {
                 <span>Admin</span>
               </button>
             </div>
-
 
             {/* Error Notification */}
             {error && (
@@ -430,7 +427,6 @@ const Register = () => {
 
               {/* Password & Confirm Password */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
                 <div>
                   <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-[#666666] mb-1.5">
                     Password *
