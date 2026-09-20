@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Search, Heart, User, ShoppingBag, Menu, X, ArrowRight } from 'lucide-react';
+import { Search, Heart, User, ShoppingBag, Menu, X, ArrowRight, LayoutDashboard, Store } from 'lucide-react';
 import { openCart } from '../../redux/slices/cartSlice';
 
 export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
@@ -107,6 +107,29 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
             )}
           </Link>
 
+          {/* Role-Based Operations Dashboard Button (Admin or Vendor only, never for Customer) */}
+          {user && (user.role === 'admin' || user.role === 'vendor' || user.role === 'seller') && (
+            <Link
+              to={user.role === 'admin' ? '/admin/dashboard' : '/vendor/dashboard'}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#111111] text-[#F8F7F4] hover:bg-[#2A2A2A] text-[10px] font-mono uppercase tracking-[0.18em] font-medium border border-[#111111] transition-all shadow-xs"
+              title={user.role === 'admin' ? 'Open Admin Control Suite' : 'Open Vendor Atelier Portal'}
+            >
+              {user.role === 'admin' ? (
+                <>
+                  <LayoutDashboard className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Admin Dashboard</span>
+                  <span className="sm:hidden">Admin</span>
+                </>
+              ) : (
+                <>
+                  <Store className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">Vendor Dashboard</span>
+                  <span className="sm:hidden">Vendor</span>
+                </>
+              )}
+            </Link>
+          )}
+
           {/* Account */}
           <Link
             to={user ? '/profile' : '/login'}
@@ -185,13 +208,32 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
           </div>
 
           <div className="pt-6 border-t border-[#E5E3DF] space-y-3">
+            {/* Role-Based Operations Dashboard Button for Mobile (Admin / Vendor only) */}
+            {user && (user.role === 'admin' || user.role === 'vendor' || user.role === 'seller') && (
+              <Link
+                to={user.role === 'admin' ? '/admin/dashboard' : '/vendor/dashboard'}
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full text-left text-xs font-mono uppercase tracking-wider py-2.5 px-3 bg-[#111111] text-[#F8F7F4] flex items-center justify-between transition-colors shadow-xs"
+              >
+                <div className="flex items-center gap-2.5">
+                  {user.role === 'admin' ? (
+                    <LayoutDashboard className="w-4 h-4 text-amber-400" />
+                  ) : (
+                    <Store className="w-4 h-4 text-emerald-400" />
+                  )}
+                  <span>{user.role === 'admin' ? 'Admin Dashboard' : 'Vendor Dashboard'}</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-[#F8F7F4]/70" />
+              </Link>
+            )}
+
             <Link
-              to="/login"
+              to={user ? '/profile' : '/login'}
               onClick={() => setMobileMenuOpen(false)}
               className="w-full text-left text-xs font-mono uppercase tracking-wider py-2 flex items-center gap-2 text-[#111111] hover:text-[#666666]"
             >
               <User className="w-4 h-4" />
-              <span>CLIENT ACCOUNT / SIGN IN</span>
+              <span>{user ? `ACCOUNT (${user.name})` : 'CLIENT ACCOUNT / SIGN IN'}</span>
             </Link>
             <button
               onClick={() => {

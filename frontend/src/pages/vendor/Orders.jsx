@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaBars, FaTimes } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 import {
     LayoutDashboard,
@@ -18,6 +18,8 @@ import {
     ChevronLeft,
     ChevronRight,
     ChevronDown,
+    Menu,
+    X
 } from "lucide-react";
 
 export default function VendorOrdersPage() {
@@ -93,7 +95,7 @@ export default function VendorOrdersPage() {
                 bg-emerald-600 text-white p-3 rounded-lg shadow-lg"
                 aria-label="Open menu"
             >
-            <FaBars size={10} />
+            <Menu size={18} />
             </button>
         )}
 
@@ -132,22 +134,22 @@ export default function VendorOrdersPage() {
                             className="absolute top-7 right-2 text-slate-300 hover:text-white md:hidden min-[320px]:w-4"
                             aria-label="Close menu"
                         >
-                            <FaTimes size={22}  strokeWidth={1} />
+                            <X size={22} />
                         </button>
                     </div>
 
                     {/* NAVIGATION */}
                     <nav className="p-4 space-y-1">
 
-                        <a
-                            href="#"
+                        <Link
+                            to="/vendor/dashboard"
                             className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
                         >
                             <LayoutDashboard size={18} />
                             <span className="text-sm font-medium">
                                 Dashboard
                             </span>
-                        </a>
+                        </Link>
 
                         <a
                             href="#"
@@ -160,15 +162,15 @@ export default function VendorOrdersPage() {
                         </a>
 
                         {/* ACTIVE ORDERS */}
-                        <a
-                            href="#"
+                        <Link
+                            to="/vendor/orders"
                             className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-medium"
                         >
                             <ShoppingBag size={18} />
                             <span className="text-sm">
                                 Orders
                             </span>
-                        </a>
+                        </Link>
 
                         <a
                             href="#"

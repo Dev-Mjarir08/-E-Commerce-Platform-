@@ -6,6 +6,7 @@ import {
   logout,
   getMe,
   forgotPassword,
+  verifyOtp,
   resetPassword,
   verifyEmail,
   resendVerification,
@@ -36,6 +37,7 @@ authRouter.get('/me', protect, getMe);
 
 // Password Management
 authRouter.post('/forgot-password', forgotPassword);
+authRouter.post('/verify-otp', verifyOtp);
 authRouter.post('/reset-password', resetPassword);
 
 // Email Verification

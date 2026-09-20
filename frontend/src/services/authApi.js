@@ -40,6 +40,26 @@ export const authApi = {
   // Refresh Token
   async refreshToken(refreshToken) {
     return api.post('/auth/refresh-token', { refreshToken });
+  },
+
+  // Password Recovery - Send OTP & Reset Link
+  async forgotPassword(email) {
+    return api.post('/auth/forgot-password', { email });
+  },
+
+  // Verify OTP
+  async verifyOtp({ email, otp }) {
+    return api.post('/auth/verify-otp', { email, otp });
+  },
+
+  // Reset Password with OTP or Token
+  async resetPassword({ email, otp, token, newPassword, password }) {
+    return api.post('/auth/reset-password', {
+      email,
+      otp,
+      token,
+      newPassword: newPassword || password
+    });
   }
 };
 

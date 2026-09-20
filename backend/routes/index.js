@@ -8,11 +8,14 @@ import wishlistRouter from "./wishlist.route.js";
 import addressRouter from "./address.route.js";
 import orderRouter from "./order.route.js";
 import customerRouter from "./customer.route.js";
+import vendorRouter from "./vendor.route.js";
 
 const router = Router();
 
 router.use('/api/auth', authRouter);
 router.use('/api/admin', adminRouter);
+router.use('/api/vendors', vendorRouter);
+router.use('/api/vendor', vendorRouter);
 router.use('/api/products', productRouter);
 router.use('/api/categories', categoryRouter);
 router.use('/api/cart', cartRouter);

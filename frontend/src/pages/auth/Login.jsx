@@ -72,8 +72,8 @@ const Login = () => {
         targetPath = '/admin/dashboard';
         setSuccessMessage(`Welcome, Administrator ${user.name}. Opening Admin Suite...`);
       } else if (user.role === 'vendor' || user.role === 'seller') {
-        targetPath = '/';
-        setSuccessMessage(`Welcome, Partner ${user.name}. Opening Portal...`);
+        targetPath = redirectParam ? decodeURIComponent(redirectParam) : '/vendor/dashboard';
+        setSuccessMessage(`Welcome, Partner ${user.name}. Opening Vendor Portal...`);
       } else {
         targetPath = redirectParam ? decodeURIComponent(redirectParam) : '/';
         setSuccessMessage(`Welcome back, ${user.name}. Redirecting to boutique...`);

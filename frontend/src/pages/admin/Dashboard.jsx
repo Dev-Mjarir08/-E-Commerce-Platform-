@@ -42,10 +42,14 @@ const Dashboard = () => {
     totalCustomers: 0,
     activeCustomers: 0,
     totalOrders: 0,
+    totalVendors: 0,
+    activeVendors: 0,
+    pendingVendors: 0,
     totalOrderRevenue: 0,
     totalInventoryValue: 0,
     recentProducts: [],
-    recentCustomers: []
+    recentCustomers: [],
+    recentVendors: []
   });
 
   const fetchDashboardData = async () => {
@@ -65,10 +69,14 @@ const Dashboard = () => {
           totalCustomers: statsData.totalCustomers ?? 0,
           activeCustomers: statsData.activeCustomers ?? 0,
           totalOrders: statsData.totalOrders ?? 0,
+          totalVendors: statsData.totalVendors ?? 0,
+          activeVendors: statsData.activeVendors ?? 0,
+          pendingVendors: statsData.pendingVendors ?? 0,
           totalOrderRevenue: statsData.totalOrderRevenue ?? 0,
           totalInventoryValue: statsData.totalInventoryValue ?? 0,
           recentProducts: Array.isArray(statsData.recentProducts) ? statsData.recentProducts : [],
-          recentCustomers: Array.isArray(statsData.recentCustomers) ? statsData.recentCustomers : []
+          recentCustomers: Array.isArray(statsData.recentCustomers) ? statsData.recentCustomers : [],
+          recentVendors: Array.isArray(statsData.recentVendors) ? statsData.recentVendors : []
         });
       }
 
@@ -292,18 +300,23 @@ const Dashboard = () => {
           <span className="text-lg font-black text-amber-600">{stats.lowStockCount + stats.outOfStockCount}</span>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <Link
+          to="/admin/vendors"
+          className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between hover:border-indigo-300 hover:shadow-sm transition-all cursor-pointer block"
+        >
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
               <Store size={18} />
             </div>
             <div>
-              <span className="text-xs font-bold text-slate-900 block">Boutique Stores</span>
-              <span className="text-[11px] text-slate-400">Independent vendors</span>
+              <span className="text-xs font-bold text-slate-900 block">Boutique Vendors</span>
+              <span className="text-[11px] text-slate-400">
+                {stats.activeVendors || stats.totalVendors} live • {stats.pendingVendors} pending
+              </span>
             </div>
           </div>
-          <span className="text-lg font-black text-slate-900">{stats.totalStores}</span>
-        </div>
+          <span className="text-lg font-black text-slate-900">{stats.totalVendors || stats.totalStores}</span>
+        </Link>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -513,6 +526,121 @@ const Dashboard = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      {/* Live Atelier Vendors & Storefronts Section (Real MongoDB Records) */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="flex items-center gap-2.5">
+            <Store size={18} className="text-emerald-600" />
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Live Boutique Vendors &amp; Storefronts</h3>
+              <p className="text-[11px] text-slate-400">Real-time marketplace sellers registered in MongoDB</p>
+            </div>
+          </div>
+
+          <Link
+            to="/admin/vendors"
+            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
+          >
+            <span>Manage All Vendors ({stats.totalVendors || stats.recentVendors.length})</span>
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+
+        <div className="overflow-x-auto flex-1">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="bg-slate-50/60 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                <th className="p-3.5">Vendor Partner</th>
+                <th className="p-3.5">Storefront Name</th>
+                <th className="p-3.5">Contact Email</th>
+                <th className="p-3.5">Catalog Items</th>
+                <th className="p-3.5">Live Status</th>
+                <th className="p-3.5">Onboarded</th>
+                <th className="p-3.5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {stats.recentVendors.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-slate-400">
+                    <Store className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="font-semibold text-slate-600">No Independent Vendors Registered Yet</p>
+                    <p className="text-[11px] text-slate-400 mt-1">When sellers register, their live stores will be listed here automatically.</p>
+                  </td>
+                </tr>
+              ) : (
+                stats.recentVendors.map((vendor) => {
+                  const id = vendor._id || vendor.id;
+                  const status = vendor.storeStatus || vendor.status || 'active';
+                  return (
+                    <tr key={id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="p-3.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-700 font-bold text-xs flex items-center justify-center border border-emerald-200 shrink-0">
+                            {vendor.storeName?.charAt(0)?.toUpperCase() || vendor.name?.charAt(0)?.toUpperCase() || 'V'}
+                          </div>
+                          <div>
+                            <span className="font-bold text-slate-900 block truncate max-w-[150px]">
+                              {vendor.name}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400">
+                              ROLE: {vendor.role?.toUpperCase() || 'SELLER'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-3.5">
+                        <span className="font-semibold text-slate-800 block">{vendor.storeName}</span>
+                        {vendor.slug && (
+                          <span className="text-[10px] font-mono text-slate-400">/store/{vendor.slug}</span>
+                        )}
+                      </td>
+                      <td className="p-3.5 font-mono text-slate-600">
+                        {vendor.email}
+                      </td>
+                      <td className="p-3.5 font-bold text-slate-900 font-mono">
+                        {vendor.productsCount} products
+                      </td>
+                      <td className="p-3.5">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                            status === 'active'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : status === 'pending'
+                              ? 'bg-amber-50 text-amber-700 border-amber-200'
+                              : 'bg-rose-50 text-rose-700 border-rose-200'
+                          }`}
+                        >
+                          {status}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-slate-500 font-mono text-[11px]">
+                        {vendor.createdAt
+                          ? new Date(vendor.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })
+                          : 'Recent'}
+                      </td>
+                      <td className="p-3.5 text-right">
+                        <Link
+                          to="/admin/vendors"
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800"
+                        >
+                          <span>Manage</span>
+                          <ArrowRight size={12} />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

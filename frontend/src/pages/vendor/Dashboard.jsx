@@ -1,408 +1,559 @@
-import React from 'react';
-import { FaBars, FaTimes } from "react-icons/fa";
-import react, { useState } from 'react'
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchVendorDashboard } from '../../redux/slices/vendorSlice';
 
 import {
-    LayoutDashboard,
-    Package,
-    ShoppingBag,
-    Users,
-    Star,
-    BarChart3,
-    Settings,
-    Bell,
-    ChevronDown,
-    TrendingUp,
-    ArrowUpRight,
-    AlertCircle,
-    CheckCircle2,
-    DollarSign,
-    ShoppingCart,
-    Boxes
+  LayoutDashboard,
+  Package,
+  ShoppingBag,
+  Users,
+  Star,
+  BarChart3,
+  Settings,
+  Bell,
+  ChevronDown,
+  TrendingUp,
+  ArrowUpRight,
+  AlertCircle,
+  CheckCircle2,
+  DollarSign,
+  ShoppingCart,
+  Boxes,
+  Menu,
+  X,
+  RotateCcw,
+  Store,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function VendorDashboard() {
-    const stats = [
-        {
-            title: 'TOTAL SALES',
-            value: '$14,567.89',
-            change: '+12.3%',
-            subtext: 'vs last month',
-            icon: DollarSign,
-            iconColor: 'text-emerald-600',
-            bgColor: 'bg-emerald-50'
-        },
-        {
-            title: 'NEW ORDERS',
-            value: '89',
-            change: '+5.1%',
-            subtext: 'vs last week',
-            icon: ShoppingCart,
-            iconColor: 'text-blue-600',
-            bgColor: 'bg-blue-50'
-        },
-        {
-            title: 'AVERAGE ORDER VALUE',
-            value: '$163.68',
-            change: '+3.9%',
-            subtext: 'vs last month',
-            icon: TrendingUp,
-            iconColor: 'text-purple-600',
-            bgColor: 'bg-purple-50'
-        },
-        {
-            title: 'ACTIVE PRODUCTS',
-            value: '156',
-            change: '2 pending review',
-            subtext: '',
-            icon: Boxes,
-            iconColor: 'text-amber-600',
-            bgColor: 'bg-amber-50'
-        }
-    ];
+  const dispatch = useDispatch();
+  const { user, store, metrics, recentOrders, topProducts, loading, error } = useSelector(
+    (state) => state.vendor
+  );
+  const { user: authUser } = useSelector((state) => state.auth);
 
-    const topProducts = [
-        { name: 'Eco-friendly Bamboo Watch', units: 45, progress: 'w-3/4', color: 'bg-emerald-600' },
-        { name: 'Craft Resin Watch', units: 32, progress: 'w-3/5', color: 'bg-teal-600' },
-        { name: 'Wooden Desk Organizer', units: 22, progress: 'w-2/5', color: 'bg-emerald-500' },
-        { name: 'Plant Polisher Spray', units: 12, progress: 'w-1/4', color: 'bg-green-400' },
-        { name: 'Handmade Leather Wallet', units: 8, progress: 'w-1/6', color: 'bg-emerald-300' }
-    ];
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [timeRange, setTimeRange] = useState('This Month');
 
-    const recentOrders = [
-        { id: '#8901', customer: 'M. Smith', status: 'Delivered', statusBg: 'bg-emerald-100 text-emerald-700', total: '$163.68', date: 'Apr 13, 2026' },
-        { id: '#8902', customer: 'M. Smith', status: 'Processing', statusBg: 'bg-blue-100 text-blue-700', total: '$12.00', date: 'Apr 12, 2026' },
-        { id: '#8903', customer: 'J. Smith', status: 'Shipped', statusBg: 'bg-amber-100 text-amber-700', total: '$12.90', date: 'Apr 13, 2026' },
-        { id: '#8904', customer: 'H. Karen', status: 'Delivered', statusBg: 'bg-emerald-100 text-emerald-700', total: '$19.00', date: 'Apr 10, 2026' }
-    ];
+  // Fetch Vendor Profile & Dashboard Data on mount
+  useEffect(() => {
+    dispatch(fetchVendorDashboard());
+  }, [dispatch]);
 
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState("All");
+  const handleRetry = () => {
+    dispatch(fetchVendorDashboard());
+  };
 
+  // Profile data with fallbacks
+  const vendorName = user?.name || authUser?.name || 'Vendor Partner';
+  const storeName = store?.name || 'Atelier Store';
+  const avatarUrl =
+    user?.avatar?.url ||
+    authUser?.avatar?.url ||
+    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80';
 
-    return (
-        <div className="flex h-screen bg-slate-100 text-slate-800 font-sans">
-            {/* SIDEBAR */}
+  // Metrics data
+  const stats = [
+    {
+      title: 'TOTAL SALES',
+      value: `$${(metrics?.totalSales || 0).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`,
+      change: '+12.5%',
+      subtext: 'vs last month',
+      icon: DollarSign,
+      iconColor: 'text-emerald-600',
+      bgColor: 'bg-emerald-50'
+    },
+    {
+      title: 'TOTAL ORDERS',
+      value: (metrics?.totalOrders || 0).toString(),
+      change: '+4.8%',
+      subtext: 'vs last week',
+      icon: ShoppingCart,
+      iconColor: 'text-blue-600',
+      bgColor: 'bg-blue-50'
+    },
+    {
+      title: 'AVERAGE ORDER VALUE',
+      value: `$${(metrics?.averageOrderValue || 0).toFixed(2)}`,
+      change: '+2.1%',
+      subtext: 'vs last month',
+      icon: TrendingUp,
+      iconColor: 'text-purple-600',
+      bgColor: 'bg-purple-50'
+    },
+    {
+      title: 'ACTIVE PRODUCTS',
+      value: (metrics?.activeProducts || 0).toString(),
+      change: `${metrics?.totalProducts || 0} total listed`,
+      subtext: '',
+      icon: Boxes,
+      iconColor: 'text-amber-600',
+      bgColor: 'bg-amber-50'
+    }
+  ];
 
-            {/* Mobile Menu Button */}
-            {!sidebarOpen && (
-                <button
-                    onClick={() => setSidebarOpen(true)}
-                    className="fixed top-4 left-4 z-60 md:hidden
-               bg-emerald-600 text-white p-3 rounded-lg shadow-lg"
-                >
-                    <FaBars size={10} />
-                </button>
-            )}
+  // Helper for order status badge styling
+  const getStatusBadge = (status = '') => {
+    const s = status.toLowerCase();
+    if (s === 'delivered' || s === 'completed') {
+      return 'bg-emerald-100 text-emerald-800';
+    }
+    if (s === 'shipped') {
+      return 'bg-blue-100 text-blue-800';
+    }
+    if (s === 'processing' || s === 'confirmed') {
+      return 'bg-purple-100 text-purple-800';
+    }
+    if (s === 'cancelled' || s === 'failed') {
+      return 'bg-red-100 text-red-800';
+    }
+    return 'bg-amber-100 text-amber-800';
+  };
 
-            {/* ================= MOBILE MENU BUTTON ================= */}
+  return (
+    <div className="flex h-screen bg-slate-100 text-slate-800 font-sans">
+      {/* Mobile Menu Button */}
+      {!sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="fixed top-4 left-4 z-60 md:hidden bg-emerald-600 text-white p-3 rounded-lg shadow-lg"
+          aria-label="Open sidebar"
+        >
+          <Menu size={18} />
+        </button>
+      )}
 
-            <aside className={`fixed md:static
-          top-0 left-0
-          z-50
-          h-screen
-          w-64
-          bg-slate-900
-          text-slate-300
-          flex flex-col justify-between
-          transform
-          transition-transform
-          duration-300
-          ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0
-        `}>
-                <div>
-                    {/* Vendor Portal Branding */}
-                    <div className="px-6 py-5 border-b border-slate-800 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center text-slate-900 font-bold text-lg">
-                            A
-                        </div>
-                        <div>
-                            <h2 className="text-sm font-semibold text-white leading-tight">Admin Portal</h2>
-                            <p className="text-xs text-slate-400">Jane D. , Acme Goods</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => setSidebarOpen(false)}
-                        className="
-              absolute top-6
-              right-2
-              text-8xl
-                text-slate-100
-                hover:text-white
-                md:hidden
-                transition-colors 
-              "
-                    >
-                        <FaTimes size={26} />
-                    </button>
-                    {/* Navigation Links */}
-                    <nav className="p-4 space-y-1">
-                        <a href="#" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-50  text-emerald-400 font-medium transition-colors">
-                            <LayoutDashboard size={18} />
-                            <span className="text-sm">Overview</span>
-                        </a>
-                        <a href="#" className="flex items-center justify-between px-4 py-2.5 rounded-lg  hover:bg-slate-50 text-emerald-400 transition-colors">
-                            <div className="flex items-center gap-3">
-                                <ShoppingBag size={18} />
-                                <span className="text-sm">Orders</span>
-                            </div>
-                            <span className="bg-amber-500/20 text-amber-400 text-xs px-2 py-0.5 rounded-full font-medium">3 unfulfilled</span>
-                        </a>
-                        <a href="#" className="flex items-center gap-3 px-4 py-2.5 rounded-lg  text-emerald-400   hover:bg-slate-50  transition-colors">
-                            <Package size={18} />
-                            <span className="text-sm">Products</span>
-                        </a>
-                        <a href="#" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-emerald-400  hover:bg-slate-50  transition-colors">
-                            <Users size={18} />
-                            <span className="text-sm">Customers</span>
-                        </a>
-                        <a href="#" className="flex items-center gap-3 px-4 py-2.5 rounded-l text-emerald-400   hover:bg-slate-50  transition-colors">
-                            <BarChart3 size={18} />
-                            <span className="text-sm">Reports</span>
-                        </a>
-                        <a href="#" className="flex items-center gap-3 px-4 py-2.5 rounded-lg  text-emerald-400  hover:bg-slate-50  transition-colors">
-                            <Settings size={18} />
-                            <span className="text-sm">Payouts</span>
-                        </a>
-                    </nav>
-                </div>
-
-                {/* Sidebar Footer */}
-                <div className="p-4 border-t border-slate-800">
-                    <a href="#" className="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white transition-colors">
-                        <Settings size={18} />
-                        <span className="text-sm">Settings</span>
-                    </a>
-                </div>
-            </aside>
-
-            {/* MAIN CONTENT AREA */}
-            <div className="flex-1 flex flex-col overflow-y-auto">
-                {/* HEADER */}
-                <header className="bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between sticky top-0 z-10">
-
-                    <h1 className="ml-12 whitespace-nowrap  text-base min-[320px]:text-sm sm:text-xl md:text-2xl lg:text-3xl md:ml-2 font-bold text-slate-800">
-                        Dashboard Overview
-                    </h1>
-
-                
-            <div className="flex items-center gap-4">
-                <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors relative">
-                    <Bell size={20} />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full"></span>
-                </button>
-                <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
-                    <img
-                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80"
-                        alt="Profile Avatar"
-                        className="w-9 h-9 rounded-full object-cover"
-                    />
-                    <ChevronDown size={16} className="text-slate-500" />
-                </div>
+      {/* SIDEBAR */}
+      <aside
+        className={`fixed md:static top-0 left-0 z-50 h-screen w-64 bg-slate-900 text-slate-300 flex flex-col justify-between transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:translate-x-0 shrink-0`}
+      >
+        <div>
+          {/* Vendor Portal Branding */}
+          <div className="px-6 py-5 border-b border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center text-slate-900 font-bold text-lg">
+                {storeName ? storeName.charAt(0).toUpperCase() : 'A'}
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-white leading-tight truncate">
+                  {storeName}
+                </h2>
+                <p className="text-xs text-slate-400 truncate">{vendorName}</p>
+              </div>
             </div>
+
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="text-slate-400 hover:text-white md:hidden"
+              aria-label="Close sidebar"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="p-4 space-y-1">
+            <Link
+              to="/vendor/dashboard"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-medium transition-colors"
+            >
+              <LayoutDashboard size={18} />
+              <span className="text-sm">Overview</span>
+            </Link>
+
+            <Link
+              to="/vendor/orders"
+              className="flex items-center justify-between px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <ShoppingBag size={18} />
+                <span className="text-sm">Orders</span>
+              </div>
+              {metrics?.totalOrders > 0 && (
+                <span className="bg-amber-500/20 text-amber-400 text-xs px-2 py-0.5 rounded-full font-medium">
+                  {metrics.totalOrders}
+                </span>
+              )}
+            </Link>
+
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+            >
+              <Package size={18} />
+              <span className="text-sm">Products</span>
+            </a>
+
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+            >
+              <Users size={18} />
+              <span className="text-sm">Customers</span>
+            </a>
+
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+            >
+              <BarChart3 size={18} />
+              <span className="text-sm">Reports</span>
+            </a>
+          </nav>
+        </div>
+
+        {/* Sidebar Footer */}
+        <div className="p-4 border-t border-slate-800 space-y-2">
+          <Link
+            to="/"
+            className="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white text-xs transition-colors"
+          >
+            <Store size={16} />
+            <span>Return to Boutique</span>
+          </Link>
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col overflow-y-auto">
+        {/* HEADER */}
+        <header className="bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <h1 className="ml-10 md:ml-0 text-lg sm:text-xl font-bold text-slate-800">
+              Vendor Dashboard
+            </h1>
+            {store?.isVerified && (
+              <span className="hidden sm:inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full">
+                <ShieldCheck size={12} /> Verified Atelier
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleRetry}
+              disabled={loading}
+              title="Refresh Dashboard"
+              className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+            >
+              <RotateCcw size={16} className={loading ? 'animate-spin' : ''} />
+            </button>
+
+            <div className="flex items-center gap-3 pl-3 border-l border-slate-200">
+              <img
+                src={avatarUrl}
+                alt={vendorName}
+                className="w-9 h-9 rounded-full object-cover border border-slate-200"
+              />
+              <div className="hidden sm:block text-left">
+                <p className="text-xs font-semibold text-slate-800 leading-none">{vendorName}</p>
+                <p className="text-[10px] font-mono uppercase text-slate-500 mt-1">{storeName}</p>
+              </div>
+            </div>
+          </div>
         </header>
 
-        {/* MAIN DASHBOARD CONTENT */ }
-    <main className="p-8 space-y-6">
-        {/* TOP METRICS CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {stats.map((stat, idx) => {
-                const Icon = stat.icon;
-                return (
-                    <div key={idx} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{stat.title}</span>
-                            <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                                <Icon className={`w-5 h-5 ${stat.iconColor}`} />
-                            </div>
-                        </div>
-                        <div className="mt-4">
-                            <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
-                            <div className="flex items-center gap-1 mt-1 text-xs">
-                                {stat.change.includes('+') ? (
-                                    <span className="text-emerald-600 font-semibold flex items-center">
-                                        <ArrowUpRight size={14} /> {stat.change}
-                                    </span>
-                                ) : (
-                                    <span className="text-slate-500 font-medium">{stat.change}</span>
-                                )}
-                                <span className="text-slate-400">{stat.subtext}</span>
-                            </div>
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
+        {/* MAIN DASHBOARD CONTENT */}
+        <main className="p-4 sm:p-6 lg:p-8 space-y-6">
+          {/* Error Banner */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2.5">
+                <AlertCircle size={18} className="text-red-600 shrink-0" />
+                <span>{error}</span>
+              </div>
+              <button
+                onClick={handleRetry}
+                className="underline font-semibold hover:text-red-900 cursor-pointer"
+              >
+                Retry
+              </button>
+            </div>
+          )}
 
-        {/* MIDDLE SECTION: CHART + TOP SELLING PRODUCTS */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Sales Trend Chart Container */}
-            <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
+          {/* Loading Skeleton Indicator */}
+          {loading && !user && !store ? (
+            <div className="flex flex-col items-center justify-center py-24 space-y-3">
+              <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+              <p className="text-xs font-mono uppercase tracking-wider text-slate-500">
+                Fetching Atelier metrics & records...
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* TOP METRICS CARDS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {stats.map((stat, idx) => {
+                  const Icon = stat.icon;
+                  return (
+                    <div
+                      key={idx}
+                      className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400">
+                          {stat.title}
+                        </span>
+                        <div className={`p-2 rounded-lg ${stat.bgColor}`}>
+                          <Icon className={`w-5 h-5 ${stat.iconColor}`} />
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
+                        <div className="flex items-center gap-1.5 mt-1 text-xs">
+                          {stat.change && (
+                            <span className="text-emerald-600 font-semibold flex items-center">
+                              <ArrowUpRight size={14} /> {stat.change}
+                            </span>
+                          )}
+                          <span className="text-slate-400">{stat.subtext}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* MIDDLE SECTION: SALES TREND & TOP PRODUCTS */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Sales Performance Card */}
+                <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h3 className="text-base font-semibold text-slate-800">Sales Trend</h3>
-                        <p className="text-xs text-slate-500">Gross revenue performance this month</p>
+                      <h3 className="text-base font-semibold text-slate-800">Sales Trend</h3>
+                      <p className="text-xs text-slate-500">Gross storefront revenue performance</p>
                     </div>
-                    <select className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-600 bg-white focus:outline-none">
-                        <option>This Month</option>
-                        <option>Last Quarter</option>
-                        <option>This Year</option>
+                    <select
+                      value={timeRange}
+                      onChange={(e) => setTimeRange(e.target.value)}
+                      className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-600 bg-white focus:outline-none cursor-pointer"
+                    >
+                      <option>This Month</option>
+                      <option>Last Quarter</option>
+                      <option>This Year</option>
                     </select>
-                </div>
+                  </div>
 
-                {/* Simplified SVG Visual Chart Component */}
-                <div className="h-60 w-full relative flex flex-col justify-between pt-4">
-                    {/* Horizontal Gridlines */}
-                    <div className="border-b border-slate-100 text-xs text-slate-400 pb-1">$400K</div>
-                    <div className="border-b border-slate-100 text-xs text-slate-400 pb-1">$300K</div>
-                    <div className="border-b border-slate-100 text-xs text-slate-400 pb-1">$200K</div>
-                    <div className="border-b border-slate-100 text-xs text-slate-400 pb-1">$100K</div>
-                    <div className="border-b border-slate-200 text-xs text-slate-400 pb-1">0</div>
+                  {/* SVG Chart Graphic */}
+                  <div className="h-60 w-full relative flex flex-col justify-between pt-4">
+                    <div className="border-b border-slate-100 text-[10px] font-mono text-slate-400 pb-1">
+                      $10,000
+                    </div>
+                    <div className="border-b border-slate-100 text-[10px] font-mono text-slate-400 pb-1">
+                      $5,000
+                    </div>
+                    <div className="border-b border-slate-100 text-[10px] font-mono text-slate-400 pb-1">
+                      $2,500
+                    </div>
+                    <div className="border-b border-slate-100 text-[10px] font-mono text-slate-400 pb-1">
+                      $0
+                    </div>
 
-                    {/* Smooth Curve Mock SVG */}
-                    <svg className="absolute inset-x-0 bottom-6 w-full h-44 overflow-visible" viewBox="0 0 500 150" preserveAspectRatio="none">
-                        <defs>
-                            <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
-                                <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
-                            </linearGradient>
-                        </defs>
-                        <path
-                            d="M 0 120 Q 75 80 150 90 T 300 40 T 450 60 T 500 20"
-                            fill="none"
-                            stroke="#10b981"
-                            strokeWidth="3"
-                        />
-                        <path
-                            d="M 0 120 Q 75 80 150 90 T 300 40 T 450 60 T 500 20 V 150 H 0 Z"
-                            fill="url(#chartGradient)"
-                        />
+                    {/* Ambient wave graph illustration */}
+                    <svg
+                      className="absolute inset-0 w-full h-full pt-6 pointer-events-none"
+                      preserveAspectRatio="none"
+                      viewBox="0 0 400 150"
+                    >
+                      <defs>
+                        <linearGradient id="vendorGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
+                          <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        d="M0,130 C80,90 120,40 200,60 C280,80 320,20 400,30 L400,150 L0,150 Z"
+                        fill="url(#vendorGrad)"
+                      />
+                      <path
+                        d="M0,130 C80,90 120,40 200,60 C280,80 320,20 400,30"
+                        fill="none"
+                        stroke="#10b981"
+                        strokeWidth="2.5"
+                      />
                     </svg>
-
-                    {/* X-Axis Days */}
-                    <div className="flex justify-between text-xs text-slate-400 pt-2 border-t border-slate-100">
-                        <span>Day 3</span>
-                        <span>Day 8</span>
-                        <span>Day 13</span>
-                        <span>Day 18</span>
-                        <span>Day 23</span>
-                        <span>Day 28</span>
-                    </div>
+                  </div>
                 </div>
-            </div>
 
-            {/* Top Selling Products Bar List */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                <div>
-                    <h3 className="text-base font-semibold text-slate-800 mb-1">Top Selling Products</h3>
-                    <p className="text-xs text-slate-500 mb-5">By units sold this month</p>
+                {/* Top Listed Products */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-800">Featured Catalog</h3>
+                    <p className="text-xs text-slate-500 mb-4">Latest products from your atelier</p>
 
-                    <div className="space-y-4">
-                        {topProducts.map((prod, idx) => (
-                            <div key={idx}>
-                                <div className="flex justify-between text-xs font-medium text-slate-700 mb-1.5">
-                                    <span className="truncate max-w-45">{prod.name}</span>
-                                    <span className="text-slate-500">{prod.units} units</span>
-                                </div>
-                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                    <div className={`h-full ${prod.color} ${prod.progress} rounded-full`}></div>
-                                </div>
+                    {topProducts && topProducts.length > 0 ? (
+                      <div className="space-y-3.5">
+                        {topProducts.slice(0, 5).map((prod, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-xs">
+                            <div className="min-w-0 pr-2">
+                              <p className="font-medium text-slate-800 truncate">{prod.name}</p>
+                              <p className="text-[10px] text-slate-400 font-mono">
+                                Stock: {prod.stock} units
+                              </p>
                             </div>
+                            <span className="font-semibold text-slate-900 font-mono shrink-0">
+                              ${prod.price || '0.00'}
+                            </span>
+                          </div>
                         ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-10 space-y-2">
+                        <Boxes size={28} className="mx-auto text-slate-300" />
+                        <p className="text-xs text-slate-500">No products uploaded yet.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <Link
+                    to="/vendor/orders"
+                    className="mt-5 text-center text-xs font-semibold text-emerald-600 hover:text-emerald-700 block"
+                  >
+                    Manage Store Orders →
+                  </Link>
+                </div>
+              </div>
+
+              {/* BOTTOM SECTION: STORE HEALTH & RECENT ORDERS */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Store Health Metrics Card */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
+                  <h3 className="text-base font-semibold text-slate-800 mb-4">Store Overview</h3>
+
+                  <div className="space-y-3.5">
+                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 size={20} className="text-emerald-500" />
+                        <div>
+                          <p className="text-xs text-slate-500">Storefront Status</p>
+                          <p className="text-sm font-semibold text-slate-800 capitalize">
+                            {store?.status || 'Active'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-emerald-600 font-medium">Healthy</span>
                     </div>
+
+                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Star size={20} className="text-amber-500 fill-amber-500" />
+                        <div>
+                          <p className="text-xs text-slate-500">Customer Rating</p>
+                          <p className="text-sm font-semibold text-slate-800">
+                            {store?.ratingAverage || 5.0} / 5.0
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-slate-500">
+                        {store?.ratingCount || 0} reviews
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Store size={20} className="text-slate-600" />
+                        <div>
+                          <p className="text-xs text-slate-500">Storefront Link</p>
+                          <p className="text-xs font-mono text-slate-700 truncate max-w-35">
+                            /store/{store?.slug || 'my-store'}
+                          </p>
+                        </div>
+                      </div>
+                      {store?.slug && (
+                        <Link
+                          to={`/store/${store.slug}`}
+                          className="text-xs text-emerald-600 font-medium hover:underline"
+                        >
+                          Visit
+                        </Link>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <a href="#" className="mt-4 inline-block text-center text-xs font-semibold text-emerald-600 hover:text-emerald-700">
-                    View Full Product Report →
-                </a>
-            </div>
-        </div>
-
-        {/* BOTTOM SECTION: STORE HEALTH & RECENT ORDERS */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Store Health Metrics Card */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <h3 className="text-base font-semibold text-slate-800 mb-4">Store Health</h3>
-
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                            <CheckCircle2 size={20} className="text-emerald-500" />
-                            <div>
-                                <p className="text-xs text-slate-500">Fulfillment Rate</p>
-                                <p className="text-sm font-semibold text-slate-800">98.5%</p>
-                            </div>
-                        </div>
-                        <span className="text-xs text-emerald-600 font-medium">Optimal</span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                            <Star size={20} className="text-amber-500 fill-amber-500" />
-                            <div>
-                                <p className="text-xs text-slate-500">Customer Rating</p>
-                                <p className="text-sm font-semibold text-slate-800">4.7 / 5.0</p>
-                            </div>
-                        </div>
-                        <span className="text-xs text-slate-500">128 reviews</span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                            <AlertCircle size={20} className="text-rose-500" />
-                            <div>
-                                <p className="text-xs text-slate-500">Inventory Alerts</p>
-                                <p className="text-sm font-semibold text-slate-800">5 items low</p>
-                            </div>
-                        </div>
-                        <button className="text-xs text-rose-600 font-medium underline">Restock</button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Recent Orders List Table */}
-            <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
+                {/* Recent Orders List Table */}
+                <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-4">
                     <h3 className="text-base font-semibold text-slate-800">Recent Orders</h3>
-                    <a href="#" className="text-xs font-semibold text-emerald-600 hover:text-emerald-700">
-                        View All Orders
-                    </a>
-                </div>
+                    <Link
+                      to="/vendor/orders"
+                      className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                    >
+                      View All Orders →
+                    </Link>
+                  </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
+                  <div className="overflow-x-auto">
+                    {recentOrders && recentOrders.length > 0 ? (
+                      <table className="w-full text-left text-xs border-collapse">
                         <thead>
-                            <tr className="border-b border-slate-200 text-slate-400 font-medium">
-                                <th className="pb-3">Order ID</th>
-                                <th className="pb-3">Customer</th>
-                                <th className="pb-3">Status</th>
-                                <th className="pb-3">Total</th>
-                                <th className="pb-3">Date</th>
-                            </tr>
+                          <tr className="border-b border-slate-200 text-slate-400 font-medium">
+                            <th className="pb-3">Order ID</th>
+                            <th className="pb-3">Customer</th>
+                            <th className="pb-3">Status</th>
+                            <th className="pb-3">Total</th>
+                            <th className="pb-3">Date</th>
+                          </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-slate-700">
-                            {recentOrders.map((order, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                                    <td className="py-3 font-semibold text-slate-800">{order.id}</td>
-                                    <td className="py-3">{order.customer}</td>
-                                    <td className="py-3">
-                                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${order.statusBg}`}>
-                                            {order.status}
-                                        </span>
-                                    </td>
-                                    <td className="py-3 font-medium text-slate-800">{order.total}</td>
-                                    <td className="py-3 text-slate-500">{order.date}</td>
-                                </tr>
-                            ))}
+                          {recentOrders.map((order, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                              <td className="py-3 font-semibold font-mono text-slate-800">
+                                #{order.orderNumber || order._id?.slice(-6) || 'ORDER'}
+                              </td>
+                              <td className="py-3 font-medium">
+                                {order.user?.name || order.shippingAddress?.recipientName || 'Client'}
+                              </td>
+                              <td className="py-3">
+                                <span
+                                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase font-semibold ${getStatusBadge(
+                                    order.orderStatus
+                                  )}`}
+                                >
+                                  {order.orderStatus || 'Pending'}
+                                </span>
+                              </td>
+                              <td className="py-3 font-semibold font-mono text-slate-900">
+                                ${(order.totalAmount || order.totalPrice || 0).toFixed(2)}
+                              </td>
+                              <td className="py-3 text-slate-500 font-mono text-[11px]">
+                                {order.createdAt
+                                  ? new Date(order.createdAt).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric'
+                                    })
+                                  : 'Recently'}
+                              </td>
+                            </tr>
+                          ))}
                         </tbody>
-                    </table>
+                      </table>
+                    ) : (
+                      <div className="text-center py-10 space-y-2">
+                        <ShoppingBag size={28} className="mx-auto text-slate-300" />
+                        <p className="text-xs text-slate-500">
+                          No recent orders recorded for this atelier.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-            </div>
-        </div>
-    </main>
-      </div >
-    </div >
+              </div>
+            </>
+          )}
+        </main>
+      </div>
+    </div>
   );
 }

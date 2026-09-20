@@ -142,7 +142,12 @@ export const registerVendor = async (req, res) => {
       storeDescription,
       storePhone,
       storeEmail,
-      storeAddress
+      storeAddress,
+      street,
+      city,
+      state,
+      postalCode,
+      country
     } = req.body;
 
     if (!name || !email || !password || !storeName) {
@@ -201,15 +206,35 @@ export const registerVendor = async (req, res) => {
 
     await user.save();
 
-    // Create associated Store
+    // Resolve structured address conforming to Store schema
+    let resolvedAddress = {};
+    if (storeAddress && typeof storeAddress === 'object') {
+      resolvedAddress = {
+        street: storeAddress.street?.trim() || '',
+        city: storeAddress.city?.trim() || '',
+        state: storeAddress.state?.trim() || '',
+        postalCode: storeAddress.postalCode?.trim() || '',
+        country: storeAddress.country?.trim() || ''
+      };
+    } else {
+      resolvedAddress = {
+        street: (street || (typeof storeAddress === 'string' ? storeAddress : ''))?.trim() || '',
+        city: city?.trim() || '',
+        state: state?.trim() || '',
+        postalCode: postalCode?.trim() || '',
+        country: country?.trim() || ''
+      };
+    }
+
+    // Create associated Store according to Store.js model
     const store = await Store.create({
       owner: user._id,
       name: storeName.trim(),
       slug: uniqueSlug,
-      description: storeDescription || `Official storefront of ${storeName}`,
-      email: storeEmail ? storeEmail.trim() : user.email,
+      description: storeDescription?.trim() || `Official storefront of ${storeName}`,
+      email: storeEmail ? storeEmail.trim().toLowerCase() : user.email,
       phone: storePhone ? storePhone.trim() : user.phone,
-      address: storeAddress || {},
+      address: resolvedAddress,
       status: 'pending' // pending administrative review or instant active
     });
 
@@ -415,7 +440,7 @@ export const getMe = async (req, res) => {
 };
 
 /**
- * @desc    Forgot Password - Send reset link
+ * @desc    Forgot Password - Send reset OTP & link
  * @route   POST /api/auth/forgot-password
  * @access  Public
  */
@@ -432,36 +457,46 @@ export const forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ email: email.toLowerCase().trim() });
 
-    // Always respond with success to protect user privacy
-    if (!user) {
-      return res.status(200).json({
-        success: true,
-        message: 'If an account with that email exists, a password reset link has been dispatched.'
-      });
-    }
+    // Generate 6-digit numeric OTP code
+    const rawOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = crypto.createHash('sha256').update(rawOtp).digest('hex');
+    const otpExpire = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     // Generate reset token
     const rawResetToken = crypto.randomBytes(32).toString('hex');
     const hashedResetToken = crypto.createHash('sha256').update(rawResetToken).digest('hex');
     const resetExpire = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
+    // Always respond with success to protect user privacy
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message: 'If an account with that email exists, a verification OTP and reset link have been dispatched.',
+        ...(process.env.NODE_ENV === 'development' && { devOtp: rawOtp, devResetToken: rawResetToken })
+      });
+    }
+
     user.resetPasswordToken = hashedResetToken;
     user.resetPasswordExpire = resetExpire;
+    user.resetPasswordOtp = hashedOtp;
+    user.resetPasswordOtpExpire = otpExpire;
     await user.save({ validateBeforeSave: false });
 
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${rawResetToken}`;
-    const emailText = `You requested a password reset for your Atelier account. Please click the link below within 30 minutes:\n\n${resetUrl}\n\nIf you did not make this request, please ignore this email.`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${rawResetToken}&email=${encodeURIComponent(user.email)}`;
+    const emailText = `Your Atelier verification OTP code is: ${rawOtp}\n\nThis verification code expires in 15 minutes.\n\nAlternatively, you can reset your password using this link:\n${resetUrl}\n\nIf you did not request this, please ignore this email.`;
 
     try {
       await sendEmail({
         email: user.email,
-        subject: 'Password Reset Request',
+        subject: 'Your Atelier Password Reset Verification Code',
         message: emailText,
         link: resetUrl
       });
     } catch (emailErr) {
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
+      user.resetPasswordOtp = undefined;
+      user.resetPasswordOtpExpire = undefined;
       await user.save({ validateBeforeSave: false });
 
       return res.status(500).json({
@@ -472,9 +507,9 @@ export const forgotPassword = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'If an account with that email exists, a password reset link has been dispatched.',
-      // In development, return the token for rapid API testing
-      ...(process.env.NODE_ENV === 'development' && { devResetToken: rawResetToken })
+      message: 'If an account with that email exists, a verification OTP and reset link have been dispatched.',
+      // In development, return the code and token for rapid UI testing
+      ...(process.env.NODE_ENV === 'development' && { devOtp: rawOtp, devResetToken: rawResetToken })
     });
   } catch (error) {
     console.error('Forgot password error:', error);
@@ -486,22 +521,67 @@ export const forgotPassword = async (req, res) => {
 };
 
 /**
- * @desc    Reset Password with token
+ * @desc    Verify Password Reset OTP
+ * @route   POST /api/auth/verify-otp
+ * @access  Public
+ */
+export const verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide both email and 6-digit OTP code.'
+      });
+    }
+
+    const cleanOtp = String(otp).trim();
+    if (cleanOtp.length !== 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP must be a 6-digit verification code.'
+      });
+    }
+
+    const hashedOtp = crypto.createHash('sha256').update(cleanOtp).digest('hex');
+
+    const user = await User.findOne({
+      email: email.toLowerCase().trim(),
+      resetPasswordOtp: hashedOtp,
+      resetPasswordOtpExpire: { $gt: Date.now() }
+    }).select('+resetPasswordOtp +resetPasswordOtpExpire');
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired OTP code. Please request a new code.'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'OTP verified successfully. You may now proceed to reset your password.'
+    });
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Internal server error while verifying OTP.'
+    });
+  }
+};
+
+/**
+ * @desc    Reset Password with OTP or token
  * @route   POST /api/auth/reset-password
  * @access  Public
  */
 export const resetPassword = async (req, res) => {
   try {
-    const { token, password, newPassword } = req.body;
+    const { token, otp, email, password, newPassword } = req.body;
     const incomingToken = token || req.query.token;
     const finalPassword = newPassword || password;
-
-    if (!incomingToken) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password reset token is required.'
-      });
-    }
 
     if (!finalPassword || finalPassword.length < 6) {
       return res.status(400).json({
@@ -510,17 +590,35 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    const hashedToken = crypto.createHash('sha256').update(incomingToken).digest('hex');
+    let user = null;
 
-    const user = await User.findOne({
-      resetPasswordToken: hashedToken,
-      resetPasswordExpire: { $gt: Date.now() }
-    }).select('+resetPasswordToken +resetPasswordExpire');
+    if (otp && email) {
+      const cleanOtp = String(otp).trim();
+      const hashedOtp = crypto.createHash('sha256').update(cleanOtp).digest('hex');
+
+      user = await User.findOne({
+        email: email.toLowerCase().trim(),
+        resetPasswordOtp: hashedOtp,
+        resetPasswordOtpExpire: { $gt: Date.now() }
+      }).select('+resetPasswordOtp +resetPasswordOtpExpire +resetPasswordToken +resetPasswordExpire');
+    } else if (incomingToken) {
+      const hashedToken = crypto.createHash('sha256').update(incomingToken).digest('hex');
+
+      user = await User.findOne({
+        resetPasswordToken: hashedToken,
+        resetPasswordExpire: { $gt: Date.now() }
+      }).select('+resetPasswordToken +resetPasswordExpire +resetPasswordOtp +resetPasswordOtpExpire');
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Either a valid OTP code with email or a reset token is required.'
+      });
+    }
 
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: 'Password reset token is invalid or has expired.'
+        message: 'Password reset code or token is invalid or has expired.'
       });
     }
 
@@ -528,6 +626,8 @@ export const resetPassword = async (req, res) => {
     user.password = finalPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
+    user.resetPasswordOtp = undefined;
+    user.resetPasswordOtpExpire = undefined;
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);

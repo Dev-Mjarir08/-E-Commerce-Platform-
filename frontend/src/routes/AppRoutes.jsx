@@ -14,6 +14,8 @@ const Shop = lazy(() => import("../pages/public/Shop"));
 const ProductDetails = lazy(() => import("../pages/public/ProductDetails"));
 const Login = lazy(() => import("../pages/auth/Login"));
 const Register = lazy(() => import("../pages/auth/Register"));
+const ForgotPassword = lazy(() => import("../pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("../pages/auth/ResetPassword"));
 
 // Lazy-loaded Customer Routes
 const Profile = lazy(() => import("../pages/customer/Profile"));
@@ -26,6 +28,10 @@ const Checkout = lazy(() => import("../pages/customer/Checkout"));
 const OrderSuccess = lazy(() => import("../pages/customer/OrderSuccess"));
 const OrderFailed = lazy(() => import("../pages/customer/OrderFailed"));
 const CustomerSettings = lazy(() => import("../pages/customer/Settings"));
+
+// Lazy-loaded Vendor Routes
+const VendorDashboard = lazy(() => import("../pages/vendor/Dashboard"));
+const VendorOrders = lazy(() => import("../pages/vendor/Orders"));
 
 // Lazy-loaded Admin Routes
 const Dashboard = lazy(() => import("../pages/admin/Dashboard"));
@@ -59,6 +65,9 @@ export const AppRoutes = () => {
         <Route path="/customer/cart" element={<Navigate to="/cart" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-otp" element={<ResetPassword />} />
         <Route path="/store/:slug" element={<StoreDetails />} />
 
         {/* Customer Routes - Protected for authenticated users */}
@@ -127,6 +136,11 @@ export const AppRoutes = () => {
             />
           </Route>
         </Route>
+
+        {/* Vendor Operations Portal */}
+        <Route path="/vendor" element={<Navigate to="/vendor/dashboard" replace />} />
+        <Route path="/vendor/dashboard" element={<VendorDashboard />} />
+        <Route path="/vendor/orders" element={<VendorOrders />} />
 
         {/* Admin Operations Suite - Protected for 'admin' role only */}
         <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>

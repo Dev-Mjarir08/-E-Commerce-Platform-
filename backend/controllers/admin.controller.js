@@ -129,8 +129,12 @@ export const getDashboardStats = async (req, res) => {
       totalCustomers,
       activeCustomers,
       totalOrders,
+      totalVendors,
+      activeVendors,
+      pendingVendors,
       recentProducts,
       recentCustomers,
+      recentVendorsRaw,
       valuationAgg,
       revenueAgg
     ] = await Promise.all([
@@ -143,6 +147,9 @@ export const getDashboardStats = async (req, res) => {
       User.countDocuments({ role: 'customer' }),
       User.countDocuments({ role: 'customer', status: 'active' }),
       Order.countDocuments(),
+      User.countDocuments({ role: { $in: ['seller', 'vendor'] } }),
+      User.countDocuments({ role: { $in: ['seller', 'vendor'] }, status: 'active' }),
+      User.countDocuments({ role: { $in: ['seller', 'vendor'] }, status: 'pending' }),
       Product.find()
         .sort({ createdAt: -1 })
         .limit(6)
@@ -152,6 +159,11 @@ export const getDashboardStats = async (req, res) => {
         .sort({ createdAt: -1 })
         .limit(5)
         .select('name email phone status avatar createdAt')
+        .lean(),
+      User.find({ role: { $in: ['seller', 'vendor'] } })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('name email phone status avatar isVerified createdAt')
         .lean(),
       Product.aggregate([
         {
@@ -174,6 +186,23 @@ export const getDashboardStats = async (req, res) => {
       ])
     ]);
 
+    // Attach store info and product count to recent vendors
+    const recentVendors = await Promise.all(
+      recentVendorsRaw.map(async (v) => {
+        const store = await Store.findOne({ owner: v._id }).lean();
+        const productsCount = store ? await Product.countDocuments({ store: store._id }) : 0;
+        return {
+          ...v,
+          storeName: store?.name || 'No Storefront Created',
+          slug: store?.slug || '',
+          city: store?.address?.city || 'Global',
+          rating: store?.ratingAverage || 4.9,
+          productsCount,
+          storeStatus: store?.status || v.status || 'active'
+        };
+      })
+    );
+
     const totalInventoryValue = valuationAgg[0]?.totalValue || 0;
     const totalOrderRevenue = revenueAgg[0]?.totalRevenue || 0;
 
@@ -189,10 +218,14 @@ export const getDashboardStats = async (req, res) => {
         totalCustomers,
         activeCustomers,
         totalOrders,
+        totalVendors,
+        activeVendors,
+        pendingVendors,
         totalOrderRevenue,
         totalInventoryValue,
         recentProducts,
-        recentCustomers
+        recentCustomers,
+        recentVendors
       }
     });
   } catch (error) {

@@ -17,7 +17,9 @@ import {
   ArrowRight,
   ShoppingBag,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  LayoutDashboard,
+  Store
 } from 'lucide-react';
 import { updateUser, logoutUser } from '../../redux/slices/authSlice';
 
@@ -176,6 +178,24 @@ export const Profile = () => {
                 ACCOUNT ARCHIVE
               </h3>
               <nav className="space-y-1">
+                {/* Operations Dashboard Shortcut (Admin / Vendor only, never for Customer) */}
+                {(user?.role === 'admin' || user?.role === 'vendor' || user?.role === 'seller') && (
+                  <Link
+                    to={user.role === 'admin' ? '/admin/dashboard' : '/vendor/dashboard'}
+                    className="flex items-center justify-between p-3 bg-[#111111] text-[#F8F7F4] hover:bg-[#222222] text-xs font-mono uppercase tracking-wider font-semibold transition-colors mb-2"
+                  >
+                    <div className="flex items-center gap-3">
+                      {user.role === 'admin' ? (
+                        <LayoutDashboard className="w-4 h-4 text-amber-400" />
+                      ) : (
+                        <Store className="w-4 h-4 text-emerald-400" />
+                      )}
+                      <span>{user.role === 'admin' ? 'Admin Dashboard' : 'Vendor Dashboard'}</span>
+                    </div>
+                    <ArrowRight className="w-3.5 h-3.5 text-[#F8F7F4]/80" />
+                  </Link>
+                )}
+
                 <Link
                   to="/profile"
                   className="flex items-center justify-between p-3 bg-[#F8F7F4] border-l-2 border-[#111111] text-xs font-mono uppercase tracking-wider text-[#111111] font-medium"
