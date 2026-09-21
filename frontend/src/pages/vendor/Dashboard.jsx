@@ -6,6 +6,7 @@ import { fetchVendorDashboard } from '../../redux/slices/vendorSlice';
 import {
   LayoutDashboard,
   Package,
+  PlusCircle,
   ShoppingBag,
   Users,
   Star,
@@ -24,7 +25,15 @@ import {
   X,
   RotateCcw,
   Store,
-  ShieldCheck
+  ShieldCheck,
+  Tag,
+  History,
+  AlertTriangle,
+  UploadCloud,
+  UserCheck,
+  Layers,
+  Sparkles,
+  ExternalLink
 } from 'lucide-react';
 
 export default function VendorDashboard() {
@@ -159,67 +168,138 @@ export default function VendorDashboard() {
           </div>
 
           {/* Navigation Links */}
-          <nav className="p-4 space-y-1">
-            <Link
-              to="/vendor/dashboard"
-              className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-medium transition-colors"
-            >
-              <LayoutDashboard size={18} />
-              <span className="text-sm">Overview</span>
-            </Link>
+          <nav className="p-3 space-y-4 overflow-y-auto max-h-[calc(100vh-140px)]">
+            {/* Core */}
+            <div>
+              <p className="px-3 text-[10px] font-mono uppercase tracking-wider text-slate-500 font-semibold mb-1">
+                Core Operations
+              </p>
+              <div className="space-y-0.5">
+                <Link
+                  to="/vendor/dashboard"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg bg-emerald-600 text-white font-medium text-xs transition-colors"
+                >
+                  <LayoutDashboard size={16} />
+                  <span>Overview</span>
+                </Link>
 
-            <Link
-              to="/vendor/orders"
-              className="flex items-center justify-between px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <ShoppingBag size={18} />
-                <span className="text-sm">Orders</span>
+                <Link
+                  to="/vendor/orders"
+                  className="flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white text-xs transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <ShoppingBag size={16} />
+                    <span>Orders</span>
+                  </div>
+                  {metrics?.totalOrders > 0 && (
+                    <span className="bg-amber-500/20 text-amber-400 text-[10px] px-2 py-0.5 rounded-full font-medium">
+                      {metrics.totalOrders}
+                    </span>
+                  )}
+                </Link>
               </div>
-              {metrics?.totalOrders > 0 && (
-                <span className="bg-amber-500/20 text-amber-400 text-xs px-2 py-0.5 rounded-full font-medium">
-                  {metrics.totalOrders}
-                </span>
-              )}
-            </Link>
+            </div>
 
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-            >
-              <Package size={18} />
-              <span className="text-sm">Products</span>
-            </a>
+            {/* Catalog & Inventory */}
+            <div>
+              <p className="px-3 text-[10px] font-mono uppercase tracking-wider text-slate-500 font-semibold mb-1">
+                Products & Stock
+              </p>
+              <div className="space-y-0.5">
+                <Link
+                  to="/vendor/products"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white text-xs transition-colors"
+                >
+                  <Package size={16} />
+                  <span>All Products</span>
+                </Link>
+                <Link
+                  to="/vendor/products/create"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white text-xs transition-colors"
+                >
+                  <PlusCircle size={16} />
+                  <span>Add Product</span>
+                </Link>
+                <Link
+                  to="/vendor/inventory"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white text-xs transition-colors"
+                >
+                  <Boxes size={16} />
+                  <span>Inventory Control</span>
+                </Link>
+              </div>
+            </div>
 
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-            >
-              <Users size={18} />
-              <span className="text-sm">Customers</span>
-            </a>
+            {/* Customers & Marketing */}
+            <div>
+              <p className="px-3 text-[10px] font-mono uppercase tracking-wider text-slate-500 font-semibold mb-1">
+                Customers & Growth
+              </p>
+              <div className="space-y-0.5">
+                <Link
+                  to="/vendor/customers"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white text-xs transition-colors"
+                >
+                  <Users size={16} />
+                  <span>Customers</span>
+                </Link>
+                <Link
+                  to="/vendor/coupons"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white text-xs transition-colors"
+                >
+                  <Tag size={16} />
+                  <span>Coupons & Promo</span>
+                </Link>
+                <Link
+                  to="/vendor/analytics"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white text-xs transition-colors"
+                >
+                  <BarChart3 size={16} />
+                  <span>Analytics & Sales</span>
+                </Link>
+              </div>
+            </div>
 
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-            >
-              <BarChart3 size={18} />
-              <span className="text-sm">Reports</span>
-            </a>
+            {/* Storefront & Settings */}
+            <div>
+              <p className="px-3 text-[10px] font-mono uppercase tracking-wider text-slate-500 font-semibold mb-1">
+                Store & Account
+              </p>
+              <div className="space-y-0.5">
+                <Link
+                  to="/vendor/store"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white text-xs transition-colors"
+                >
+                  <Store size={16} />
+                  <span>My Storefront</span>
+                </Link>
+                <Link
+                  to="/vendor/settings"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white text-xs transition-colors"
+                >
+                  <Settings size={16} />
+                  <span>Store Settings</span>
+                </Link>
+                <Link
+                  to="/vendor/profile"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white text-xs transition-colors"
+                >
+                  <UserCheck size={16} />
+                  <span>Vendor Profile</span>
+                </Link>
+              </div>
+            </div>
           </nav>
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-slate-800 space-y-2">
+        <div className="p-3 border-t border-slate-800 space-y-1">
           <Link
             to="/"
-            className="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white text-xs transition-colors"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-xs transition-colors"
           >
-            <Store size={16} />
-            <span>Return to Boutique</span>
+            <ExternalLink size={15} />
+            <span>Public Boutique</span>
           </Link>
         </div>
       </aside>
@@ -239,7 +319,7 @@ export default function VendorDashboard() {
             )}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={handleRetry}
               disabled={loading}
@@ -249,7 +329,27 @@ export default function VendorDashboard() {
               <RotateCcw size={16} className={loading ? 'animate-spin' : ''} />
             </button>
 
-            <div className="flex items-center gap-3 pl-3 border-l border-slate-200">
+            <Link
+              to="/vendor/notifications"
+              title="Vendor Notifications"
+              className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors relative"
+            >
+              <Bell size={18} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full" />
+            </Link>
+
+            <Link
+              to="/vendor/store"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition-colors"
+            >
+              <Store size={14} />
+              <span>Storefront</span>
+            </Link>
+
+            <Link
+              to="/vendor/profile"
+              className="flex items-center gap-3 pl-3 border-l border-slate-200 hover:opacity-85 transition-opacity"
+            >
               <img
                 src={avatarUrl}
                 alt={vendorName}
@@ -259,7 +359,7 @@ export default function VendorDashboard() {
                 <p className="text-xs font-semibold text-slate-800 leading-none">{vendorName}</p>
                 <p className="text-[10px] font-mono uppercase text-slate-500 mt-1">{storeName}</p>
               </div>
-            </div>
+            </Link>
           </div>
         </header>
 
@@ -291,6 +391,73 @@ export default function VendorDashboard() {
             </div>
           ) : (
             <>
+              {/* VENDOR QUICK ACTION ROUTES BAR */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-semibold uppercase font-mono tracking-wider text-slate-500">
+                    Quick Operations Hub
+                  </span>
+                  <span className="text-xs text-slate-400">Direct portal routing</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                  <Link
+                    to="/vendor/products/create"
+                    className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-200 border border-slate-200/80 text-slate-700 hover:text-emerald-700 transition-all text-center group"
+                  >
+                    <PlusCircle size={20} className="text-emerald-600 mb-1.5 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold">New Product</span>
+                  </Link>
+
+                  <Link
+                    to="/vendor/products"
+                    className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-200 border border-slate-200/80 text-slate-700 hover:text-emerald-700 transition-all text-center group"
+                  >
+                    <Package size={20} className="text-emerald-600 mb-1.5 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold">Products</span>
+                  </Link>
+
+                  <Link
+                    to="/vendor/orders"
+                    className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-blue-50 hover:border-blue-200 border border-slate-200/80 text-slate-700 hover:text-blue-700 transition-all text-center group"
+                  >
+                    <ShoppingBag size={20} className="text-blue-600 mb-1.5 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold">All Orders</span>
+                  </Link>
+
+                  <Link
+                    to="/vendor/inventory"
+                    className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-amber-50 hover:border-amber-200 border border-slate-200/80 text-slate-700 hover:text-amber-700 transition-all text-center group"
+                  >
+                    <Boxes size={20} className="text-amber-600 mb-1.5 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold">Inventory</span>
+                  </Link>
+
+                  <Link
+                    to="/vendor/coupons"
+                    className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-purple-50 hover:border-purple-200 border border-slate-200/80 text-slate-700 hover:text-purple-700 transition-all text-center group"
+                  >
+                    <Tag size={20} className="text-purple-600 mb-1.5 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold">Coupons</span>
+                  </Link>
+
+                  <Link
+                    to="/vendor/customers"
+                    className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 border border-slate-200/80 text-slate-700 hover:text-indigo-700 transition-all text-center group"
+                  >
+                    <Users size={20} className="text-indigo-600 mb-1.5 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold">Customers</span>
+                  </Link>
+
+                  <Link
+                    to="/vendor/analytics"
+                    className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-teal-50 hover:border-teal-200 border border-slate-200/80 text-slate-700 hover:text-teal-700 transition-all text-center group"
+                  >
+                    <BarChart3 size={20} className="text-teal-600 mb-1.5 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold">Analytics</span>
+                  </Link>
+                </div>
+              </div>
+
               {/* TOP METRICS CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 {stats.map((stat, idx) => {

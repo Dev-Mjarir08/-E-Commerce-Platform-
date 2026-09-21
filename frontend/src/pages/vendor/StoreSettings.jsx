@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaUniversity,
   FaReceipt,
@@ -10,12 +10,17 @@ import {
   FaSave,
   FaCreditCard,
   FaSlidersH,
+  FaSpinner,
 } from "react-icons/fa";
+import storeApi from "../../services/storeApi";
 
 export default function StoreSettings() {
   // Active Settings Tab
   const [activeTab, setActiveTab] = useState("payouts");
   const [isSaved, setIsSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   // Vendor Operational Settings State
   const [settings, setSettings] = useState({
@@ -47,15 +52,48 @@ export default function StoreSettings() {
     customerSmsAlerts: false,
   });
 
+  // Fetch real settings from backend on component mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      setIsLoading(true);
+      try {
+        const res = await storeApi.getStoreSettings();
+        const data = res?.data || res;
+        if (data?.settings && Object.keys(data.settings).length > 0) {
+          setSettings((prev) => ({
+            ...prev,
+            ...data.settings,
+          }));
+        }
+      } catch (err) {
+        console.warn("Notice loading operational settings:", err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
   const handleChange = (field, value) => {
     setSettings((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    console.log("Saving Vendor Operational Settings:", settings);
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+  const handleSave = async (e) => {
+    if (e) e.preventDefault();
+    setIsSaving(true);
+    setErrorMessage(null);
+    try {
+      await storeApi.updateStoreSettings(settings);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3500);
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || "Failed to update settings.";
+      setErrorMessage(msg);
+      setTimeout(() => setErrorMessage(null), 4000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -75,9 +113,15 @@ export default function StoreSettings() {
 
           <button
             onClick={handleSave}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all cursor-pointer"
+            disabled={isSaving || isLoading}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <FaSave className="text-xs" /> Save Settings
+            {isSaving ? (
+              <FaSpinner className="text-xs animate-spin" />
+            ) : (
+              <FaSave className="text-xs" />
+            )}
+            {isSaving ? "Saving..." : "Save Settings"}
           </button>
         </div>
 
@@ -86,6 +130,20 @@ export default function StoreSettings() {
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl text-xs font-semibold flex items-center gap-2 animate-fade-in">
             <FaCheckCircle className="text-emerald-600 text-sm" />
             <span>Operational settings updated successfully!</span>
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3 rounded-2xl text-xs font-semibold flex items-center gap-2 animate-fade-in">
+            <FaInfoCircle className="text-rose-600 text-sm" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium py-1">
+            <FaSpinner className="animate-spin text-teal-700" />
+            <span>Loading store settings from server...</span>
           </div>
         )}
 
