@@ -95,6 +95,22 @@ export const uploadAvatar = multer({
   fileFilter
 }).single('avatar');
 
+export const uploadSingleImageMiddleware = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10 MB limit
+  },
+  fileFilter
+}).single('image');
+
+export const uploadMultipleImagesMiddleware = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10 MB limit
+  },
+  fileFilter
+}).array('images', 20);
+
 /**
  * Utility helper to delete an image file from disk / Cloudinary
  * @param {string} imagePathOrUrl - Local path or URL
