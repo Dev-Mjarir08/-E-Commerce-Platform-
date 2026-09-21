@@ -51,16 +51,33 @@ const AddProduct = lazy(() => import("../pages/admin/products/AddProduct"));
 const Categories = lazy(() => import("../pages/admin/Categories"));
 const Inventory = lazy(() => import("../pages/admin/products/Inventory"));
 const Stores = lazy(() => import("../pages/admin/Stores"));
+const AdminStoreDetails = lazy(
+  () => import("../pages/admin/stores/StoreDetails"),
+);
 const Vendors = lazy(() => import("../pages/admin/Vendors"));
-const VendorDetails = lazy(() => import("../pages/admin/vendors/VendorDetails"));
+const VendorDetails = lazy(
+  () => import("../pages/admin/vendors/VendorDetails"),
+);
 const Coupons = lazy(() => import("../pages/admin/Coupons"));
 const OrdersAdmin = lazy(() => import("../pages/admin/Orders"));
-const AdminOrderDetails = lazy(() => import("../pages/admin/orders/OrderDetails"));
+const AdminOrderDetails = lazy(
+  () => import("../pages/admin/orders/OrderDetails"),
+);
 const SettingsAdmin = lazy(() => import("../pages/admin/Settings"));
 const Customers = lazy(() => import("../pages/admin/Customers"));
-const CustomerDetails = lazy(() => import("../pages/admin/customers/CustomerDetails"));
+const CustomerDetails = lazy(
+  () => import("../pages/admin/customers/CustomerDetails"),
+);
 const Payment = lazy(() => import("../pages/admin/Payment"));
 const Analytics = lazy(() => import("../pages/admin/Analytics"));
+const Payouts = lazy(() => import("../pages/admin/Payouts"));
+const Reviews = lazy(() => import("../pages/admin/Reviews"));
+const Refunds = lazy(() => import("../pages/admin/Refunds"));
+const VendorRequests = lazy(() => import("../pages/admin/VendorRequests"));
+const Banners = lazy(() => import("../pages/admin/Banners"));
+const Brands = lazy(() => import("../pages/admin/Brands"));
+const Shipping = lazy(() => import("../pages/admin/Shipping"));
+const Notifications = lazy(() => import("../pages/admin/Notifications"));
 
 export const AppRoutes = () => {
   return (
@@ -73,7 +90,10 @@ export const AppRoutes = () => {
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/products/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
-        <Route path="/customer/cart" element={<Navigate to="/cart" replace />} />
+        <Route
+          path="/customer/cart"
+          element={<Navigate to="/cart" replace />}
+        />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -109,10 +129,7 @@ export const AppRoutes = () => {
               element={<Navigate to="/orders" replace />}
             />
             <Route path="/orders/:id" element={<OrderDetails />} />
-            <Route
-              path="/customer/orders/:id"
-              element={<OrderDetails />}
-            />
+            <Route path="/customer/orders/:id" element={<OrderDetails />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route
               path="/customer/checkout"
@@ -149,13 +166,22 @@ export const AppRoutes = () => {
         </Route>
 
         {/* Vendor Operations Portal */}
-        <Route path="/vendor" element={<Navigate to="/vendor/dashboard" replace />} />
+        <Route
+          path="/vendor"
+          element={<Navigate to="/vendor/dashboard" replace />}
+        />
         <Route path="/vendor/dashboard" element={<VendorDashboard />} />
         <Route path="/vendor/orders" element={<VendorOrders />} />
         <Route path="/vendor/orders/:id" element={<VendorOrderDetails />} />
         <Route path="/vendor/products" element={<VendorProducts />} />
-        <Route path="/vendor/products/create" element={<VendorCreateProduct />} />
-        <Route path="/vendor/products/edit/:id" element={<VendorEditProduct />} />
+        <Route
+          path="/vendor/products/create"
+          element={<VendorCreateProduct />}
+        />
+        <Route
+          path="/vendor/products/edit/:id"
+          element={<VendorEditProduct />}
+        />
         <Route path="/vendor/inventory" element={<VendorInventory />} />
         <Route path="/vendor/coupons" element={<VendorCoupons />} />
         <Route path="/vendor/customers" element={<VendorCustomers />} />
@@ -179,6 +205,7 @@ export const AppRoutes = () => {
 
             {/* Stores */}
             <Route path="stores" element={<Stores />} />
+            <Route path="stores/:id" element={<AdminStoreDetails />} />
 
             {/* Vendors */}
             <Route path="vendors" element={<Vendors />} />
@@ -198,11 +225,35 @@ export const AppRoutes = () => {
             <Route path="customers" element={<Customers />} />
             <Route path="customers/:id" element={<CustomerDetails />} />
 
+            {/* Finance */}
+            <Route path="payouts" element={<Payouts />} />
+
+            {/* Moderation */}
+            <Route path="reviews" element={<Reviews />} />
+
+            {/* Post Order */}
+            <Route path="refunds" element={<Refunds />} />
+
+            {/* Vendor Requests */}
+            <Route path="vendor-requests" element={<VendorRequests />} />
+
+            {/* Banners */}
+            <Route path="banners" element={<Banners />} />
+
+            {/* Brands */}
+            <Route path="brands" element={<Brands />} />
+
             {/* Settings */}
             <Route path="settings" element={<SettingsAdmin />} />
 
             {/* Analytics */}
             <Route path="analytics" element={<Analytics />} />
+
+            {/* Shipping */}
+            <Route path="shipping" element={<Shipping />} />
+
+            {/* Notifications */}
+            <Route path="notifications" element={<Notifications />} />
           </Route>
         </Route>
 
