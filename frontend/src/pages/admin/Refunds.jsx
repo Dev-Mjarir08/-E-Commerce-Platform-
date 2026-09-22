@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   RotateCcw,
   Search,
@@ -74,6 +75,7 @@ const initialRefunds = [
 ];
 
 const Refunds = () => {
+  const navigate = useNavigate();
   const [refunds, setRefunds] = useState(initialRefunds);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -92,12 +94,9 @@ const Refunds = () => {
         item.reason.toLowerCase().includes(search);
 
       const matchesStatus =
-        selectedStatus === "all" ||
-        item.status === selectedStatus;
+        selectedStatus === "all" || item.status === selectedStatus;
 
-      const matchesType =
-        selectedType === "all" ||
-        item.type === selectedType;
+      const matchesType = selectedType === "all" || item.type === selectedType;
 
       return matchesSearch && matchesStatus && matchesType;
     });
@@ -108,20 +107,14 @@ const Refunds = () => {
       total: refunds.length,
 
       pending: refunds.filter(
-        (item) =>
-          item.status === "pending" ||
-          item.status === "under_review"
+        (item) => item.status === "pending" || item.status === "under_review",
       ).length,
 
-      approved: refunds.filter(
-        (item) => item.status === "approved"
-      ).length,
+      approved: refunds.filter((item) => item.status === "approved").length,
 
       amount: refunds
         .filter(
-          (item) =>
-            item.status === "pending" ||
-            item.status === "under_review"
+          (item) => item.status === "pending" || item.status === "under_review",
         )
         .reduce((sum, item) => sum + item.amount, 0),
     };
@@ -135,8 +128,8 @@ const Refunds = () => {
               ...item,
               status,
             }
-          : item
-      )
+          : item,
+      ),
     );
   };
 
@@ -157,14 +150,10 @@ const Refunds = () => {
     };
 
     const styles = {
-      pending:
-        "bg-amber-50 text-amber-700 border-amber-200",
-      under_review:
-        "bg-indigo-50 text-indigo-700 border-indigo-200",
-      approved:
-        "bg-emerald-50 text-emerald-700 border-emerald-200",
-      rejected:
-        "bg-rose-50 text-rose-700 border-rose-200",
+      pending: "bg-amber-50 text-amber-700 border-amber-200",
+      under_review: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      rejected: "bg-rose-50 text-rose-700 border-rose-200",
     };
 
     return (
@@ -196,8 +185,8 @@ const Refunds = () => {
           </div>
 
           <p className="text-xs text-slate-500 mt-1">
-            Review return requests, refund disputes, damaged products,
-            and post-order customer claims.
+            Review return requests, refund disputes, damaged products, and
+            post-order customer claims.
           </p>
         </div>
 
@@ -327,10 +316,7 @@ const Refunds = () => {
 
       {/* Information Banner */}
       <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100 flex items-start gap-3">
-        <AlertTriangle
-          size={17}
-          className="text-indigo-600 shrink-0 mt-0.5"
-        />
+        <AlertTriangle size={17} className="text-indigo-600 shrink-0 mt-0.5" />
 
         <div>
           <p className="text-xs font-bold text-indigo-900">
@@ -338,8 +324,8 @@ const Refunds = () => {
           </p>
 
           <p className="text-[11px] text-indigo-700 mt-1">
-            Verify order information, customer evidence, vendor response,
-            and applicable return policy before approving a dispute.
+            Verify order information, customer evidence, vendor response, and
+            applicable return policy before approving a dispute.
           </p>
         </div>
       </div>
@@ -368,9 +354,7 @@ const Refunds = () => {
                   className="hover:bg-slate-50/70 transition-colors"
                 >
                   <td className="px-4 py-4">
-                    <div className="font-bold text-slate-900">
-                      {item.id}
-                    </div>
+                    <div className="font-bold text-slate-900">{item.id}</div>
 
                     <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-1">
                       <ShoppingBag size={10} />
@@ -428,9 +412,7 @@ const Refunds = () => {
                     </span>
                   </td>
 
-                  <td className="px-4 py-4">
-                    {statusBadge(item.status)}
-                  </td>
+                  <td className="px-4 py-4">{statusBadge(item.status)}</td>
 
                   <td className="px-4 py-4">
                     <div className="flex justify-end items-center gap-1.5">
@@ -439,9 +421,7 @@ const Refunds = () => {
                         <>
                           <button
                             type="button"
-                            onClick={() =>
-                              updateStatus(item.id, "approved")
-                            }
+                            onClick={() => updateStatus(item.id, "approved")}
                             title="Approve request"
                             className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50"
                           >
@@ -450,9 +430,7 @@ const Refunds = () => {
 
                           <button
                             type="button"
-                            onClick={() =>
-                              updateStatus(item.id, "rejected")
-                            }
+                            onClick={() => updateStatus(item.id, "rejected")}
                             title="Reject request"
                             className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50"
                           >
@@ -463,10 +441,12 @@ const Refunds = () => {
 
                       <button
                         type="button"
-                        title="View dispute"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
+                        title="View refund details"
+                        onClick={() => navigate(`/admin/refunds/${item.id}`)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100 text-[11px] font-semibold"
                       >
-                        <Eye size={15} />
+                        {" "}
+                        <Eye size={14} /> View{" "}
                       </button>
                     </div>
                   </td>

@@ -71,12 +71,24 @@ const CustomerDetails = lazy(
 const Payment = lazy(() => import("../pages/admin/Payment"));
 const Analytics = lazy(() => import("../pages/admin/Analytics"));
 const Payouts = lazy(() => import("../pages/admin/Payouts"));
+const PayoutDetails = lazy(
+  () => import("../pages/admin/payouts/PayoutDetails"),
+);
 const Reviews = lazy(() => import("../pages/admin/Reviews"));
+const ReviewDetails = lazy(
+  () => import("../pages/admin/reviews/ReviewDetails"),
+);
 const Refunds = lazy(() => import("../pages/admin/Refunds"));
+const RefundDetails = lazy(
+  () => import("../pages/admin/refunds/RefundDetails"),
+);
 const VendorRequests = lazy(() => import("../pages/admin/VendorRequests"));
 const Banners = lazy(() => import("../pages/admin/Banners"));
 const Brands = lazy(() => import("../pages/admin/Brands"));
 const Shipping = lazy(() => import("../pages/admin/Shipping"));
+const ShipmentDetails = lazy(
+  () => import("../pages/admin/shipping/ShipmentDetails"),
+);
 const Notifications = lazy(() => import("../pages/admin/Notifications"));
 
 export const AppRoutes = () => {
@@ -227,12 +239,15 @@ export const AppRoutes = () => {
 
             {/* Finance */}
             <Route path="payouts" element={<Payouts />} />
+            <Route path="payouts/:id" element={<PayoutDetails />} />
 
             {/* Moderation */}
             <Route path="reviews" element={<Reviews />} />
+            <Route path="reviews/:id" element={<ReviewDetails />} />
 
             {/* Post Order */}
             <Route path="refunds" element={<Refunds />} />
+            <Route path="refunds/:id" element={<RefundDetails />} />
 
             {/* Vendor Requests */}
             <Route path="vendor-requests" element={<VendorRequests />} />
@@ -251,6 +266,7 @@ export const AppRoutes = () => {
 
             {/* Shipping */}
             <Route path="shipping" element={<Shipping />} />
+            <Route path="shipping/:id" element={<ShipmentDetails />} />
 
             {/* Notifications */}
             <Route path="notifications" element={<Notifications />} />

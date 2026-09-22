@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Star,
   Search,
@@ -83,6 +84,7 @@ const initialReviews = [
 ];
 
 const Reviews = () => {
+  const navigate = useNavigate();
   const [reviews, setReviews] = useState(initialReviews);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -100,12 +102,10 @@ const Reviews = () => {
         review.review.toLowerCase().includes(search);
 
       const matchesStatus =
-        selectedStatus === "all" ||
-        review.status === selectedStatus;
+        selectedStatus === "all" || review.status === selectedStatus;
 
       const matchesRating =
-        selectedRating === "all" ||
-        review.rating === Number(selectedRating);
+        selectedRating === "all" || review.rating === Number(selectedRating);
 
       return matchesSearch && matchesStatus && matchesRating;
     });
@@ -127,8 +127,8 @@ const Reviews = () => {
               status,
               flagged: status === "approved" ? false : review.flagged,
             }
-          : review
-      )
+          : review,
+      ),
     );
   };
 
@@ -148,11 +148,7 @@ const Reviews = () => {
             key={star}
             size={13}
             fill={star <= rating ? "currentColor" : "none"}
-            className={
-              star <= rating
-                ? "text-amber-400"
-                : "text-slate-300"
-            }
+            className={star <= rating ? "text-amber-400" : "text-slate-300"}
           />
         ))}
       </div>
@@ -161,19 +157,15 @@ const Reviews = () => {
 
   const statusBadge = (status) => {
     const styles = {
-      approved:
-        "bg-emerald-50 text-emerald-700 border-emerald-200",
-      pending:
-        "bg-amber-50 text-amber-700 border-amber-200",
-      rejected:
-        "bg-rose-50 text-rose-700 border-rose-200",
+      approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      pending: "bg-amber-50 text-amber-700 border-amber-200",
+      rejected: "bg-rose-50 text-rose-700 border-rose-200",
     };
 
     return (
       <span
         className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-          styles[status] ||
-          "bg-slate-50 text-slate-600 border-slate-200"
+          styles[status] || "bg-slate-50 text-slate-600 border-slate-200"
         }`}
       >
         {status}
@@ -199,8 +191,8 @@ const Reviews = () => {
           </div>
 
           <p className="text-xs text-slate-500 mt-1">
-            Review customer feedback, moderate inappropriate content,
-            and manage marketplace ratings.
+            Review customer feedback, moderate inappropriate content, and manage
+            marketplace ratings.
           </p>
         </div>
 
@@ -404,9 +396,7 @@ const Reviews = () => {
                     )}
                   </td>
 
-                  <td className="px-4 py-4">
-                    {statusBadge(review.status)}
-                  </td>
+                  <td className="px-4 py-4">{statusBadge(review.status)}</td>
 
                   <td className="px-4 py-4 text-slate-500 text-[11px]">
                     {review.date}
@@ -417,9 +407,7 @@ const Reviews = () => {
                       {review.status !== "approved" && (
                         <button
                           type="button"
-                          onClick={() =>
-                            updateStatus(review.id, "approved")
-                          }
+                          onClick={() => updateStatus(review.id, "approved")}
                           title="Approve review"
                           className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50"
                         >
@@ -430,9 +418,7 @@ const Reviews = () => {
                       {review.status !== "rejected" && (
                         <button
                           type="button"
-                          onClick={() =>
-                            updateStatus(review.id, "rejected")
-                          }
+                          onClick={() => updateStatus(review.id, "rejected")}
                           title="Reject review"
                           className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50"
                         >
@@ -443,6 +429,7 @@ const Reviews = () => {
                       <button
                         type="button"
                         title="View review"
+                        onClick={() => navigate(`/admin/reviews/${review.id}`)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
                       >
                         <Eye size={15} />

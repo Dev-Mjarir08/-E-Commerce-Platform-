@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Wallet,
   Search,
@@ -74,6 +75,7 @@ const initialPayouts = [
 ];
 
 const Payouts = () => {
+  const navigate = useNavigate();
   const [payouts, setPayouts] = useState(initialPayouts);
   const [searchTerm, setSearchTerm] = useState("");
   const [status, setStatus] = useState("all");
@@ -86,8 +88,7 @@ const Payouts = () => {
         payout.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         payout.id.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus =
-        status === "all" || payout.status === status;
+      const matchesStatus = status === "all" || payout.status === status;
 
       return matchesSearch && matchesStatus;
     });
@@ -102,8 +103,7 @@ const Payouts = () => {
         .reduce((sum, item) => sum + item.netAmount, 0),
       pending: payouts
         .filter(
-          (item) =>
-            item.status === "pending" || item.status === "processing"
+          (item) => item.status === "pending" || item.status === "processing",
         )
         .reduce((sum, item) => sum + item.netAmount, 0),
     };
@@ -125,8 +125,8 @@ const Payouts = () => {
               ...item,
               status: "paid",
             }
-          : item
-      )
+          : item,
+      ),
     );
   };
 
@@ -168,8 +168,8 @@ const Payouts = () => {
           </div>
 
           <p className="text-xs text-slate-500 mt-1">
-            Monitor vendor earnings, platform commissions, payout status,
-            and settlement activity.
+            Monitor vendor earnings, platform commissions, payout status, and
+            settlement activity.
           </p>
         </div>
 
@@ -339,9 +339,7 @@ const Payouts = () => {
                   className="hover:bg-slate-50/70 transition-colors"
                 >
                   <td className="px-4 py-4">
-                    <div className="font-bold text-slate-900">
-                      {payout.id}
-                    </div>
+                    <div className="font-bold text-slate-900">{payout.id}</div>
 
                     <div className="text-[10px] text-slate-400 mt-0.5">
                       {payout.date}
@@ -377,13 +375,9 @@ const Payouts = () => {
                     ₹{payout.netAmount.toLocaleString("en-IN")}
                   </td>
 
-                  <td className="px-4 py-4 text-slate-500">
-                    {payout.method}
-                  </td>
+                  <td className="px-4 py-4 text-slate-500">{payout.method}</td>
 
-                  <td className="px-4 py-4">
-                    {statusBadge(payout.status)}
-                  </td>
+                  <td className="px-4 py-4">{statusBadge(payout.status)}</td>
 
                   <td className="px-4 py-4">
                     <div className="flex justify-end items-center gap-1.5">
@@ -401,6 +395,7 @@ const Payouts = () => {
                       <button
                         type="button"
                         title="View payout"
+                        onClick={() => navigate(`/admin/payouts/${payout.id}`)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
                       >
                         <Eye size={15} />
