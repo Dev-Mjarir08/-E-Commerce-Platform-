@@ -452,3 +452,284 @@ export const updateStoreSettings = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get all stores from MongoDB (Admin)
+ * @route   GET /api/stores
+ * @access  Private / Admin
+ */
+export const getAllStores = async (req, res) => {
+  try {
+    const stores = await Store.find()
+      .populate('owner', 'email')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: stores
+    });
+  } catch (error) {
+    console.error('Error fetching all stores:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch stores list.',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Update store by ID (Admin)
+ * @route   PATCH /api/stores/:id
+ * @access  Private / Admin
+ */
+export const updateStoreById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invalid store ID format.'
+      });
+    }
+
+    const store = await Store.findById(id);
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        message: 'Store not found.'
+      });
+    }
+
+    const { name, description, phone, email, city, address, status, isVerified } = req.body;
+
+    // Slug generation: Always regenerate slug on backend if name changes
+    if (name && name.trim() !== store.name) {
+      store.name = name.trim();
+      store.slug = await getUniqueStoreSlug(name, store._id);
+    }
+
+    if (description !== undefined) store.description = description.trim();
+    if (phone !== undefined) store.phone = phone.trim();
+    if (email !== undefined) store.email = email.trim().toLowerCase();
+
+    // Preserve existing address fields when updating city or address
+    if (city !== undefined || address !== undefined) {
+      const existingAddress = store.address?.toObject?.() || store.address || {};
+      const incomingAddress = typeof address === 'object' && address !== null ? address : {};
+      store.address = {
+        street: incomingAddress.street !== undefined ? incomingAddress.street : (existingAddress.street || ''),
+        city: city !== undefined ? city.trim() : (incomingAddress.city !== undefined ? incomingAddress.city : (existingAddress.city || '')),
+        state: incomingAddress.state !== undefined ? incomingAddress.state : (existingAddress.state || ''),
+        postalCode: incomingAddress.postalCode !== undefined ? incomingAddress.postalCode : (existingAddress.postalCode || ''),
+        country: incomingAddress.country !== undefined ? incomingAddress.country : (existingAddress.country || '')
+      };
+    }
+
+    if (status !== undefined) {
+      if (!['pending', 'active', 'suspended', 'closed'].includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid status. Allowed values: 'pending', 'active', 'suspended', 'closed'."
+        });
+      }
+      store.status = status;
+    }
+
+    if (isVerified !== undefined) {
+      store.isVerified = Boolean(isVerified);
+    }
+
+    await store.save();
+    await store.populate('owner', 'email');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Store updated successfully.',
+      data: store
+    });
+  } catch (error) {
+    console.error('Error updating store:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update store.',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Delete store by ID (Admin)
+ * @route   DELETE /api/stores/:id
+ * @access  Private / Admin
+ */
+export const deleteStoreById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invalid store ID format.'
+      });
+    }
+
+    const store = await Store.findByIdAndDelete(id);
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        message: 'Store not found.'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Store deleted successfully.'
+    });
+  } catch (error) {
+    console.error('Error deleting store:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete store.',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Update store status by ID (Admin)
+ * @route   PATCH /api/stores/:id/status
+ * @access  Private / Admin
+ */
+export const updateStoreStatusById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invalid store ID format.'
+      });
+    }
+
+    if (!status || !['pending', 'active', 'suspended', 'closed'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status. Allowed values: 'pending', 'active', 'suspended', 'closed'."
+      });
+    }
+
+    const store = await Store.findById(id);
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        message: 'Store not found.'
+      });
+    }
+
+    store.status = status;
+    await store.save();
+    await store.populate('owner', 'email');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Store status updated successfully.',
+      data: store
+    });
+  } catch (error) {
+    console.error('Error updating store status:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update store status.',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Update store verification by ID (Admin)
+ * @route   PATCH /api/stores/:id/verification
+ * @access  Private / Admin
+ */
+export const toggleStoreVerificationById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invalid store ID format.'
+      });
+    }
+
+    const store = await Store.findById(id);
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        message: 'Store not found.'
+      });
+    }
+
+    if (req.body.isVerified !== undefined) {
+      store.isVerified = Boolean(req.body.isVerified);
+    } else {
+      store.isVerified = !store.isVerified;
+    }
+
+    await store.save();
+    await store.populate('owner', 'email');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Store verification updated successfully.',
+      data: store
+    });
+  } catch (error) {
+    console.error('Error updating store verification:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update store verification.',
+      error: error.message
+    });
+  }
+};
+
+// Get single store by ID - Admin
+export const getStoreById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid store ID",
+      });
+    }
+
+    const store = await Store.findById(id).populate(
+      "owner",
+      "name email phone avatar"
+    );
+
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        message: "Store not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: store,
+    });
+  } catch (error) {
+    console.error("Get store by ID error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch store",
+    });
+  }
+};

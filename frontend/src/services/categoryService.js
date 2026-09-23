@@ -1,18 +1,41 @@
-import { categories } from '../data/categories';
+import api from './api';
 
-/**
- * Category Service
- * Ready for GET /api/categories integration
- */
 export const categoryService = {
   // GET /api/categories
   async getCategories() {
-    return Promise.resolve([...categories]);
+    return api.get('/categories');
   },
 
   // GET /api/categories/:id
   async getCategoryById(id) {
-    const category = categories.find(c => c.id === id);
-    return Promise.resolve(category || null);
+    return api.get(`/categories/${id}`);
+  },
+
+  // POST /api/categories
+  async createCategory(categoryData) {
+    return api.post('/categories', categoryData);
+  },
+
+  // PUT /api/categories/:id
+  async updateCategory(id, categoryData) {
+    return api.put(
+      `/categories/${id}`,
+      categoryData
+    );
+  },
+
+  // PATCH /api/categories/:id/status
+  async updateCategoryStatus(id, isActive) {
+    return api.patch(
+      `/categories/${id}/status`,
+      { isActive }
+    );
+  },
+
+  // DELETE /api/categories/:id
+  async deleteCategory(id) {
+    return api.delete(`/categories/${id}`);
   }
 };
+
+export default categoryService;

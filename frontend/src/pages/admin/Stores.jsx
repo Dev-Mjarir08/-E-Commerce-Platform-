@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   Store,
@@ -13,6 +13,7 @@ import {
   Eye,
 } from "lucide-react";
 import {
+  fetchStores,
   addStore,
   updateStore,
   deleteStore,
@@ -28,7 +29,11 @@ const Stores = () => {
   const navigate = useNavigate();
   const { confirm, alert: modalAlert } = useConfirm();
   const { showToast } = useToast();
-  const storeList = useSelector((state) => state.stores.items);
+  const storeList = useSelector((state) => state.stores.items || []);
+
+  useEffect(() => {
+    dispatch(fetchStores());
+  }, [dispatch]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStore, setEditingStore] = useState(null);
@@ -127,12 +132,34 @@ const Stores = () => {
       type: "danger",
     });
     if (ok) {
-      dispatch(deleteStore(id));
-      showToast(`Boutique "${name}" has been removed.`, "info");
+      try {
+        await dispatch(deleteStore(id)).unwrap();
+        showToast(`Boutique "${name}" has been removed.`, "info");
+      } catch (err) {
+        showToast(err || "Failed to remove boutique.", "error");
+      }
     }
   };
 
-  const handleSubmitForm = (e) => {
+  const handleToggleStatus = async (id) => {
+    try {
+      await dispatch(toggleStoreStatus(id)).unwrap();
+      showToast("Store status updated.", "success");
+    } catch (err) {
+      showToast(err || "Failed to update store status.", "error");
+    }
+  };
+
+  const handleToggleVerification = async (id) => {
+    try {
+      await dispatch(toggleStoreVerification(id)).unwrap();
+      showToast("Store verification updated.", "success");
+    } catch (err) {
+      showToast(err || "Failed to update store verification.", "error");
+    }
+  };
+
+  const handleSubmitForm = async (e) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.slug.trim()) {
       modalAlert({
@@ -144,44 +171,43 @@ const Stores = () => {
     }
 
     if (editingStore) {
-      dispatch(
-        updateStore({
-          ...editingStore,
-          name: formData.name.trim(),
-          slug: formData.slug.trim(),
-          ownerEmail: formData.ownerEmail.trim(),
-          phone: formData.phone.trim(),
-          city: formData.city.trim(),
-          category: formData.category,
-          description: formData.description.trim(),
-          status: formData.status,
-          isVerified: formData.isVerified,
-          logo: formData.logo.trim(),
-        }),
-      );
+      try {
+        await dispatch(
+          updateStore({
+            id: editingStore.id,
+            name: formData.name.trim(),
+            description: formData.description.trim(),
+            phone: formData.phone.trim(),
+            email: formData.ownerEmail.trim(),
+            city: formData.city.trim(),
+            status: formData.status,
+            isVerified: formData.isVerified
+          })
+        ).unwrap();
+        showToast(`Boutique "${formData.name.trim()}" updated successfully.`, "success");
+        setIsModalOpen(false);
+      } catch (err) {
+        showToast(err || "Failed to update boutique.", "error");
+      }
     } else {
-      const newStore = {
-        id: `STR-${Date.now().toString().slice(-4)}`,
-        name: formData.name.trim(),
-        slug: formData.slug.trim(),
-        ownerEmail: formData.ownerEmail.trim(),
-        phone: formData.phone.trim(),
-        city: formData.city.trim() || "Milan",
-        category: formData.category,
-        description: formData.description.trim(),
-        status: formData.status,
-        isVerified: formData.isVerified,
-        logo:
-          formData.logo.trim() ||
-          "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&q=80",
-        rating: 5.0,
-        productsCount: 0,
-        createdAt: new Date().toISOString(),
-      };
-      dispatch(addStore(newStore));
+      try {
+        await dispatch(
+          addStore({
+            name: formData.name.trim(),
+            description: formData.description.trim(),
+            phone: formData.phone.trim(),
+            email: formData.ownerEmail.trim(),
+            city: formData.city.trim(),
+            status: formData.status,
+            isVerified: formData.isVerified
+          })
+        ).unwrap();
+        showToast(`Boutique "${formData.name.trim()}" registered successfully.`, "success");
+        setIsModalOpen(false);
+      } catch (err) {
+        showToast(err || "Failed to register boutique.", "error");
+      }
     }
-
-    setIsModalOpen(false);
   };
 
   return (
@@ -360,7 +386,7 @@ const Stores = () => {
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shrink-0">
-                            {store.name.slice(0, 2).toUpperCase()}
+                            {(store.name || "ST").slice(0, 2).toUpperCase()}
                           </div>
                           <div className="min-w-0">
                             <p className="font-bold text-slate-900 truncate max-w-xs">
@@ -383,7 +409,7 @@ const Stores = () => {
                       <td className="p-4">
                         <button
                           type="button"
-                          onClick={() => dispatch(toggleStoreStatus(store.id))}
+                          onClick={() => handleToggleStatus(store.id)}
                           className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
                             isActive
                               ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
@@ -396,9 +422,7 @@ const Stores = () => {
                       <td className="p-4">
                         <button
                           type="button"
-                          onClick={() =>
-                            dispatch(toggleStoreVerification(store.id))
-                          }
+                          onClick={() => handleToggleVerification(store.id)}
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
                             isVerified
                               ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"

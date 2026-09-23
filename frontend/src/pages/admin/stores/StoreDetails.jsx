@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import storeApi from "../../../services/storeApi";
 import {
   ArrowLeft,
   Store,
@@ -34,22 +35,13 @@ const StoreDetails = () => {
         setLoading(true);
         setError("");
 
-        const response = await fetch(`/api/stores/${id}`, {
-          credentials: "include"
-        });
+        const response = await storeApi.getStoreById(id);
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to fetch store details");
-        }
-
-        // Supports either:
-        // { store: {...} }
-        // or direct store object
-        setStore(data.store || data);
+        setStore(response.data || response.store || response);
       } catch (err) {
-        setError(err.message || "Unable to load store details");
+        setError(
+          err?.message || "Failed to fetch store details"
+        );
       } finally {
         setLoading(false);
       }
@@ -558,7 +550,7 @@ const StoreDetails = () => {
           <div className="p-5">
 
             {store.address &&
-            Object.values(store.address).some(Boolean) ? (
+              Object.values(store.address).some(Boolean) ? (
               <div className="flex gap-3">
 
                 <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
@@ -684,9 +676,8 @@ const InfoRow = ({
         </p>
 
         <p
-          className={`text-xs font-semibold text-slate-800 mt-1 break-words ${
-            mono ? "font-mono" : ""
-          }`}
+          className={`text-xs font-semibold text-slate-800 mt-1 break-words ${mono ? "font-mono" : ""
+            }`}
         >
           {value || "N/A"}
         </p>

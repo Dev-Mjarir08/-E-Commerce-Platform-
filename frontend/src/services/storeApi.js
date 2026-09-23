@@ -40,6 +40,36 @@ export const storeApi = {
   // PATCH /api/stores/my-store/settings - Update operational settings
   async updateStoreSettings(settingsData) {
     return api.patch('/stores/my-store/settings', settingsData);
+  },
+
+  // GET /api/stores - Admin: Get all stores
+  async getAllStores() {
+    return api.get('/stores');
+  },
+
+  // GET /api/stores/:id - Admin: Get single store
+  async getStoreById(id) {
+    return api.get(`/stores/${id}`);
+  },
+
+  // PATCH /api/stores/:id - Admin: Update store
+  async updateStore(id, storeData) {
+    return api.patch(`/stores/${id}`, storeData);
+  },
+
+  // DELETE /api/stores/:id - Admin: Delete store
+  async deleteStore(id) {
+    return api.delete(`/stores/${id}`);
+  },
+
+  // PATCH /api/stores/:id/status - Admin: Update store status
+  async updateStoreStatus(id, status) {
+    return api.patch(`/stores/${id}/status`, { status });
+  },
+
+  // PATCH /api/stores/:id/verification - Admin: Update store verification
+  async updateStoreVerification(id, isVerified) {
+    return api.patch(`/stores/${id}/verification`, { isVerified });
   }
 };
 
