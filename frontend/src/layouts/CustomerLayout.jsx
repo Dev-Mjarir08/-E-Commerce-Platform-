@@ -11,7 +11,7 @@ export const CustomerLayout = () => {
   const { info } = useToast();
 
   return (
-    <div className="min-h-screen bg-[#F8F7F4] text-[#111111] flex flex-col font-sans selection:bg-[#111111] selection:text-[#F8F7F4]">
+    <div className="min-h-screen bg-m4m-bg text-[#111111] flex flex-col font-sans selection:bg-[#111111] selection:text-m4m-bg">
       {/* Navigation Header */}
       <Navbar
         onOpenSearch={() => setSearchOpen(true)}

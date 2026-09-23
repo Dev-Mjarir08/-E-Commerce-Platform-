@@ -24,6 +24,11 @@ const Wishlist = lazy(() => import("../pages/customer/Wishlist"));
 const Addresses = lazy(() => import("../pages/customer/Addresses"));
 const CustomerOrders = lazy(() => import("../pages/customer/Orders"));
 const OrderDetails = lazy(() => import("../pages/customer/OrderDetails"));
+const OrderTracking = lazy(() => import("../pages/customer/OrderTracking"));
+const ReturnRefund = lazy(() => import("../pages/customer/ReturnRefund"));
+const SearchResults = lazy(() => import("../pages/customer/SearchResults"));
+const CustomerCategories = lazy(() => import("../pages/customer/Categories"));
+const ContactHelp = lazy(() => import("../pages/customer/ContactHelp"));
 const Checkout = lazy(() => import("../pages/customer/Checkout"));
 const OrderSuccess = lazy(() => import("../pages/customer/OrderSuccess"));
 const OrderFailed = lazy(() => import("../pages/customer/OrderFailed"));
@@ -142,6 +147,11 @@ export const AppRoutes = () => {
             />
             <Route path="/orders/:id" element={<OrderDetails />} />
             <Route path="/customer/orders/:id" element={<OrderDetails />} />
+            <Route path="/orders/:id/track" element={<OrderTracking />} />
+            <Route path="/orders/:id/return" element={<ReturnRefund />} />
+            <Route path="/search" element={<SearchResults />} />
+            <Route path="/categories" element={<CustomerCategories />} />
+            <Route path="/contact" element={<ContactHelp />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route
               path="/customer/checkout"

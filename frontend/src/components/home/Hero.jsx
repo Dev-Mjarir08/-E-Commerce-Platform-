@@ -59,7 +59,7 @@ export const Hero = ({ onShopNewArrivals, onExploreStores }) => {
   return (
     <section
       ref={heroRef}
-      className="relative min-h-[85vh] lg:min-h-[92vh] flex items-center justify-center overflow-hidden bg-[#111111] text-[#FFFFFF]"
+      className="relative min-h-[85vh] lg:min-h-[92vh] flex items-center justify-center overflow-hidden bg-[#111111] text-m4m-card"
     >
       {/* Background Photography with subtle scale */}
       <div className="absolute inset-0 z-0">
@@ -71,7 +71,7 @@ export const Hero = ({ onShopNewArrivals, onExploreStores }) => {
           loading="eager"
         />
         {/* Soft dark vignette gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#111111]/85 via-[#111111]/45 to-[#111111]/30" />
+        <div className="absolute inset-0 bg-linear-to-t from-[#111111]/85 via-[#111111]/45 to-[#111111]/30" />
       </div>
 
       {/* Overlay Content */}
@@ -81,17 +81,17 @@ export const Hero = ({ onShopNewArrivals, onExploreStores }) => {
       >
         {/* Subtitle / Season */}
         <div className="hero-tag inline-flex items-center gap-3 mb-5 sm:mb-6">
-          <span className="w-6 h-[1px] bg-[#FFFFFF]/70" />
+          <span className="w-6 h-[1px] bg-m4m-card/70" />
           <span className="text-[10px] sm:text-xs font-mono tracking-[0.35em] uppercase text-[#D4CEC5]">
             NEW SEASON • SS/26 MARKETPLACE
           </span>
-          <span className="w-6 h-[1px] bg-[#FFFFFF]/70" />
+          <span className="w-6 h-[1px] bg-m4m-card/70" />
         </div>
 
         {/* Big Editorial Headline */}
-        <h1 className="hero-heading font-serif text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-normal leading-[1.05] tracking-tight uppercase mb-6 sm:mb-8 max-w-4xl text-[#FFFFFF]">
+        <h1 className="hero-heading font-serif text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-normal leading-[1.05] tracking-tight uppercase mb-6 sm:mb-8 max-w-4xl text-m4m-card">
           DEFINE YOUR <br />
-          <span className="italic font-light text-[#E5E3DF]">EVERYDAY.</span>
+          <span className="italic font-light text-m4m-border">EVERYDAY.</span>
         </h1>
 
         {/* Short description */}
@@ -104,7 +104,7 @@ export const Hero = ({ onShopNewArrivals, onExploreStores }) => {
           <a
             href="#new-arrivals"
             onClick={onShopNewArrivals}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#FFFFFF] text-[#111111] text-[11px] font-mono uppercase tracking-[0.22em] px-8 py-4 hover:bg-[#D4CEC5] transition-all duration-300 shadow-md group"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-m4m-card text-[#111111] text-[11px] font-mono uppercase tracking-[0.22em] px-8 py-4 hover:bg-[#D4CEC5] transition-all duration-300 shadow-md group"
           >
             <span>SHOP NEW ARRIVALS</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -113,7 +113,7 @@ export const Hero = ({ onShopNewArrivals, onExploreStores }) => {
           <a
             href="#featured-stores"
             onClick={onExploreStores}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent text-[#FFFFFF] border border-[#FFFFFF]/60 text-[11px] font-mono uppercase tracking-[0.22em] px-8 py-4 hover:bg-[#FFFFFF] hover:text-[#111111] transition-all duration-300 backdrop-blur-xs"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent text-m4m-card border border-m4m-card/60 text-[11px] font-mono uppercase tracking-[0.22em] px-8 py-4 hover:bg-m4m-card hover:text-[#111111] transition-all duration-300 backdrop-blur-xs"
           >
             <Compass className="w-3.5 h-3.5" />
             <span>EXPLORE STORES</span>
