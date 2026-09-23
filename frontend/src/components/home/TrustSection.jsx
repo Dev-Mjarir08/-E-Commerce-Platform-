@@ -25,9 +25,9 @@ export const TrustSection = () => {
   ];
 
   return (
-    <section className="bg-[#FFFFFF] border-b border-[#E5E3DF] py-12">
+    <section className="bg-m4m-card border-b border-m4m-border py-12">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 divide-y sm:divide-y-0 sm:divide-x divide-[#E5E3DF]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 divide-y sm:divide-y-0 sm:divide-x divide-m4m-border">
           {features.map((feat, idx) => {
             const Icon = feat.icon;
             return (
@@ -35,14 +35,14 @@ export const TrustSection = () => {
                 key={idx}
                 className="flex items-center gap-4 px-2 sm:px-6 pt-4 sm:pt-0 first:pt-0"
               >
-                <div className="w-11 h-11 rounded-full bg-[#FAF9F6] border border-[#E5E3DF] flex items-center justify-center shrink-0 text-[#111111]">
+                <div className="w-11 h-11 rounded-full bg-[#FAF9F6] border border-m4m-border flex items-center justify-center shrink-0 text-[#111111]">
                   <Icon className="w-5 h-5 stroke-[1.25]" />
                 </div>
                 <div>
                   <h4 className="text-xs font-mono font-semibold uppercase tracking-[0.18em] text-[#111111] mb-0.5">
                     {feat.title}
                   </h4>
-                  <p className="text-xs text-[#666666] font-sans">
+                  <p className="text-xs text-m4m-secondary font-sans">
                     {feat.description}
                   </p>
                 </div>

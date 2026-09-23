@@ -79,12 +79,12 @@ export const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F7F4] text-[#111111] py-10 md:py-16 px-4 sm:px-6 lg:px-12 font-sans">
+    <div className="min-h-screen bg-m4m-bg text-[#111111] py-10 md:py-16 px-4 sm:px-6 lg:px-12 font-sans">
       <div className="max-w-6xl mx-auto">
         {/* Page Header / Breadcrumb */}
-        <div className="mb-10 pb-6 border-b border-[#E5E3DF] flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="mb-10 pb-6 border-b border-m4m-border flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#8E877F] block mb-2">
+            <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-m4m-accent block mb-2">
               CLIENT PORTAL • ACCOUNT MANAGEMENT
             </span>
             <h1 className="font-serif text-3xl sm:text-4xl text-[#111111] tracking-tight uppercase">
@@ -94,7 +94,7 @@ export const Profile = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E3DF] hover:border-[#111111] hover:bg-[#111111] hover:text-[#F8F7F4] text-[#111111] text-xs font-mono uppercase tracking-wider transition-all rounded-none"
+              className="inline-flex items-center gap-2 px-4 py-2 border border-m4m-border hover:border-[#111111] hover:bg-[#111111] hover:text-m4m-bg text-[#111111] text-xs font-mono uppercase tracking-wider transition-all rounded-none"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>
@@ -121,7 +121,7 @@ export const Profile = () => {
             </div>
             <button
               onClick={() => setToastMessage(null)}
-              className="text-xs text-[#8E877F] hover:text-[#111111]"
+              className="text-xs text-m4m-accent hover:text-[#111111]"
             >
               ✕
             </button>
@@ -132,9 +132,9 @@ export const Profile = () => {
           {/* Left Column: User Summary Card (4 Cols) */}
           <div className="lg:col-span-4 space-y-6">
             {/* Identity Card */}
-            <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-6 text-center space-y-5 shadow-xs">
+            <div className="bg-m4m-card border border-m4m-border p-6 text-center space-y-5 shadow-xs">
               <div className="relative inline-block">
-                <div className="w-24 h-24 mx-auto rounded-full bg-[#111111] text-[#F8F7F4] font-serif text-2xl tracking-widest flex items-center justify-center border-2 border-[#E5E3DF]">
+                <div className="w-24 h-24 mx-auto rounded-full bg-[#111111] text-m4m-bg font-serif text-2xl tracking-widest flex items-center justify-center border-2 border-m4m-border">
                   {getInitials(user?.name)}
                 </div>
                 {user?.isVerified && (
@@ -151,11 +151,11 @@ export const Profile = () => {
                 <h2 className="font-serif text-xl text-[#111111] font-medium tracking-tight">
                   {user?.name || 'Valued Client'}
                 </h2>
-                <p className="text-xs text-[#8E877F] font-mono mt-1">{user?.email || 'N/A'}</p>
+                <p className="text-xs text-m4m-accent font-mono mt-1">{user?.email || 'N/A'}</p>
               </div>
 
-              <div className="pt-3 border-t border-[#E5E3DF] flex items-center justify-center gap-2">
-                <span className="text-[10px] font-mono uppercase tracking-[0.2em] px-3 py-1 bg-[#F8F7F4] border border-[#E5E3DF] text-[#111111]">
+              <div className="pt-3 border-t border-m4m-border flex items-center justify-center gap-2">
+                <span className="text-[10px] font-mono uppercase tracking-[0.2em] px-3 py-1 bg-m4m-bg border border-m4m-border text-[#111111]">
                   ROLE: {user?.role ? user.role.toUpperCase() : 'CUSTOMER'}
                 </span>
                 <span
@@ -171,14 +171,14 @@ export const Profile = () => {
             </div>
 
             {/* Quick Navigation Menu */}
-            <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-6 space-y-3 shadow-xs">
-              <h3 className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#8E877F] mb-4">
+            <div className="bg-m4m-card border border-m4m-border p-6 space-y-3 shadow-xs">
+              <h3 className="text-[10px] font-mono uppercase tracking-[0.25em] text-m4m-accent mb-4">
                 ACCOUNT ARCHIVE
               </h3>
               <nav className="space-y-1">
                 <Link
                   to="/profile"
-                  className="flex items-center justify-between p-3 bg-[#F8F7F4] border-l-2 border-[#111111] text-xs font-mono uppercase tracking-wider text-[#111111] font-medium"
+                  className="flex items-center justify-between p-3 bg-m4m-bg border-l-2 border-[#111111] text-xs font-mono uppercase tracking-wider text-[#111111] font-medium"
                 >
                   <div className="flex items-center gap-3">
                     <User className="w-4 h-4 text-[#111111]" />
@@ -189,46 +189,46 @@ export const Profile = () => {
 
                 <Link
                   to="/orders"
-                  className="flex items-center justify-between p-3 hover:bg-[#F8F7F4] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  className="flex items-center justify-between p-3 hover:bg-m4m-bg text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <Package className="w-4 h-4 text-[#8E877F]" />
+                    <Package className="w-4 h-4 text-m4m-accent" />
                     <span>Order History</span>
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-[#8E877F]" />
+                  <ArrowRight className="w-3.5 h-3.5 text-m4m-accent" />
                 </Link>
 
                 <Link
                   to="/addresses"
-                  className="flex items-center justify-between p-3 hover:bg-[#F8F7F4] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  className="flex items-center justify-between p-3 hover:bg-m4m-bg text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <MapPin className="w-4 h-4 text-[#8E877F]" />
+                    <MapPin className="w-4 h-4 text-m4m-accent" />
                     <span>Saved Addresses</span>
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-[#8E877F]" />
+                  <ArrowRight className="w-3.5 h-3.5 text-m4m-accent" />
                 </Link>
 
                 <Link
                   to="/wishlist"
-                  className="flex items-center justify-between p-3 hover:bg-[#F8F7F4] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  className="flex items-center justify-between p-3 hover:bg-m4m-bg text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <Heart className="w-4 h-4 text-[#8E877F]" />
+                    <Heart className="w-4 h-4 text-m4m-accent" />
                     <span>Wishlist Archive</span>
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-[#8E877F]" />
+                  <ArrowRight className="w-3.5 h-3.5 text-m4m-accent" />
                 </Link>
 
                 <Link
                   to="/cart"
-                  className="flex items-center justify-between p-3 hover:bg-[#F8F7F4] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  className="flex items-center justify-between p-3 hover:bg-m4m-bg text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <ShoppingBag className="w-4 h-4 text-[#8E877F]" />
+                    <ShoppingBag className="w-4 h-4 text-m4m-accent" />
                     <span>Active Bag</span>
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-[#8E877F]" />
+                  <ArrowRight className="w-3.5 h-3.5 text-m4m-accent" />
                 </Link>
               </nav>
             </div>
@@ -237,13 +237,13 @@ export const Profile = () => {
           {/* Right Column: Main Profile Information Form (8 Cols) */}
           <div className="lg:col-span-8 space-y-8">
             {/* Personal Details Form Section */}
-            <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-6 sm:p-8 space-y-6 shadow-xs">
-              <div className="flex items-center justify-between pb-4 border-b border-[#E5E3DF]">
+            <div className="bg-m4m-card border border-m4m-border p-6 sm:p-8 space-y-6 shadow-xs">
+              <div className="flex items-center justify-between pb-4 border-b border-m4m-border">
                 <div>
                   <h3 className="font-serif text-xl uppercase tracking-wider text-[#111111]">
                     Account Credentials & Information
                   </h3>
-                  <p className="text-xs text-[#8E877F] font-sans mt-1">
+                  <p className="text-xs text-m4m-accent font-sans mt-1">
                     Manage your identity, communication preferences, and personal details.
                   </p>
                 </div>
@@ -251,7 +251,7 @@ export const Profile = () => {
                   <button
                     type="button"
                     onClick={() => setIsEditing(true)}
-                    className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider px-3.5 py-2 border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F8F7F4] transition-all"
+                    className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider px-3.5 py-2 border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-m4m-bg transition-all"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>Edit Info</span>
@@ -274,10 +274,10 @@ export const Profile = () => {
                         value={formData.name}
                         onChange={handleInputChange}
                         required
-                        className="w-full bg-[#F8F7F4] border border-[#E5E3DF] px-4 py-3 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] disabled:opacity-75 transition-colors"
+                        className="w-full bg-m4m-bg border border-m4m-border px-4 py-3 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] disabled:opacity-75 transition-colors"
                         placeholder="John Doe"
                       />
-                      <User className="w-4 h-4 text-[#8E877F] absolute right-3.5 top-3.5 pointer-events-none" />
+                      <User className="w-4 h-4 text-m4m-accent absolute right-3.5 top-3.5 pointer-events-none" />
                     </div>
                   </div>
 
@@ -292,11 +292,11 @@ export const Profile = () => {
                         name="email"
                         disabled
                         value={formData.email}
-                        className="w-full bg-[#E5E3DF]/50 border border-[#E5E3DF] px-4 py-3 text-xs font-sans text-[#666666] cursor-not-allowed"
+                        className="w-full bg-m4m-border/50 border border-m4m-border px-4 py-3 text-xs font-sans text-m4m-secondary cursor-not-allowed"
                       />
-                      <Mail className="w-4 h-4 text-[#8E877F] absolute right-3.5 top-3.5 pointer-events-none" />
+                      <Mail className="w-4 h-4 text-m4m-accent absolute right-3.5 top-3.5 pointer-events-none" />
                     </div>
-                    <span className="text-[10px] font-mono text-[#8E877F]">
+                    <span className="text-[10px] font-mono text-m4m-accent">
                       Email address cannot be changed directly.
                     </span>
                   </div>
@@ -313,10 +313,10 @@ export const Profile = () => {
                         disabled={!isEditing}
                         value={formData.phone}
                         onChange={handleInputChange}
-                        className="w-full bg-[#F8F7F4] border border-[#E5E3DF] px-4 py-3 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] disabled:opacity-75 transition-colors"
+                        className="w-full bg-m4m-bg border border-m4m-border px-4 py-3 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] disabled:opacity-75 transition-colors"
                         placeholder="+1 (555) 000-0000"
                       />
-                      <Phone className="w-4 h-4 text-[#8E877F] absolute right-3.5 top-3.5 pointer-events-none" />
+                      <Phone className="w-4 h-4 text-m4m-accent absolute right-3.5 top-3.5 pointer-events-none" />
                     </div>
                   </div>
 
@@ -330,16 +330,16 @@ export const Profile = () => {
                         type="text"
                         disabled
                         value={user?.status ? user.status.toUpperCase() : 'ACTIVE'}
-                        className="w-full bg-[#E5E3DF]/50 border border-[#E5E3DF] px-4 py-3 text-xs font-mono uppercase text-[#666666] cursor-not-allowed"
+                        className="w-full bg-m4m-border/50 border border-m4m-border px-4 py-3 text-xs font-mono uppercase text-m4m-secondary cursor-not-allowed"
                       />
-                      <ShieldCheck className="w-4 h-4 text-[#8E877F] absolute right-3.5 top-3.5 pointer-events-none" />
+                      <ShieldCheck className="w-4 h-4 text-m4m-accent absolute right-3.5 top-3.5 pointer-events-none" />
                     </div>
                   </div>
                 </div>
 
                 {/* Form Action Buttons */}
                 {isEditing && (
-                  <div className="pt-4 border-t border-[#E5E3DF] flex items-center justify-end gap-4">
+                  <div className="pt-4 border-t border-m4m-border flex items-center justify-end gap-4">
                     <button
                       type="button"
                       onClick={() => {
@@ -350,14 +350,14 @@ export const Profile = () => {
                           email: user?.email || ''
                         });
                       }}
-                      className="px-5 py-2.5 border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                      className="px-5 py-2.5 border border-m4m-border text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={saving}
-                      className="px-6 py-2.5 bg-[#111111] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors flex items-center gap-2 disabled:opacity-50"
+                      className="px-6 py-2.5 bg-[#111111] text-m4m-bg text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors flex items-center gap-2 disabled:opacity-50"
                     >
                       {saving ? (
                         <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -375,56 +375,56 @@ export const Profile = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Link
                 to="/orders"
-                className="bg-[#FFFFFF] border border-[#E5E3DF] p-5 hover:border-[#111111] transition-all group shadow-xs"
+                className="bg-m4m-card border border-m4m-border p-5 hover:border-[#111111] transition-all group shadow-xs"
               >
-                <div className="w-10 h-10 bg-[#F8F7F4] border border-[#E5E3DF] flex items-center justify-center text-[#111111] mb-3 group-hover:bg-[#111111] group-hover:text-[#F8F7F4] transition-colors">
+                <div className="w-10 h-10 bg-m4m-bg border border-m4m-border flex items-center justify-center text-[#111111] mb-3 group-hover:bg-[#111111] group-hover:text-m4m-bg transition-colors">
                   <Package className="w-5 h-5" />
                 </div>
                 <h4 className="text-xs font-mono uppercase tracking-wider text-[#111111] font-semibold">
                   Orders & Returns
                 </h4>
-                <p className="text-[11px] text-[#8E877F] mt-1">Track shipments and order history</p>
+                <p className="text-[11px] text-m4m-accent mt-1">Track shipments and order history</p>
               </Link>
 
               <Link
                 to="/addresses"
-                className="bg-[#FFFFFF] border border-[#E5E3DF] p-5 hover:border-[#111111] transition-all group shadow-xs"
+                className="bg-m4m-card border border-m4m-border p-5 hover:border-[#111111] transition-all group shadow-xs"
               >
-                <div className="w-10 h-10 bg-[#F8F7F4] border border-[#E5E3DF] flex items-center justify-center text-[#111111] mb-3 group-hover:bg-[#111111] group-hover:text-[#F8F7F4] transition-colors">
+                <div className="w-10 h-10 bg-m4m-bg border border-m4m-border flex items-center justify-center text-[#111111] mb-3 group-hover:bg-[#111111] group-hover:text-m4m-bg transition-colors">
                   <MapPin className="w-5 h-5" />
                 </div>
                 <h4 className="text-xs font-mono uppercase tracking-wider text-[#111111] font-semibold">
                   Address Book
                 </h4>
-                <p className="text-[11px] text-[#8E877F] mt-1">Manage delivery locations</p>
+                <p className="text-[11px] text-m4m-accent mt-1">Manage delivery locations</p>
               </Link>
 
               <Link
                 to="/wishlist"
-                className="bg-[#FFFFFF] border border-[#E5E3DF] p-5 hover:border-[#111111] transition-all group shadow-xs"
+                className="bg-m4m-card border border-m4m-border p-5 hover:border-[#111111] transition-all group shadow-xs"
               >
-                <div className="w-10 h-10 bg-[#F8F7F4] border border-[#E5E3DF] flex items-center justify-center text-[#111111] mb-3 group-hover:bg-[#111111] group-hover:text-[#F8F7F4] transition-colors">
+                <div className="w-10 h-10 bg-m4m-bg border border-m4m-border flex items-center justify-center text-[#111111] mb-3 group-hover:bg-[#111111] group-hover:text-m4m-bg transition-colors">
                   <Heart className="w-5 h-5" />
                 </div>
                 <h4 className="text-xs font-mono uppercase tracking-wider text-[#111111] font-semibold">
                   Saved Wishlist
                 </h4>
-                <p className="text-[11px] text-[#8E877F] mt-1">Curated garment collection</p>
+                <p className="text-[11px] text-m4m-accent mt-1">Curated garment collection</p>
               </Link>
             </div>
 
             {/* Security & Authentication Notice */}
-            <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-6 space-y-4 shadow-xs">
+            <div className="bg-m4m-card border border-m4m-border p-6 space-y-4 shadow-xs">
               <div className="flex items-center gap-3">
                 <Lock className="w-4 h-4 text-[#111111]" />
                 <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-[#111111] font-semibold">
                   Security & Authentication
                 </h3>
               </div>
-              <p className="text-xs text-[#666666] leading-relaxed">
+              <p className="text-xs text-m4m-secondary leading-relaxed">
                 Your Atelier client session is secured with JWT token encryption. If you need to update your password or request account deletion, please use our secure identity verification flow.
               </p>
-              <div className="pt-2 flex flex-wrap gap-4 text-xs font-mono text-[#8E877F]">
+              <div className="pt-2 flex flex-wrap gap-4 text-xs font-mono text-m4m-accent">
                 <div className="flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5" />
                   <span>Session Active</span>

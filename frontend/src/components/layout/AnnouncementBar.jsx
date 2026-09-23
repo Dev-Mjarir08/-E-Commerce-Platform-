@@ -14,12 +14,12 @@ export const AnnouncementBar = () => {
   if (!isVisible) return null;
 
   return (
-    <aside className="bg-[#111111] text-[#F8F7F4] text-[10px] sm:text-[11px] font-mono tracking-[0.18em] uppercase py-2.5 px-4 relative z-40 border-b border-[#222222]">
+    <aside className="bg-[#111111] text-m4m-bg text-[10px] sm:text-[11px] font-mono tracking-[0.18em] uppercase py-2.5 px-4 relative z-40 border-b border-[#222222]">
       <div className="max-w-[1920px] mx-auto flex items-center justify-between">
         <button
           type="button"
           onClick={() => setCurrentIndex((prev) => (prev - 1 + messages.length) % messages.length)}
-          className="text-[#888888] hover:text-[#FFFFFF] transition-colors p-0.5"
+          className="text-[#888888] hover:text-m4m-card transition-colors p-0.5"
           aria-label="Previous announcement"
         >
           <ChevronLeft className="w-3.5 h-3.5" />
@@ -35,7 +35,7 @@ export const AnnouncementBar = () => {
           <button
             type="button"
             onClick={() => setCurrentIndex((prev) => (prev + 1) % messages.length)}
-            className="text-[#888888] hover:text-[#FFFFFF] transition-colors p-0.5"
+            className="text-[#888888] hover:text-m4m-card transition-colors p-0.5"
             aria-label="Next announcement"
           >
             <ChevronRight className="w-3.5 h-3.5" />
@@ -43,7 +43,7 @@ export const AnnouncementBar = () => {
           <button
             type="button"
             onClick={() => setIsVisible(false)}
-            className="text-[#888888] hover:text-[#FFFFFF] transition-colors p-0.5 ml-1"
+            className="text-[#888888] hover:text-m4m-card transition-colors p-0.5 ml-1"
             aria-label="Dismiss announcement"
           >
             <X className="w-3.5 h-3.5" />

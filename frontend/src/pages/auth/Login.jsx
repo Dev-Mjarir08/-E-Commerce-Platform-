@@ -112,13 +112,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F7F4] text-[#111111] flex flex-col font-sans selection:bg-[#111111] selection:text-[#F8F7F4]">
+    <div className="min-h-screen bg-m4m-bg text-[#111111] flex flex-col font-sans selection:bg-[#111111] selection:text-m4m-bg">
       {/* Top Header Bar */}
-      <header className="border-b border-[#E5E3DF] bg-[#F8F7F4]/90 backdrop-blur-md sticky top-0 z-30 py-4 px-4 sm:px-8 lg:px-12">
+      <header className="border-b border-m4m-border bg-m4m-bg/90 backdrop-blur-md sticky top-0 z-30 py-4 px-4 sm:px-8 lg:px-12">
         <div className="max-w-[1920px] mx-auto flex items-center justify-between">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-[#666666] hover:text-[#111111] transition-colors group"
+            className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-m4m-secondary hover:text-[#111111] transition-colors group"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
             <span>Return to Boutique</span>
@@ -128,12 +128,12 @@ const Login = () => {
             <h1 className="font-serif text-2xl sm:text-3xl tracking-[0.2em] uppercase text-[#111111] font-normal leading-none">
               ATELIER
             </h1>
-            <span className="block text-[8px] font-mono tracking-[0.35em] text-[#8E877F] uppercase mt-1">
+            <span className="block text-[8px] font-mono tracking-[0.35em] text-m4m-accent uppercase mt-1">
               INDEPENDENT FASHION SAAS
             </span>
           </Link>
 
-          <div className="text-[10px] font-mono uppercase tracking-widest text-[#8E877F] hidden sm:block">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-m4m-accent hidden sm:block">
             IN / ₹ INR • CLIENT PORTAL
           </div>
         </div>
@@ -142,7 +142,7 @@ const Login = () => {
       {/* Main Split Screen */}
       <main className="flex-1 flex flex-col lg:flex-row">
         {/* Left Editorial Visual Panel (Hidden on small mobile, visible on desktop) */}
-        <section className="hidden lg:flex lg:w-1/2 relative bg-[#111111] text-[#FFFFFF] overflow-hidden items-center justify-center p-12">
+        <section className="hidden lg:flex lg:w-1/2 relative bg-[#111111] text-m4m-card overflow-hidden items-center justify-center p-12">
           {/* Background Image */}
           <div className="absolute inset-0">
             <img
@@ -151,19 +151,19 @@ const Login = () => {
               className="w-full h-full object-cover object-center scale-105"
             />
             {/* Editorial overlay gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#111111]/90 via-[#111111]/50 to-[#111111]/40" />
+            <div className="absolute inset-0 bg-linear-to-t from-[#111111]/90 via-[#111111]/50 to-[#111111]/40" />
           </div>
 
           {/* Floating Editorial Badge & Quote */}
           <div className="relative z-10 max-w-lg flex flex-col justify-between h-full py-8">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 bg-[#FFFFFF]/15 backdrop-blur-md border border-white/20 px-3 py-1.5 text-[9px] font-mono uppercase tracking-[0.25em] text-[#F8F7F4]">
+              <div className="inline-flex items-center gap-2 bg-m4m-card/15 backdrop-blur-md border border-white/20 px-3 py-1.5 text-[9px] font-mono uppercase tracking-[0.25em] text-m4m-bg">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>MEMBER PRIVILEGE PORTAL</span>
               </div>
-              <h2 className="font-serif text-4xl xl:text-5xl font-normal tracking-tight uppercase leading-tight text-[#FFFFFF]">
+              <h2 className="font-serif text-4xl xl:text-5xl font-normal tracking-tight uppercase leading-tight text-m4m-card">
                 Architectural <br />
-                <span className="italic font-light text-[#E5E3DF]">Form & Precision.</span>
+                <span className="italic font-light text-m4m-border">Form & Precision.</span>
               </h2>
             </div>
 
@@ -172,17 +172,17 @@ const Login = () => {
               <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#D4CEC5] block">
                 ATELIER CLIENT PRIVILEGES
               </span>
-              <ul className="space-y-2.5 text-xs text-[#E5E3DF] font-sans">
+              <ul className="space-y-2.5 text-xs text-m4m-border font-sans">
                 <li className="flex items-center gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFFFFF]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-m4m-card" />
                   <span>Curated capsule drops from 20+ verified artisan storefronts</span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFFFFF]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-m4m-card" />
                   <span>Synchronized wishlist and saved bag across all boutique devices</span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFFFFF]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-m4m-card" />
                   <span>Priority access to seasonal archives & atelier pre-orders</span>
                 </li>
               </ul>
@@ -197,16 +197,16 @@ const Login = () => {
 
         {/* Right Form Panel */}
         <section className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-16">
-          <div className="w-full max-w-md bg-[#FFFFFF] border border-[#E5E3DF] p-8 sm:p-10 shadow-lg">
+          <div className="w-full max-w-md bg-m4m-card border border-m4m-border p-8 sm:p-10 shadow-lg">
             {/* Top Subtitle & Title */}
             <div className="mb-8">
-              <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#8E877F] block mb-2">
+              <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-m4m-accent block mb-2">
                 CLIENT AUTHENTICATION
               </span>
               <h2 className="font-serif text-3xl sm:text-4xl text-[#111111] font-normal tracking-tight uppercase">
                 Sign In
               </h2>
-              <p className="text-xs text-[#666666] font-sans mt-2 leading-relaxed">
+              <p className="text-xs text-m4m-secondary font-sans mt-2 leading-relaxed">
                 Access your personalized atelier account, manage order tracking, and view saved wardrobes.
               </p>
             </div>
@@ -231,11 +231,11 @@ const Login = () => {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email Field */}
               <div>
-                <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-[#666666] mb-2">
+                <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-m4m-secondary mb-2">
                   Email Address *
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8E877F]">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-m4m-accent">
                     <Mail className="w-4 h-4" />
                   </div>
                   <input
@@ -246,8 +246,8 @@ const Login = () => {
                     placeholder="ENTER YOUR REGISTERED EMAIL"
                     autoComplete="email"
                     className={`w-full bg-[#FAF9F6] border ${
-                      formErrors.email ? 'border-red-500' : 'border-[#E5E3DF]'
-                    } focus:border-[#111111] focus:bg-[#FFFFFF] text-xs font-sans text-[#111111] pl-10 pr-4 py-3.5 outline-none transition-colors placeholder:text-[#8E877F] placeholder:font-mono placeholder:text-[10px] placeholder:tracking-wider placeholder:uppercase`}
+                      formErrors.email ? 'border-red-500' : 'border-m4m-border'
+                    } focus:border-[#111111] focus:bg-m4m-card text-xs font-sans text-[#111111] pl-10 pr-4 py-3.5 outline-none transition-colors placeholder:text-m4m-accent placeholder:font-mono placeholder:text-[10px] placeholder:tracking-wider placeholder:uppercase`}
                   />
                 </div>
                 {formErrors.email && (
@@ -258,18 +258,18 @@ const Login = () => {
               {/* Password Field */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-[#666666]">
+                  <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-m4m-secondary">
                     Password *
                   </label>
                   <Link
                     to="/forgot-password"
-                    className="text-[10px] font-mono uppercase tracking-wider text-[#8E877F] hover:text-[#111111] transition-colors"
+                    className="text-[10px] font-mono uppercase tracking-wider text-m4m-accent hover:text-[#111111] transition-colors"
                   >
                     Forgot Password?
                   </Link>
                 </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8E877F]">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-m4m-accent">
                     <Lock className="w-4 h-4" />
                   </div>
                   <input
@@ -280,13 +280,13 @@ const Login = () => {
                     placeholder="••••••••••••"
                     autoComplete="current-password"
                     className={`w-full bg-[#FAF9F6] border ${
-                      formErrors.password ? 'border-red-500' : 'border-[#E5E3DF]'
-                    } focus:border-[#111111] focus:bg-[#FFFFFF] text-xs font-sans text-[#111111] pl-10 pr-10 py-3.5 outline-none transition-colors placeholder:text-[#8E877F]`}
+                      formErrors.password ? 'border-red-500' : 'border-m4m-border'
+                    } focus:border-[#111111] focus:bg-m4m-card text-xs font-sans text-[#111111] pl-10 pr-10 py-3.5 outline-none transition-colors placeholder:text-m4m-accent`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#8E877F] hover:text-[#111111] transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-m4m-accent hover:text-[#111111] transition-colors"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -305,9 +305,9 @@ const Login = () => {
                     name="rememberMe"
                     checked={formData.rememberMe}
                     onChange={handleChange}
-                    className="w-3.5 h-3.5 text-[#111111] border-[#E5E3DF] rounded-none focus:ring-0 cursor-pointer accent-[#111111]"
+                    className="w-3.5 h-3.5 text-[#111111] border-m4m-border rounded-none focus:ring-0 cursor-pointer accent-[#111111]"
                   />
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-[#666666]">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-m4m-secondary">
                     Remember this device
                   </span>
                 </label>
@@ -317,7 +317,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#111111] text-[#F8F7F4] text-xs font-mono uppercase tracking-[0.22em] py-4 px-6 hover:bg-[#2B2B2B] transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-60 shadow-sm"
+                className="w-full bg-[#111111] text-m4m-bg text-xs font-mono uppercase tracking-[0.22em] py-4 px-6 hover:bg-[#2B2B2B] transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-60 shadow-sm"
               >
                 {loading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -331,8 +331,8 @@ const Login = () => {
             </form>
 
             {/* Quick Demo Login Preset Helper */}
-            <div className="mt-6 pt-6 border-t border-[#E5E3DF] text-center">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#8E877F] block mb-2.5">
+            <div className="mt-6 pt-6 border-t border-m4m-border text-center">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-m4m-accent block mb-2.5">
                 QUICK DEMO ACCESS
               </span>
               <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -346,14 +346,14 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => fillDemoAccount('customer')}
-                  className="text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 border border-[#E5E3DF] hover:border-[#111111] hover:text-[#111111] text-[#666666] bg-[#FAF9F6] transition-colors"
+                  className="text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 border border-m4m-border hover:border-[#111111] hover:text-[#111111] text-m4m-secondary bg-[#FAF9F6] transition-colors"
                 >
                   Customer Demo
                 </button>
                 <button
                   type="button"
                   onClick={() => fillDemoAccount('vendor')}
-                  className="text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 border border-[#E5E3DF] hover:border-[#111111] hover:text-[#111111] text-[#666666] bg-[#FAF9F6] transition-colors"
+                  className="text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 border border-m4m-border hover:border-[#111111] hover:text-[#111111] text-m4m-secondary bg-[#FAF9F6] transition-colors"
                 >
                   Vendor Demo
                 </button>
@@ -361,13 +361,13 @@ const Login = () => {
             </div>
 
             {/* Register Switch Link */}
-            <div className="mt-8 pt-6 border-t border-[#E5E3DF] text-center space-y-3">
-              <p className="text-xs text-[#666666] font-sans">
+            <div className="mt-8 pt-6 border-t border-m4m-border text-center space-y-3">
+              <p className="text-xs text-m4m-secondary font-sans">
                 Don't have an atelier membership yet?
               </p>
               <Link
                 to="/register"
-                className="inline-block text-xs font-mono uppercase tracking-[0.2em] text-[#111111] border-b border-[#111111] pb-0.5 hover:text-[#666666] hover:border-[#666666] transition-colors font-semibold"
+                className="inline-block text-xs font-mono uppercase tracking-[0.2em] text-[#111111] border-b border-[#111111] pb-0.5 hover:text-m4m-secondary hover:border-m4m-secondary transition-colors font-semibold"
               >
                 CREATE AN ACCOUNT
               </Link>
@@ -377,7 +377,7 @@ const Login = () => {
       </main>
 
       {/* Subtle Footer Note */}
-      <footer className="border-t border-[#E5E3DF] py-4 px-4 text-center text-[10px] font-mono uppercase tracking-widest text-[#8E877F] bg-[#FAF9F6]">
+      <footer className="border-t border-m4m-border py-4 px-4 text-center text-[10px] font-mono uppercase tracking-widest text-m4m-accent bg-[#FAF9F6]">
         SECURE 256-BIT ENCRYPTION • ATELIER GLOBAL CONCIERGE
       </footer>
     </div>

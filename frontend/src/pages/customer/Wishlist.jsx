@@ -1,45 +1,44 @@
-import { useState, useMemo } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
 import {
-  Heart,
-  ShoppingBag,
-  Trash2,
-  ArrowRight,
-  ArrowLeft,
-  CheckCircle2,
   AlertCircle,
-  Package,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  ExternalLink,
+  Grid,
+  Heart,
+  List,
   MapPin,
-  User,
+  Package,
   RefreshCw,
   Search,
-  Grid,
-  List,
-  SlidersHorizontal,
-  Sparkles,
-  ExternalLink,
   ShieldCheck,
-  Check,
-  X
-} from 'lucide-react';
-import { toggleWishlist, clearWishlist } from '../../redux/slices/wishlistSlice';
-import { addToCart } from '../../redux/slices/cartSlice';
-import { products as catalogProducts } from '../../data/products';
+  ShoppingBag,
+  Sparkles,
+  Trash2,
+  User,
+  X,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import { products as catalogProducts } from "../../data/products";
+import { addToCart } from "../../redux/slices/cartSlice";
+import {
+  clearWishlist,
+  toggleWishlist,
+} from "../../redux/slices/wishlistSlice";
 
 export const Wishlist = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   // Redux store state
   const wishlistIds = useSelector((state) => state.wishlist.items || []);
   const adminProducts = useSelector((state) => state.products?.items || []);
-  const { user } = useSelector((state) => state.auth);
 
   // Local state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'list'
   const [toastMessage, setToastMessage] = useState(null);
   const [selectedSizeMap, setSelectedSizeMap] = useState({});
   const [isClearing, setIsClearing] = useState(false);
@@ -55,17 +54,21 @@ export const Wishlist = () => {
   const resolvedWishlistProducts = useMemo(() => {
     // Combine catalog products with custom admin products
     const allAvailableProducts = [...catalogProducts];
-    
+
     // Add admin products that are not duplicates
     adminProducts.forEach((ap) => {
-      if (!allAvailableProducts.some((p) => p.id === ap.id || p._id === ap._id)) {
+      if (
+        !allAvailableProducts.some((p) => p.id === ap.id || p._id === ap._id)
+      ) {
         allAvailableProducts.push(ap);
       }
     });
 
     // Filter products whose IDs are in wishlistIds
     return wishlistIds
-      .map((id) => allAvailableProducts.find((p) => p.id === id || p._id === id))
+      .map((id) =>
+        allAvailableProducts.find((p) => p.id === id || p._id === id),
+      )
       .filter(Boolean);
   }, [wishlistIds, adminProducts]);
 
@@ -74,23 +77,30 @@ export const Wishlist = () => {
     const categoriesSet = new Set(
       resolvedWishlistProducts
         .map((p) => p.categoryName || p.category)
-        .filter(Boolean)
+        .filter(Boolean),
     );
-    return ['all', ...Array.from(categoriesSet)];
+    return ["all", ...Array.from(categoriesSet)];
   }, [resolvedWishlistProducts]);
 
   // Filter products by search and category
   const filteredProducts = useMemo(() => {
     return resolvedWishlistProducts.filter((product) => {
       const matchesSearch =
-        searchQuery === '' ||
+        searchQuery === "" ||
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (product.subtitle && product.subtitle.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (product.fabric && product.fabric.toLowerCase().includes(searchQuery.toLowerCase()));
+        (product.subtitle &&
+          product.subtitle.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (product.fabric &&
+          product.fabric.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      const categoryName = (product.categoryName || product.category || '').toLowerCase();
+      const categoryName = (
+        product.categoryName ||
+        product.category ||
+        ""
+      ).toLowerCase();
       const matchesCategory =
-        selectedCategory === 'all' || categoryName === selectedCategory.toLowerCase();
+        selectedCategory === "all" ||
+        categoryName === selectedCategory.toLowerCase();
 
       return matchesSearch && matchesCategory;
     });
@@ -100,26 +110,30 @@ export const Wishlist = () => {
   const handleRemoveFromWishlist = (product) => {
     const productId = product.id || product._id;
     dispatch(toggleWishlist(productId));
-    showToast('info', `Removed "${product.name}" from your wishlist archive.`);
+    showToast("info", `Removed "${product.name}" from your wishlist archive.`);
   };
 
   const handleAddToCart = (product, e) => {
     if (e) e.stopPropagation();
-    
+
     const productId = product.id || product._id;
-    const chosenSize = selectedSizeMap[productId] || product.sizes?.[0] || 'Standard';
-    const chosenColor = product.colors?.[0]?.name || 'Classic';
+    const chosenSize =
+      selectedSizeMap[productId] || product.sizes?.[0] || "Standard";
+    const chosenColor = product.colors?.[0]?.name || "Classic";
 
     dispatch(
       addToCart({
         product,
         size: chosenSize,
         color: chosenColor,
-        quantity: 1
-      })
+        quantity: 1,
+      }),
     );
 
-    showToast('success', `Added "${product.name}" (${chosenSize}) to your shopping bag.`);
+    showToast(
+      "success",
+      `Added "${product.name}" (${chosenSize}) to your shopping bag.`,
+    );
   };
 
   const handleMoveAllToCart = () => {
@@ -127,29 +141,37 @@ export const Wishlist = () => {
 
     filteredProducts.forEach((product) => {
       const productId = product.id || product._id;
-      const chosenSize = selectedSizeMap[productId] || product.sizes?.[0] || 'Standard';
-      const chosenColor = product.colors?.[0]?.name || 'Classic';
+      const chosenSize =
+        selectedSizeMap[productId] || product.sizes?.[0] || "Standard";
+      const chosenColor = product.colors?.[0]?.name || "Classic";
 
       dispatch(
         addToCart({
           product,
           size: chosenSize,
           color: chosenColor,
-          quantity: 1
-        })
+          quantity: 1,
+        }),
       );
     });
 
-    showToast('success', `Transferred ${filteredProducts.length} items to your shopping bag.`);
+    showToast(
+      "success",
+      `Transferred ${filteredProducts.length} items to your shopping bag.`,
+    );
   };
 
   const handleClearWishlist = () => {
-    if (window.confirm('Are you sure you want to clear your saved wishlist archive?')) {
+    if (
+      window.confirm(
+        "Are you sure you want to clear your saved wishlist archive?",
+      )
+    ) {
       setIsClearing(true);
       setTimeout(() => {
         dispatch(clearWishlist());
         setIsClearing(false);
-        showToast('info', 'Your wishlist archive has been cleared.');
+        showToast("info", "Your wishlist archive has been cleared.");
       }, 300);
     }
   };
@@ -164,19 +186,19 @@ export const Wishlist = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F8F7F4] text-[#111111] py-10 md:py-16 px-4 sm:px-6 lg:px-12 font-sans">
+    <div className="min-h-screen bg-m4m-bg text-[#111111] py-10 md:py-16 px-4 sm:px-6 lg:px-12 font-sans">
       <div className="max-w-6xl mx-auto">
         {/* Page Header / Breadcrumb */}
-        <div className="mb-10 pb-6 border-b border-[#E5E3DF] flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="mb-10 pb-6 border-b border-m4m-border flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#8E877F] block mb-2">
+            <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-m4m-accent block mb-2">
               CLIENT PORTAL • SAVED GARMENT ARCHIVE
             </span>
             <h1 className="font-serif text-3xl sm:text-4xl text-[#111111] tracking-tight uppercase flex items-center gap-3">
               <span>Your Wishlist Archive</span>
-              <span className="text-sm font-mono bg-[#111111] text-[#F8F7F4] px-3 py-1 rounded-none">
-                {resolvedWishlistProducts.length}{' '}
-                {resolvedWishlistProducts.length === 1 ? 'GARMENT' : 'GARMENTS'}
+              <span className="text-sm font-mono bg-[#111111] text-m4m-bg px-3 py-1 rounded-none">
+                {resolvedWishlistProducts.length}{" "}
+                {resolvedWishlistProducts.length === 1 ? "GARMENT" : "GARMENTS"}
               </span>
             </h1>
           </div>
@@ -184,14 +206,14 @@ export const Wishlist = () => {
           <div className="flex items-center gap-3">
             <Link
               to="/cart"
-              className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E3DF] hover:border-[#111111] hover:bg-[#111111] hover:text-[#F8F7F4] text-[#111111] text-xs font-mono uppercase tracking-wider transition-all rounded-none"
+              className="inline-flex items-center gap-2 px-4 py-2 border border-m4m-border hover:border-[#111111] hover:bg-[#111111] hover:text-m4m-bg text-[#111111] text-xs font-mono uppercase tracking-wider transition-all rounded-none"
             >
               <ShoppingBag className="w-3.5 h-3.5" />
               <span>Active Bag</span>
             </Link>
             <Link
               to="/"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#111111] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-all rounded-none"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#111111] text-m4m-bg text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-all rounded-none"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Explore Catalog</span>
@@ -203,15 +225,15 @@ export const Wishlist = () => {
         {toastMessage && (
           <div
             className={`mb-8 p-4 border flex items-center justify-between text-xs font-mono uppercase tracking-wider transition-all ${
-              toastMessage.type === 'success'
-                ? 'bg-emerald-50/80 border-emerald-300 text-emerald-900'
-                : toastMessage.type === 'error'
-                ? 'bg-rose-50/80 border-rose-300 text-rose-900'
-                : 'bg-amber-50/80 border-amber-300 text-amber-900'
+              toastMessage.type === "success"
+                ? "bg-emerald-50/80 border-emerald-300 text-emerald-900"
+                : toastMessage.type === "error"
+                  ? "bg-rose-50/80 border-rose-300 text-rose-900"
+                  : "bg-amber-50/80 border-amber-300 text-amber-900"
             }`}
           >
             <div className="flex items-center gap-3">
-              {toastMessage.type === 'success' ? (
+              {toastMessage.type === "success" ? (
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               ) : (
                 <AlertCircle className="w-4 h-4 text-rose-600" />
@@ -220,7 +242,7 @@ export const Wishlist = () => {
             </div>
             <button
               onClick={() => setToastMessage(null)}
-              className="text-xs text-[#8E877F] hover:text-[#111111]"
+              className="text-xs text-m4m-accent hover:text-[#111111]"
             >
               ✕
             </button>
@@ -232,7 +254,7 @@ export const Wishlist = () => {
           <div className="lg:col-span-8 space-y-6">
             {/* Filter & View Controls Bar */}
             {resolvedWishlistProducts.length > 0 && (
-              <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-4 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+              <div className="bg-m4m-card border border-m4m-border p-4 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
                 {/* Search input inside wishlist */}
                 <div className="relative flex-1">
                   <input
@@ -240,9 +262,9 @@ export const Wishlist = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search saved garments by name or fabric..."
-                    className="w-full bg-[#F8F7F4] border border-[#E5E3DF] pl-9 pr-4 py-2 text-xs font-mono text-[#111111] focus:outline-none focus:border-[#111111] transition-colors placeholder:text-[#8E877F]"
+                    className="w-full bg-m4m-bg border border-m4m-border pl-9 pr-4 py-2 text-xs font-mono text-[#111111] focus:outline-none focus:border-[#111111] transition-colors placeholder:text-m4m-accent"
                   />
-                  <Search className="w-3.5 h-3.5 text-[#8E877F] absolute left-3 top-3 pointer-events-none" />
+                  <Search className="w-3.5 h-3.5 text-m4m-accent absolute left-3 top-3 pointer-events-none" />
                 </div>
 
                 {/* Category filter & view toggle */}
@@ -252,11 +274,13 @@ export const Wishlist = () => {
                       <select
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="bg-[#F8F7F4] border border-[#E5E3DF] px-3 py-2 text-xs font-mono uppercase tracking-wider text-[#111111] focus:outline-none focus:border-[#111111] cursor-pointer"
+                        className="bg-m4m-bg border border-m4m-border px-3 py-2 text-xs font-mono uppercase tracking-wider text-[#111111] focus:outline-none focus:border-[#111111] cursor-pointer"
                       >
                         {availableCategories.map((cat) => (
                           <option key={cat} value={cat}>
-                            {cat === 'all' ? 'ALL CATEGORIES' : cat.toUpperCase()}
+                            {cat === "all"
+                              ? "ALL CATEGORIES"
+                              : cat.toUpperCase()}
                           </option>
                         ))}
                       </select>
@@ -264,13 +288,13 @@ export const Wishlist = () => {
                   )}
 
                   {/* Grid vs List view toggle */}
-                  <div className="flex items-center border border-[#E5E3DF] bg-[#F8F7F4]">
+                  <div className="flex items-center border border-m4m-border bg-m4m-bg">
                     <button
-                      onClick={() => setViewMode('grid')}
+                      onClick={() => setViewMode("grid")}
                       className={`p-2 transition-colors ${
-                        viewMode === 'grid'
-                          ? 'bg-[#111111] text-[#F8F7F4]'
-                          : 'text-[#8E877F] hover:text-[#111111]'
+                        viewMode === "grid"
+                          ? "bg-[#111111] text-m4m-bg"
+                          : "text-m4m-accent hover:text-[#111111]"
                       }`}
                       title="Grid View"
                       aria-label="Grid View"
@@ -278,11 +302,11 @@ export const Wishlist = () => {
                       <Grid className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => setViewMode('list')}
+                      onClick={() => setViewMode("list")}
                       className={`p-2 transition-colors ${
-                        viewMode === 'list'
-                          ? 'bg-[#111111] text-[#F8F7F4]'
-                          : 'text-[#8E877F] hover:text-[#111111]'
+                        viewMode === "list"
+                          ? "bg-[#111111] text-m4m-bg"
+                          : "text-m4m-accent hover:text-[#111111]"
                       }`}
                       title="List View"
                       aria-label="List View"
@@ -296,9 +320,10 @@ export const Wishlist = () => {
 
             {/* Bulk Actions Header */}
             {filteredProducts.length > 0 && (
-              <div className="flex items-center justify-between px-2 text-xs font-mono uppercase tracking-wider text-[#8E877F]">
+              <div className="flex items-center justify-between px-2 text-xs font-mono uppercase tracking-wider text-m4m-accent">
                 <span>
-                  SHOWING {filteredProducts.length} OF {resolvedWishlistProducts.length} SAVED PIECES
+                  SHOWING {filteredProducts.length} OF{" "}
+                  {resolvedWishlistProducts.length} SAVED PIECES
                 </span>
 
                 <div className="flex items-center gap-4">
@@ -307,7 +332,9 @@ export const Wishlist = () => {
                     className="hover:text-[#111111] transition-colors flex items-center gap-1.5"
                   >
                     <ShoppingBag className="w-3.5 h-3.5 text-[#111111]" />
-                    <span className="text-[#111111] font-semibold">MOVE ALL TO BAG</span>
+                    <span className="text-[#111111] font-semibold">
+                      MOVE ALL TO BAG
+                    </span>
                   </button>
                   <span>•</span>
                   <button
@@ -315,7 +342,9 @@ export const Wishlist = () => {
                     disabled={isClearing}
                     className="hover:text-rose-600 transition-colors flex items-center gap-1"
                   >
-                    <RefreshCw className={`w-3 h-3 ${isClearing ? 'animate-spin' : ''}`} />
+                    <RefreshCw
+                      className={`w-3 h-3 ${isClearing ? "animate-spin" : ""}`}
+                    />
                     <span>CLEAR ARCHIVE</span>
                   </button>
                 </div>
@@ -325,27 +354,29 @@ export const Wishlist = () => {
             {/* Wishlist Items Display */}
             {resolvedWishlistProducts.length === 0 ? (
               /* EMPTY WISHLIST STATE */
-              <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-8 sm:p-12 text-center space-y-6 shadow-xs">
-                <div className="w-20 h-20 mx-auto rounded-full bg-[#F8F7F4] border border-[#E5E3DF] flex items-center justify-center text-[#8E877F]">
-                  <Heart className="w-10 h-10 stroke-[1.25] text-[#8E877F]" />
+              <div className="bg-m4m-card border border-m4m-border p-8 sm:p-12 text-center space-y-6 shadow-xs">
+                <div className="w-20 h-20 mx-auto rounded-full bg-m4m-bg border border-m4m-border flex items-center justify-center text-m4m-accent">
+                  <Heart className="w-10 h-10 stroke-[1.25] text-m4m-accent" />
                 </div>
 
                 <div className="max-w-md mx-auto space-y-2">
-                  <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#8E877F]">
+                  <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-m4m-accent">
                     EMPTY CLIENT ARCHIVE
                   </span>
                   <h2 className="font-serif text-2xl sm:text-3xl uppercase tracking-wider text-[#111111]">
                     Your Wishlist is Empty
                   </h2>
-                  <p className="text-xs text-[#666666] font-sans leading-relaxed">
-                    Bookmark your favorite bespoke coats, tailored suits, cashmere knits, and handcrafted footwear to keep track of seasonal availability and price updates.
+                  <p className="text-xs text-m4m-secondary font-sans leading-relaxed">
+                    Bookmark your favorite bespoke coats, tailored suits,
+                    cashmere knits, and handcrafted footwear to keep track of
+                    seasonal availability and price updates.
                   </p>
                 </div>
 
                 <div className="pt-2 flex flex-wrap justify-center gap-4">
                   <Link
                     to="/"
-                    className="inline-flex items-center gap-2 bg-[#111111] text-[#F8F7F4] px-7 py-3 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#333333] transition-colors"
+                    className="inline-flex items-center gap-2 bg-[#111111] text-m4m-bg px-7 py-3 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#333333] transition-colors"
                   >
                     <span>Browse New Arrivals</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -353,7 +384,7 @@ export const Wishlist = () => {
                 </div>
 
                 {/* Suggested Items Gallery inside Empty State */}
-                <div className="pt-10 border-t border-[#E5E3DF] text-left space-y-4">
+                <div className="pt-10 border-t border-m4m-border text-left space-y-4">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-[#111111]" />
                     <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-[#111111] font-semibold">
@@ -365,23 +396,23 @@ export const Wishlist = () => {
                     {recommendedItems.map((item) => (
                       <div
                         key={item.id}
-                        className="bg-[#F8F7F4] border border-[#E5E3DF] p-4 flex flex-col justify-between group hover:border-[#111111] transition-all"
+                        className="bg-m4m-bg border border-m4m-border p-4 flex flex-col justify-between group hover:border-[#111111] transition-all"
                       >
                         <div className="space-y-3">
                           <img
                             src={item.images?.[0] || item.image}
                             alt={item.name}
-                            className="w-full h-40 object-cover bg-white border border-[#E5E3DF]"
+                            className="w-full h-40 object-cover bg-white border border-m4m-border"
                           />
                           <div>
-                            <span className="text-[9px] font-mono uppercase text-[#8E877F]">
+                            <span className="text-[9px] font-mono uppercase text-m4m-accent">
                               {item.categoryName || item.category}
                             </span>
                             <h4 className="font-serif text-sm uppercase text-[#111111] line-clamp-1">
                               {item.name}
                             </h4>
                             <p className="font-mono text-xs text-[#111111] mt-1 font-semibold">
-                              ₹{item.price.toLocaleString('en-IN')}
+                              ₹{item.price.toLocaleString("en-IN")}
                             </p>
                           </div>
                         </div>
@@ -389,9 +420,12 @@ export const Wishlist = () => {
                         <button
                           onClick={() => {
                             dispatch(toggleWishlist(item.id));
-                            showToast('success', `Saved "${item.name}" to your wishlist.`);
+                            showToast(
+                              "success",
+                              `Saved "${item.name}" to your wishlist.`,
+                            );
                           }}
-                          className="mt-4 w-full py-2 border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F8F7F4] text-[10px] font-mono uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5"
+                          className="mt-4 w-full py-2 border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-m4m-bg text-[10px] font-mono uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5"
                         >
                           <Heart className="w-3 h-3 fill-current" />
                           <span>SAVE TO WISHLIST</span>
@@ -403,41 +437,48 @@ export const Wishlist = () => {
               </div>
             ) : filteredProducts.length === 0 ? (
               /* NO MATCHES FOR SEARCH FILTER */
-              <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-10 text-center space-y-4 shadow-xs">
-                <AlertCircle className="w-8 h-8 text-[#8E877F] mx-auto" />
+              <div className="bg-m4m-card border border-m4m-border p-10 text-center space-y-4 shadow-xs">
+                <AlertCircle className="w-8 h-8 text-m4m-accent mx-auto" />
                 <h3 className="font-serif text-lg uppercase text-[#111111]">
                   No saved garments match your criteria
                 </h3>
-                <p className="text-xs text-[#666666] font-sans">
+                <p className="text-xs text-m4m-secondary font-sans">
                   Try adjusting your search terms or category filter.
                 </p>
                 <button
                   onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('all');
+                    setSearchQuery("");
+                    setSelectedCategory("all");
                   }}
-                  className="px-4 py-2 border border-[#111111] text-xs font-mono uppercase text-[#111111] hover:bg-[#111111] hover:text-[#F8F7F4] transition-colors"
+                  className="px-4 py-2 border border-[#111111] text-xs font-mono uppercase text-[#111111] hover:bg-[#111111] hover:text-m4m-bg transition-colors"
                 >
                   Reset Filters
                 </button>
               </div>
-            ) : viewMode === 'grid' ? (
+            ) : viewMode === "grid" ? (
               /* GRID VIEW DISPLAY */
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {filteredProducts.map((product) => {
                   const productId = product.id || product._id;
-                  const chosenSize = selectedSizeMap[productId] || product.sizes?.[0] || 'Standard';
+                  const chosenSize =
+                    selectedSizeMap[productId] ||
+                    product.sizes?.[0] ||
+                    "Standard";
 
                   return (
                     <div
                       key={productId}
-                      className="bg-[#FFFFFF] border border-[#E5E3DF] shadow-xs flex flex-col justify-between group hover:border-[#111111] transition-all relative"
+                      className="bg-m4m-card border border-m4m-border shadow-xs flex flex-col justify-between group hover:border-[#111111] transition-all relative"
                     >
                       {/* Badge / Status Indicator */}
                       <div className="p-4 space-y-4">
-                        <div className="relative overflow-hidden bg-[#F8F7F4] border border-[#E5E3DF] group">
+                        <div className="relative overflow-hidden bg-m4m-bg border border-m4m-border group">
                           <img
-                            src={product.images?.[0] || product.image || product.hoverImage}
+                            src={
+                              product.images?.[0] ||
+                              product.image ||
+                              product.hoverImage
+                            }
                             alt={product.name}
                             className="w-full h-64 object-cover object-top transition-transform duration-700 group-hover:scale-105"
                           />
@@ -446,7 +487,7 @@ export const Wishlist = () => {
                           <button
                             type="button"
                             onClick={() => handleRemoveFromWishlist(product)}
-                            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[#FFFFFF]/90 hover:bg-rose-600 hover:text-white text-[#111111] border border-[#E5E3DF] flex items-center justify-center shadow-xs transition-colors z-10"
+                            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-m4m-card/90 hover:bg-rose-600 hover:text-white text-[#111111] border border-m4m-border flex items-center justify-center shadow-xs transition-colors z-10"
                             title="Remove from Wishlist"
                             aria-label="Remove from Wishlist"
                           >
@@ -455,25 +496,25 @@ export const Wishlist = () => {
 
                           {/* Collection Tag or Badge */}
                           {product.badge && (
-                            <span className="absolute top-3 left-3 bg-[#111111] text-[#F8F7F4] text-[9px] font-mono uppercase tracking-widest px-2.5 py-1">
+                            <span className="absolute top-3 left-3 bg-[#111111] text-m4m-bg text-[9px] font-mono uppercase tracking-widest px-2.5 py-1">
                               {product.badge}
                             </span>
                           )}
 
                           {/* Stock Overlay Tag */}
-                          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 bg-[#FFFFFF]/90 backdrop-blur-sm border border-[#E5E3DF]">
+                          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 bg-m4m-card/90 backdrop-blur-sm border border-m4m-border">
                             <span
                               className={
                                 product.inStock !== false
-                                  ? 'text-emerald-800 font-semibold'
-                                  : 'text-rose-700 font-semibold'
+                                  ? "text-emerald-800 font-semibold"
+                                  : "text-rose-700 font-semibold"
                               }
                             >
                               {product.inStock !== false
                                 ? product.stockCount
                                   ? `IN STOCK (${product.stockCount} AVAILABLE)`
-                                  : 'IN STOCK • READY TO SHIP'
-                                : 'OUT OF STOCK'}
+                                  : "IN STOCK • READY TO SHIP"
+                                : "OUT OF STOCK"}
                             </span>
                           </div>
                         </div>
@@ -481,10 +522,12 @@ export const Wishlist = () => {
                         {/* Product Title & Specifications */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-mono uppercase tracking-widest text-[#8E877F]">
-                              {product.categoryName || product.category || 'MENSWEAR'}
+                            <span className="text-[10px] font-mono uppercase tracking-widest text-m4m-accent">
+                              {product.categoryName ||
+                                product.category ||
+                                "MENSWEAR"}
                             </span>
-                            <span className="text-[10px] font-mono text-[#8E877F]">
+                            <span className="text-[10px] font-mono text-m4m-accent">
                               SKU: {productId}
                             </span>
                           </div>
@@ -494,7 +537,7 @@ export const Wishlist = () => {
                           </h3>
 
                           {product.subtitle && (
-                            <p className="text-xs text-[#666666] font-sans line-clamp-1">
+                            <p className="text-xs text-m4m-secondary font-sans line-clamp-1">
                               {product.subtitle}
                             </p>
                           )}
@@ -502,11 +545,12 @@ export const Wishlist = () => {
                           {/* Pricing */}
                           <div className="pt-2 flex items-baseline gap-3">
                             <span className="font-mono text-base font-semibold text-[#111111]">
-                              ₹{product.price.toLocaleString('en-IN')}
+                              ₹{product.price.toLocaleString("en-IN")}
                             </span>
                             {product.compareAtPrice && (
-                              <span className="font-mono text-xs text-[#8E877F] line-through">
-                                ₹{product.compareAtPrice.toLocaleString('en-IN')}
+                              <span className="font-mono text-xs text-m4m-accent line-through">
+                                ₹
+                                {product.compareAtPrice.toLocaleString("en-IN")}
                               </span>
                             )}
                           </div>
@@ -514,13 +558,15 @@ export const Wishlist = () => {
                           {/* Size Selection Dropdown if multiple sizes exist */}
                           {product.sizes && product.sizes.length > 0 && (
                             <div className="pt-2 flex items-center gap-2">
-                              <span className="text-[10px] font-mono uppercase text-[#8E877F]">
+                              <span className="text-[10px] font-mono uppercase text-m4m-accent">
                                 SIZE:
                               </span>
                               <select
                                 value={chosenSize}
-                                onChange={(e) => handleSizeChange(productId, e.target.value)}
-                                className="bg-[#F8F7F4] border border-[#E5E3DF] px-2 py-1 text-[11px] font-mono text-[#111111] focus:outline-none focus:border-[#111111]"
+                                onChange={(e) =>
+                                  handleSizeChange(productId, e.target.value)
+                                }
+                                className="bg-m4m-bg border border-m4m-border px-2 py-1 text-[11px] font-mono text-[#111111] focus:outline-none focus:border-[#111111]"
                               >
                                 {product.sizes.map((sz) => (
                                   <option key={sz} value={sz}>
@@ -534,13 +580,13 @@ export const Wishlist = () => {
                       </div>
 
                       {/* Card Action Buttons */}
-                      <div className="p-4 pt-0 border-t border-[#E5E3DF] mt-3 grid grid-cols-2 gap-2">
+                      <div className="p-4 pt-0 border-t border-m4m-border mt-3 grid grid-cols-2 gap-2">
                         <button
                           type="button"
                           onClick={() => setQuickViewProduct(product)}
-                          className="py-2.5 border border-[#E5E3DF] hover:border-[#111111] text-xs font-mono uppercase tracking-wider text-[#111111] transition-colors flex items-center justify-center gap-1.5"
+                          className="py-2.5 border border-m4m-border hover:border-[#111111] text-xs font-mono uppercase tracking-wider text-[#111111] transition-colors flex items-center justify-center gap-1.5"
                         >
-                          <ExternalLink className="w-3.5 h-3.5 text-[#8E877F]" />
+                          <ExternalLink className="w-3.5 h-3.5 text-m4m-accent" />
                           <span>DETAILS</span>
                         </button>
 
@@ -548,7 +594,7 @@ export const Wishlist = () => {
                           type="button"
                           onClick={(e) => handleAddToCart(product, e)}
                           disabled={product.inStock === false}
-                          className="py-2.5 bg-[#111111] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="py-2.5 bg-[#111111] text-m4m-bg text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ShoppingBag className="w-3.5 h-3.5" />
                           <span>ADD TO BAG</span>
@@ -560,30 +606,35 @@ export const Wishlist = () => {
               </div>
             ) : (
               /* LIST VIEW DISPLAY */
-              <div className="bg-[#FFFFFF] border border-[#E5E3DF] shadow-xs divide-y divide-[#E5E3DF]">
+              <div className="bg-m4m-card border border-m4m-border shadow-xs divide-y divide-m4m-border">
                 {filteredProducts.map((product) => {
                   const productId = product.id || product._id;
-                  const chosenSize = selectedSizeMap[productId] || product.sizes?.[0] || 'Standard';
+                  const chosenSize =
+                    selectedSizeMap[productId] ||
+                    product.sizes?.[0] ||
+                    "Standard";
 
                   return (
                     <div
                       key={productId}
-                      className="p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between hover:bg-[#F8F7F4]/40 transition-colors"
+                      className="p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between hover:bg-m4m-bg/40 transition-colors"
                     >
                       {/* Image & Main Info */}
                       <div className="flex gap-5 items-start sm:items-center">
                         <img
                           src={product.images?.[0] || product.image}
                           alt={product.name}
-                          className="w-24 h-28 object-cover bg-[#F8F7F4] border border-[#E5E3DF] shrink-0"
+                          className="w-24 h-28 object-cover bg-m4m-bg border border-m4m-border shrink-0"
                         />
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-mono uppercase tracking-widest text-[#8E877F]">
-                              {product.categoryName || product.category || 'COLLECTION'}
+                            <span className="text-[10px] font-mono uppercase tracking-widest text-m4m-accent">
+                              {product.categoryName ||
+                                product.category ||
+                                "COLLECTION"}
                             </span>
                             {product.origin && (
-                              <span className="text-[9px] font-mono uppercase text-[#8E877F]">
+                              <span className="text-[9px] font-mono uppercase text-m4m-accent">
                                 • {product.origin}
                               </span>
                             )}
@@ -591,18 +642,20 @@ export const Wishlist = () => {
                           <h3 className="font-serif text-lg uppercase text-[#111111] leading-snug">
                             {product.name}
                           </h3>
-                          <p className="text-xs text-[#666666] font-sans line-clamp-1">
+                          <p className="text-xs text-m4m-secondary font-sans line-clamp-1">
                             {product.fabric || product.subtitle}
                           </p>
 
                           {/* Size Selection */}
                           {product.sizes && product.sizes.length > 0 && (
                             <div className="pt-1 flex items-center gap-2 text-[11px] font-mono">
-                              <span className="text-[#8E877F]">SIZE:</span>
+                              <span className="text-m4m-accent">SIZE:</span>
                               <select
                                 value={chosenSize}
-                                onChange={(e) => handleSizeChange(productId, e.target.value)}
-                                className="bg-[#F8F7F4] border border-[#E5E3DF] px-2 py-0.5 text-xs font-mono text-[#111111] focus:outline-none"
+                                onChange={(e) =>
+                                  handleSizeChange(productId, e.target.value)
+                                }
+                                className="bg-m4m-bg border border-m4m-border px-2 py-0.5 text-xs font-mono text-[#111111] focus:outline-none"
                               >
                                 {product.sizes.map((sz) => (
                                   <option key={sz} value={sz}>
@@ -616,13 +669,15 @@ export const Wishlist = () => {
                       </div>
 
                       {/* Pricing, Availability & Actions */}
-                      <div className="w-full sm:w-auto flex sm:flex-col items-center sm:items-end justify-between gap-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-[#E5E3DF]">
+                      <div className="w-full sm:w-auto flex sm:flex-col items-center sm:items-end justify-between gap-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-m4m-border">
                         <div className="text-left sm:text-right">
                           <span className="font-mono text-base font-semibold text-[#111111] block">
-                            ₹{product.price.toLocaleString('en-IN')}
+                            ₹{product.price.toLocaleString("en-IN")}
                           </span>
                           <span className="text-[10px] font-mono text-emerald-800 uppercase tracking-wider block">
-                            {product.inStock !== false ? 'IN STOCK' : 'OUT OF STOCK'}
+                            {product.inStock !== false
+                              ? "IN STOCK"
+                              : "OUT OF STOCK"}
                           </span>
                         </div>
 
@@ -630,7 +685,7 @@ export const Wishlist = () => {
                           <button
                             type="button"
                             onClick={() => handleRemoveFromWishlist(product)}
-                            className="p-2.5 border border-[#E5E3DF] hover:border-rose-300 hover:bg-rose-50/50 text-[#8E877F] hover:text-rose-600 transition-colors"
+                            className="p-2.5 border border-m4m-border hover:border-rose-300 hover:bg-rose-50/50 text-m4m-accent hover:text-rose-600 transition-colors"
                             title="Remove from Wishlist"
                             aria-label="Remove from Wishlist"
                           >
@@ -641,7 +696,7 @@ export const Wishlist = () => {
                             type="button"
                             onClick={(e) => handleAddToCart(product, e)}
                             disabled={product.inStock === false}
-                            className="px-4 py-2.5 bg-[#111111] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                            className="px-4 py-2.5 bg-[#111111] text-m4m-bg text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors flex items-center gap-1.5 disabled:opacity-50"
                           >
                             <ShoppingBag className="w-3.5 h-3.5" />
                             <span>ADD TO BAG</span>
@@ -655,40 +710,40 @@ export const Wishlist = () => {
             )}
 
             {/* Quick Navigation Menu (Matches Profile & Cart pages) */}
-            <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-6 space-y-3 shadow-xs">
-              <h3 className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#8E877F] mb-4">
+            <div className="bg-m4m-card border border-m4m-border p-6 space-y-3 shadow-xs">
+              <h3 className="text-[10px] font-mono uppercase tracking-[0.25em] text-m4m-accent mb-4">
                 CLIENT ACCOUNT NAVIGATION
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <Link
                   to="/profile"
-                  className="flex items-center gap-2.5 p-3 hover:bg-[#F8F7F4] border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  className="flex items-center gap-2.5 p-3 hover:bg-m4m-bg border border-m4m-border text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                 >
-                  <User className="w-4 h-4 text-[#8E877F]" />
+                  <User className="w-4 h-4 text-m4m-accent" />
                   <span>Profile</span>
                 </Link>
 
                 <Link
                   to="/orders"
-                  className="flex items-center gap-2.5 p-3 hover:bg-[#F8F7F4] border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  className="flex items-center gap-2.5 p-3 hover:bg-m4m-bg border border-m4m-border text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                 >
-                  <Package className="w-4 h-4 text-[#8E877F]" />
+                  <Package className="w-4 h-4 text-m4m-accent" />
                   <span>Orders</span>
                 </Link>
 
                 <Link
                   to="/addresses"
-                  className="flex items-center gap-2.5 p-3 hover:bg-[#F8F7F4] border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  className="flex items-center gap-2.5 p-3 hover:bg-m4m-bg border border-m4m-border text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                 >
-                  <MapPin className="w-4 h-4 text-[#8E877F]" />
+                  <MapPin className="w-4 h-4 text-m4m-accent" />
                   <span>Addresses</span>
                 </Link>
 
                 <Link
                   to="/cart"
-                  className="flex items-center gap-2.5 p-3 hover:bg-[#F8F7F4] border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  className="flex items-center gap-2.5 p-3 hover:bg-m4m-bg border border-m4m-border text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                 >
-                  <ShoppingBag className="w-4 h-4 text-[#8E877F]" />
+                  <ShoppingBag className="w-4 h-4 text-m4m-accent" />
                   <span>Active Bag</span>
                 </Link>
               </div>
@@ -698,40 +753,46 @@ export const Wishlist = () => {
           {/* Right Column: Wishlist Summary & Client Services (4 Cols) */}
           <div className="lg:col-span-4 space-y-6">
             {/* Wishlist Overview Summary Box */}
-            <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-6 space-y-6 shadow-xs sticky top-8">
-              <div className="pb-4 border-b border-[#E5E3DF] flex items-center justify-between">
+            <div className="bg-m4m-card border border-m4m-border p-6 space-y-6 shadow-xs sticky top-8">
+              <div className="pb-4 border-b border-m4m-border flex items-center justify-between">
                 <h3 className="font-serif text-xl uppercase tracking-wider text-[#111111]">
                   Wishlist Overview
                 </h3>
-                <span className="text-[10px] font-mono text-[#8E877F] uppercase tracking-widest">
+                <span className="text-[10px] font-mono text-m4m-accent uppercase tracking-widest">
                   CURATED ARCHIVE
                 </span>
               </div>
 
               {/* Wishlist Statistics */}
               <div className="space-y-4 text-xs font-mono">
-                <div className="flex justify-between items-center pb-3 border-b border-[#E5E3DF]/50">
-                  <span className="text-[#666666]">Total Saved Items</span>
+                <div className="flex justify-between items-center pb-3 border-b border-m4m-border/50">
+                  <span className="text-m4m-secondary">Total Saved Items</span>
                   <span className="font-semibold text-[#111111]">
                     {resolvedWishlistProducts.length}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center pb-3 border-b border-[#E5E3DF]/50">
-                  <span className="text-[#666666]">Estimated Collection Value</span>
+                <div className="flex justify-between items-center pb-3 border-b border-m4m-border/50">
+                  <span className="text-m4m-secondary">
+                    Estimated Collection Value
+                  </span>
                   <span className="font-semibold text-[#111111]">
                     ₹
                     {resolvedWishlistProducts
                       .reduce((acc, item) => acc + (item.price || 0), 0)
-                      .toLocaleString('en-IN')}
+                      .toLocaleString("en-IN")}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center pb-3 border-b border-[#E5E3DF]/50">
-                  <span className="text-[#666666]">In Stock Status</span>
+                <div className="flex justify-between items-center pb-3 border-b border-m4m-border/50">
+                  <span className="text-m4m-secondary">In Stock Status</span>
                   <span className="text-emerald-800 font-semibold">
-                    {resolvedWishlistProducts.filter((p) => p.inStock !== false).length} /{' '}
-                    {resolvedWishlistProducts.length} AVAILABLE
+                    {
+                      resolvedWishlistProducts.filter(
+                        (p) => p.inStock !== false,
+                      ).length
+                    }{" "}
+                    / {resolvedWishlistProducts.length} AVAILABLE
                   </span>
                 </div>
               </div>
@@ -741,7 +802,7 @@ export const Wishlist = () => {
                 <button
                   type="button"
                   onClick={handleMoveAllToCart}
-                  className="w-full bg-[#111111] text-[#F8F7F4] py-4 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#333333] transition-all flex items-center justify-center gap-2 group"
+                  className="w-full bg-[#111111] text-m4m-bg py-4 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#333333] transition-all flex items-center justify-center gap-2 group"
                 >
                   <ShoppingBag className="w-4 h-4" />
                   <span>TRANSFER ALL TO BAG</span>
@@ -749,7 +810,7 @@ export const Wishlist = () => {
               )}
 
               {/* Security & Authenticity Badges */}
-              <div className="pt-4 border-t border-[#E5E3DF] space-y-3 text-[11px] font-mono text-[#666666]">
+              <div className="pt-4 border-t border-m4m-border space-y-3 text-[11px] font-mono text-m4m-secondary">
                 <div className="flex items-center gap-2.5">
                   <ShieldCheck className="w-4 h-4 text-[#111111] shrink-0" />
                   <span>Guaranteed Bespoke Craftsmanship</span>
@@ -767,10 +828,10 @@ export const Wishlist = () => {
       {/* Quick View Product Modal */}
       {quickViewProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111111]/60 backdrop-blur-xs">
-          <div className="bg-[#FFFFFF] border border-[#E5E3DF] max-w-xl w-full p-6 space-y-6 shadow-2xl relative">
+          <div className="bg-m4m-card border border-m4m-border max-w-xl w-full p-6 space-y-6 shadow-2xl relative">
             <button
               onClick={() => setQuickViewProduct(null)}
-              className="absolute top-4 right-4 text-[#8E877F] hover:text-[#111111] p-1"
+              className="absolute top-4 right-4 text-m4m-accent hover:text-[#111111] p-1"
             >
               <X className="w-5 h-5" />
             </button>
@@ -779,41 +840,43 @@ export const Wishlist = () => {
               <img
                 src={quickViewProduct.images?.[0] || quickViewProduct.image}
                 alt={quickViewProduct.name}
-                className="w-full sm:w-48 h-64 object-cover bg-[#F8F7F4] border border-[#E5E3DF]"
+                className="w-full sm:w-48 h-64 object-cover bg-m4m-bg border border-m4m-border"
               />
 
               <div className="space-y-3 flex-1">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#8E877F]">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-m4m-accent">
                   {quickViewProduct.categoryName || quickViewProduct.category}
                 </span>
                 <h3 className="font-serif text-xl uppercase text-[#111111]">
                   {quickViewProduct.name}
                 </h3>
                 <p className="font-mono text-base font-semibold text-[#111111]">
-                  ₹{quickViewProduct.price.toLocaleString('en-IN')}
+                  ₹{quickViewProduct.price.toLocaleString("en-IN")}
                 </p>
-                <p className="text-xs text-[#666666] font-sans leading-relaxed">
+                <p className="text-xs text-m4m-secondary font-sans leading-relaxed">
                   {quickViewProduct.description || quickViewProduct.subtitle}
                 </p>
 
                 {quickViewProduct.fabric && (
                   <div className="pt-2 text-xs font-mono text-[#111111]">
-                    <span className="text-[#8E877F]">FABRIC:</span> {quickViewProduct.fabric}
+                    <span className="text-m4m-accent">FABRIC:</span>{" "}
+                    {quickViewProduct.fabric}
                   </div>
                 )}
 
                 {quickViewProduct.origin && (
                   <div className="text-xs font-mono text-[#111111]">
-                    <span className="text-[#8E877F]">ORIGIN:</span> {quickViewProduct.origin}
+                    <span className="text-m4m-accent">ORIGIN:</span>{" "}
+                    {quickViewProduct.origin}
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="pt-4 border-t border-[#E5E3DF] flex justify-end gap-3">
+            <div className="pt-4 border-t border-m4m-border flex justify-end gap-3">
               <button
                 onClick={() => setQuickViewProduct(null)}
-                className="px-4 py-2 border border-[#E5E3DF] text-xs font-mono uppercase text-[#666666] hover:text-[#111111]"
+                className="px-4 py-2 border border-m4m-border text-xs font-mono uppercase text-m4m-secondary hover:text-[#111111]"
               >
                 Close
               </button>
@@ -822,7 +885,7 @@ export const Wishlist = () => {
                   handleAddToCart(quickViewProduct, e);
                   setQuickViewProduct(null);
                 }}
-                className="px-6 py-2 bg-[#111111] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors flex items-center gap-2"
+                className="px-6 py-2 bg-[#111111] text-m4m-bg text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors flex items-center gap-2"
               >
                 <ShoppingBag className="w-3 h-3" />
                 <span>Add to Bag</span>

@@ -47,12 +47,12 @@ export const CartDrawer = ({ onOpenCheckout }) => {
 
       {/* Drawer Panel */}
       <div
-        className={`absolute top-0 right-0 h-full w-full max-w-md bg-[#F8F7F4] text-[#111111] shadow-2xl flex flex-col transition-transform duration-500 ease-out ${
+        className={`absolute top-0 right-0 h-full w-full max-w-md bg-m4m-bg text-[#111111] shadow-2xl flex flex-col transition-transform duration-500 ease-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-[#E5E3DF] flex items-center justify-between bg-[#FFFFFF]">
+        <div className="px-6 py-5 border-b border-m4m-border flex items-center justify-between bg-m4m-card">
           <div className="flex items-center gap-2.5">
             <ShoppingBag className="w-4 h-4 text-[#111111]" />
             <h2 className="text-xs font-mono uppercase tracking-[0.25em] font-semibold text-[#111111]">
@@ -61,7 +61,7 @@ export const CartDrawer = ({ onOpenCheckout }) => {
           </div>
           <button
             onClick={() => dispatch(closeCart())}
-            className="p-1.5 text-[#666666] hover:text-[#111111] transition-colors"
+            className="p-1.5 text-m4m-secondary hover:text-[#111111] transition-colors"
             aria-label="Close bag"
           >
             <X className="w-5 h-5" />
@@ -69,8 +69,8 @@ export const CartDrawer = ({ onOpenCheckout }) => {
         </div>
 
         {/* Free Shipping Progress Indicator (₹999) */}
-        <div className="px-6 py-3.5 bg-[#EFECE6] border-b border-[#E5E3DF]">
-          <div className="flex justify-between text-[10px] font-mono uppercase tracking-wider mb-1.5 text-[#666666]">
+        <div className="px-6 py-3.5 bg-m4m-stone border-b border-m4m-border">
+          <div className="flex justify-between text-[10px] font-mono uppercase tracking-wider mb-1.5 text-m4m-secondary">
             <span>
               {amountToFreeShipping === 0
                 ? '✓ COMPLIMENTARY EXPRESS SHIPPING UNLOCKED'
@@ -87,17 +87,17 @@ export const CartDrawer = ({ onOpenCheckout }) => {
         </div>
 
         {/* Cart Item List */}
-        <div className="flex-1 overflow-y-auto p-6 divide-y divide-[#E5E3DF]">
+        <div className="flex-1 overflow-y-auto p-6 divide-y divide-m4m-border">
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center py-16">
-              <ShoppingBag className="w-12 h-12 text-[#8E877F] stroke-[1] mb-4" />
+              <ShoppingBag className="w-12 h-12 text-m4m-accent stroke-[1] mb-4" />
               <p className="font-serif text-xl text-[#111111] mb-2">Your Bag is Empty</p>
-              <p className="text-xs text-[#666666] max-w-xs mb-6 font-sans">
+              <p className="text-xs text-m4m-secondary max-w-xs mb-6 font-sans">
                 Discover contemporary pieces from our independent brand collective.
               </p>
               <button
                 onClick={() => dispatch(closeCart())}
-                className="bg-[#111111] text-[#F8F7F4] text-[11px] font-mono uppercase tracking-[0.2em] px-6 py-3 hover:bg-[#2B2B2B] transition-colors"
+                className="bg-[#111111] text-m4m-bg text-[11px] font-mono uppercase tracking-[0.2em] px-6 py-3 hover:bg-[#2B2B2B] transition-colors"
               >
                 DISCOVER NEW ARRIVALS
               </button>
@@ -108,7 +108,7 @@ export const CartDrawer = ({ onOpenCheckout }) => {
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-20 h-24 object-cover bg-[#E5E3DF] shrink-0"
+                  className="w-20 h-24 object-cover bg-m4m-border shrink-0"
                 />
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
@@ -124,7 +124,7 @@ export const CartDrawer = ({ onOpenCheckout }) => {
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <p className="text-[11px] text-[#666666] mt-1 font-mono uppercase tracking-wider">
+                    <p className="text-[11px] text-m4m-secondary mt-1 font-mono uppercase tracking-wider">
                       {item.color} • {item.size}
                     </p>
                     <p className="text-xs font-medium text-[#111111] mt-1">
@@ -134,7 +134,7 @@ export const CartDrawer = ({ onOpenCheckout }) => {
 
                   {/* Quantity Controller */}
                   <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center border border-[#E5E3DF] bg-[#FFFFFF]">
+                    <div className="flex items-center border border-m4m-border bg-m4m-card">
                       <button
                         onClick={() =>
                           dispatch(
@@ -146,7 +146,7 @@ export const CartDrawer = ({ onOpenCheckout }) => {
                             })
                           )
                         }
-                        className="p-1.5 hover:bg-[#F8F7F4] text-[#666666] transition-colors"
+                        className="p-1.5 hover:bg-m4m-bg text-m4m-secondary transition-colors"
                         aria-label="Decrease"
                       >
                         <Minus className="w-3 h-3" />
@@ -165,7 +165,7 @@ export const CartDrawer = ({ onOpenCheckout }) => {
                             })
                           )
                         }
-                        className="p-1.5 hover:bg-[#F8F7F4] text-[#666666] transition-colors"
+                        className="p-1.5 hover:bg-m4m-bg text-m4m-secondary transition-colors"
                         aria-label="Increase"
                       >
                         <Plus className="w-3 h-3" />
@@ -184,16 +184,16 @@ export const CartDrawer = ({ onOpenCheckout }) => {
 
         {/* Footer Summary & Checkout */}
         {items.length > 0 && (
-          <div className="p-6 border-t border-[#E5E3DF] bg-[#FFFFFF] space-y-4">
+          <div className="p-6 border-t border-m4m-border bg-m4m-card space-y-4">
             <div>
               {promoCode ? (
-                <div className="flex items-center justify-between bg-[#EFECE6] px-3 py-2 text-xs font-mono">
+                <div className="flex items-center justify-between bg-m4m-stone px-3 py-2 text-xs font-mono">
                   <span className="text-[#111111] font-semibold">
                     {promoCode} (-{discountPercent}%)
                   </span>
                   <button
                     onClick={() => dispatch(removePromo())}
-                    className="text-[#666666] hover:text-[#111111] text-[10px] uppercase underline"
+                    className="text-m4m-secondary hover:text-[#111111] text-[10px] uppercase underline"
                   >
                     REMOVE
                   </button>
@@ -205,21 +205,21 @@ export const CartDrawer = ({ onOpenCheckout }) => {
                     value={promoInput}
                     onChange={(e) => setPromoInput(e.target.value)}
                     placeholder="PROMO CODE (e.g. ATELIER10)"
-                    className="flex-1 text-[11px] font-mono uppercase tracking-wider px-3 py-2 border border-[#E5E3DF] focus:outline-none focus:border-[#111111] bg-[#F8F7F4]"
+                    className="flex-1 text-[11px] font-mono uppercase tracking-wider px-3 py-2 border border-m4m-border focus:outline-none focus:border-[#111111] bg-m4m-bg"
                   />
                   <button
                     type="submit"
-                    className="text-[10px] font-mono uppercase tracking-[0.15em] bg-[#111111] text-[#F8F7F4] px-4 py-2 hover:bg-[#2B2B2B] transition-colors"
+                    className="text-[10px] font-mono uppercase tracking-[0.15em] bg-[#111111] text-m4m-bg px-4 py-2 hover:bg-[#2B2B2B] transition-colors"
                   >
                     APPLY
                   </button>
                 </form>
               )}
-              {promoMsg && <p className="text-[10px] text-[#666666] mt-1">{promoMsg}</p>}
+              {promoMsg && <p className="text-[10px] text-m4m-secondary mt-1">{promoMsg}</p>}
             </div>
 
             <div className="space-y-1.5 text-xs">
-              <div className="flex justify-between text-[#666666]">
+              <div className="flex justify-between text-m4m-secondary">
                 <span>SUBTOTAL</span>
                 <span className="font-mono">₹{subtotal.toLocaleString('en-IN')}</span>
               </div>
@@ -229,11 +229,11 @@ export const CartDrawer = ({ onOpenCheckout }) => {
                   <span className="font-mono">-₹{discountAmount.toLocaleString('en-IN')}</span>
                 </div>
               )}
-              <div className="flex justify-between text-[#666666]">
+              <div className="flex justify-between text-m4m-secondary">
                 <span>SHIPPING</span>
                 <span className="font-mono">{subtotal >= freeShippingThreshold ? 'FREE' : '₹99'}</span>
               </div>
-              <div className="flex justify-between text-sm font-semibold text-[#111111] pt-2 border-t border-[#E5E3DF]">
+              <div className="flex justify-between text-sm font-semibold text-[#111111] pt-2 border-t border-m4m-border">
                 <span>ESTIMATED TOTAL</span>
                 <span className="font-mono">
                   ₹{(finalTotal + (subtotal >= freeShippingThreshold ? 0 : 99)).toLocaleString('en-IN')}
@@ -247,13 +247,13 @@ export const CartDrawer = ({ onOpenCheckout }) => {
                 if (onOpenCheckout) onOpenCheckout();
                 else alert('Proceeding to secure checkout.');
               }}
-              className="w-full bg-[#111111] text-[#F8F7F4] py-3.5 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#2B2B2B] transition-all flex items-center justify-center gap-2 group"
+              className="w-full bg-[#111111] text-m4m-bg py-3.5 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#2B2B2B] transition-all flex items-center justify-center gap-2 group"
             >
               <span>PROCEED TO CHECKOUT</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </button>
 
-            <div className="flex items-center justify-center gap-2 text-[10px] text-[#666666] uppercase font-mono tracking-wider">
+            <div className="flex items-center justify-center gap-2 text-[10px] text-m4m-secondary uppercase font-mono tracking-wider">
               <ShieldCheck className="w-3.5 h-3.5 text-[#111111]" />
               <span>Free Shipping Over ₹999 • 7-Day Easy Returns</span>
             </div>

@@ -1,62 +1,60 @@
-import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
 import {
-  MapPin,
-  Plus,
-  Edit3,
-  Trash2,
-  CheckCircle2,
   AlertCircle,
-  Home,
   Briefcase,
+  Check,
+  CheckCircle2,
+  Edit3,
   Globe,
-  Star,
-  ShieldCheck,
-  ArrowRight,
-  ArrowLeft,
-  User,
-  Package,
   Heart,
+  Home,
+  MapPin,
+  Package,
+  Plus,
+  ShieldCheck,
   ShoppingBag,
+  Star,
+  Trash2,
+  User,
   X,
-  Check
-} from 'lucide-react';
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 
 // Default initial mock addresses matching backend/models/Address.js schema
 const INITIAL_DEFAULT_ADDRESSES = [
   {
-    _id: 'addr_101',
-    recipientName: 'Jarir Multani',
-    phone: '+91 45678 91230',
-    street: 'Gujrat',
-    apartment: 'Suite 4B',
-    city: 'Mumbai',
-    state: 'Gujrat',
-    postalCode: '400001',
-    country: 'India',
-    addressType: 'home',
+    _id: "addr_101",
+    recipientName: "Jarir Multani",
+    phone: "+91 45678 91230",
+    street: "Gujrat",
+    apartment: "Suite 4B",
+    city: "Mumbai",
+    state: "Gujrat",
+    postalCode: "400001",
+    country: "India",
+    addressType: "home",
     isDefaultShipping: true,
-    isDefaultBilling: true
+    isDefaultBilling: true,
   },
   {
-    _id: 'addr_102',
-    recipientName: 'Ayaan Ali (Atelier Studio)',
-    phone: '+91- 13245 67890',
-    street: 'Hafiz Babanagar Bandlaguda',
-    city: 'Hyderabad',
-    state: 'Telangana',
-    postalCode: '400051',
-    country: 'India',
-    addressType: 'work',
+    _id: "addr_102",
+    recipientName: "Ayaan Ali (Atelier Studio)",
+    phone: "+91- 13245 67890",
+    street: "Hafiz Babanagar Bandlaguda",
+    city: "Hyderabad",
+    state: "Telangana",
+    postalCode: "400051",
+    country: "India",
+    addressType: "work",
     isDefaultShipping: false,
-    isDefaultBilling: false
-  }
+    isDefaultBilling: false,
+  },
 ];
 
 export const Addresses = () => {
   const { user } = useSelector((state) => state.auth);
-  const userId = user?.id || user?._id || 'guest_client';
+  const userId = user?.id || user?._id || "guest_client";
   const storageKey = `atelier_addresses_${userId}`;
 
   // Addresses state initialized from localStorage or initial mock data
@@ -68,7 +66,7 @@ export const Addresses = () => {
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch (e) {
-      console.warn('Failed to parse saved addresses from localStorage:', e);
+      console.warn("Failed to parse saved addresses from localStorage:", e);
     }
     return INITIAL_DEFAULT_ADDRESSES;
   });
@@ -82,17 +80,17 @@ export const Addresses = () => {
 
   // Form State matching Address model schema
   const [formData, setFormData] = useState({
-    recipientName: '',
-    phone: '',
-    street: '',
-    apartment: '',
-    city: '',
-    state: '',
-    postalCode: '',
-    country: 'India',
-    addressType: 'home',
+    recipientName: "",
+    phone: "",
+    street: "",
+    apartment: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "India",
+    addressType: "home",
     isDefaultShipping: false,
-    isDefaultBilling: false
+    isDefaultBilling: false,
   });
 
   // Persist address list to localStorage on updates
@@ -100,7 +98,7 @@ export const Addresses = () => {
     try {
       localStorage.setItem(storageKey, JSON.stringify(addresses));
     } catch (e) {
-      console.warn('Failed to save addresses to localStorage:', e);
+      console.warn("Failed to save addresses to localStorage:", e);
     }
   }, [addresses, storageKey]);
 
@@ -115,17 +113,17 @@ export const Addresses = () => {
     setEditingAddress(null);
     setFormErrors({});
     setFormData({
-      recipientName: user?.name || '',
-      phone: user?.phone || '',
-      street: '',
-      apartment: '',
-      city: '',
-      state: '',
-      postalCode: '',
-      country: 'India',
-      addressType: 'home',
+      recipientName: user?.name || "",
+      phone: user?.phone || "",
+      street: "",
+      apartment: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      country: "India",
+      addressType: "home",
       isDefaultShipping: addresses.length === 0,
-      isDefaultBilling: addresses.length === 0
+      isDefaultBilling: addresses.length === 0,
     });
     setIsModalOpen(true);
   };
@@ -135,17 +133,17 @@ export const Addresses = () => {
     setEditingAddress(addr);
     setFormErrors({});
     setFormData({
-      recipientName: addr.recipientName || '',
-      phone: addr.phone || '',
-      street: addr.street || '',
-      apartment: addr.apartment || '',
-      city: addr.city || '',
-      state: addr.state || '',
-      postalCode: addr.postalCode || '',
-      country: addr.country || 'India',
-      addressType: addr.addressType || 'home',
+      recipientName: addr.recipientName || "",
+      phone: addr.phone || "",
+      street: addr.street || "",
+      apartment: addr.apartment || "",
+      city: addr.city || "",
+      state: addr.state || "",
+      postalCode: addr.postalCode || "",
+      country: addr.country || "India",
+      addressType: addr.addressType || "home",
       isDefaultShipping: Boolean(addr.isDefaultShipping),
-      isDefaultBilling: Boolean(addr.isDefaultBilling)
+      isDefaultBilling: Boolean(addr.isDefaultBilling),
     });
     setIsModalOpen(true);
   };
@@ -155,7 +153,7 @@ export const Addresses = () => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
     if (formErrors[name]) {
       setFormErrors((prev) => ({ ...prev, [name]: null }));
@@ -165,13 +163,15 @@ export const Addresses = () => {
   // Validate address form
   const validateForm = () => {
     const errors = {};
-    if (!formData.recipientName.trim()) errors.recipientName = 'Recipient name is required';
-    if (!formData.phone.trim()) errors.phone = 'Phone number is required';
-    if (!formData.street.trim()) errors.street = 'Street address is required';
-    if (!formData.city.trim()) errors.city = 'City is required';
-    if (!formData.state.trim()) errors.state = 'State/Province is required';
-    if (!formData.postalCode.trim()) errors.postalCode = 'Postal code is required';
-    if (!formData.country.trim()) errors.country = 'Country is required';
+    if (!formData.recipientName.trim())
+      errors.recipientName = "Recipient name is required";
+    if (!formData.phone.trim()) errors.phone = "Phone number is required";
+    if (!formData.street.trim()) errors.street = "Street address is required";
+    if (!formData.city.trim()) errors.city = "City is required";
+    if (!formData.state.trim()) errors.state = "State/Province is required";
+    if (!formData.postalCode.trim())
+      errors.postalCode = "Postal code is required";
+    if (!formData.country.trim()) errors.country = "Country is required";
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -188,23 +188,27 @@ export const Addresses = () => {
           if (item._id === editingAddress._id) {
             return {
               ...item,
-              ...formData
+              ...formData,
             };
           }
           // If setting as default, unset on others
           return {
             ...item,
-            isDefaultShipping: formData.isDefaultShipping ? false : item.isDefaultShipping,
-            isDefaultBilling: formData.isDefaultBilling ? false : item.isDefaultBilling
+            isDefaultShipping: formData.isDefaultShipping
+              ? false
+              : item.isDefaultShipping,
+            isDefaultBilling: formData.isDefaultBilling
+              ? false
+              : item.isDefaultBilling,
           };
-        })
+        }),
       );
-      showToast('success', 'Address details updated successfully.');
+      showToast("success", "Address details updated successfully.");
     } else {
       // Create new address
       const newAddress = {
         _id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-        ...formData
+        ...formData,
       };
 
       setAddresses((prev) => {
@@ -217,7 +221,7 @@ export const Addresses = () => {
         }
         return [newAddress, ...updated];
       });
-      showToast('success', 'New address added to your address book.');
+      showToast("success", "New address added to your address book.");
     }
 
     setIsModalOpen(false);
@@ -231,16 +235,22 @@ export const Addresses = () => {
       const remaining = prev.filter((a) => a._id !== deletedId);
       // If deleted address was default, set first remaining as default
       if (remaining.length > 0) {
-        if (addressToDelete.isDefaultShipping && !remaining.some((a) => a.isDefaultShipping)) {
+        if (
+          addressToDelete.isDefaultShipping &&
+          !remaining.some((a) => a.isDefaultShipping)
+        ) {
           remaining[0].isDefaultShipping = true;
         }
-        if (addressToDelete.isDefaultBilling && !remaining.some((a) => a.isDefaultBilling)) {
+        if (
+          addressToDelete.isDefaultBilling &&
+          !remaining.some((a) => a.isDefaultBilling)
+        ) {
           remaining[0].isDefaultBilling = true;
         }
       }
       return remaining;
     });
-    showToast('info', 'Address removed from your address book.');
+    showToast("info", "Address removed from your address book.");
     setAddressToDelete(null);
   };
 
@@ -249,10 +259,10 @@ export const Addresses = () => {
     setAddresses((prev) =>
       prev.map((a) => ({
         ...a,
-        isDefaultShipping: a._id === id
-      }))
+        isDefaultShipping: a._id === id,
+      })),
     );
-    showToast('success', 'Default shipping location updated.');
+    showToast("success", "Default shipping location updated.");
   };
 
   // Set Default Billing Address
@@ -260,16 +270,15 @@ export const Addresses = () => {
     setAddresses((prev) =>
       prev.map((a) => ({
         ...a,
-        isDefaultBilling: a._id === id
-      }))
+        isDefaultBilling: a._id === id,
+      })),
     );
-    showToast('success', 'Default billing location updated.');
+    showToast("success", "Default billing location updated.");
   };
 
   // Address Type Icon Helper
   const renderTypeBadge = (type) => {
-    const formatted = (type || 'home').toUpperCase();
-    if (type === 'work') {
+    if (type === "work") {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-900 text-[10px] font-mono uppercase tracking-wider">
           <Briefcase className="w-3 h-3 text-amber-700" />
@@ -277,7 +286,7 @@ export const Addresses = () => {
         </span>
       );
     }
-    if (type === 'other') {
+    if (type === "other") {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-50 border border-purple-200 text-purple-900 text-[10px] font-mono uppercase tracking-wider">
           <Globe className="w-3 h-3 text-purple-700" />
@@ -294,18 +303,19 @@ export const Addresses = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F7F4] text-[#111111] py-10 md:py-16 px-4 sm:px-6 lg:px-12 font-sans">
+    <div className="min-h-screen bg-m4m-bg text-[#111111] py-10 md:py-16 px-4 sm:px-6 lg:px-12 font-sans">
       <div className="max-w-6xl mx-auto">
         {/* Page Header / Breadcrumb */}
-        <div className="mb-10 pb-6 border-b border-[#E5E3DF] flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="mb-10 pb-6 border-b border-m4m-border flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#8E877F] block mb-2">
+            <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-m4m-accent block mb-2">
               CLIENT PORTAL • DELIVERY & BILLING LOCATIONS
             </span>
             <h1 className="font-serif text-3xl sm:text-4xl text-[#111111] tracking-tight uppercase flex items-center gap-3">
               <span>Saved Address Book</span>
-              <span className="text-sm font-mono bg-[#111111] text-[#F8F7F4] px-3 py-1 rounded-none">
-                {addresses.length} {addresses.length === 1 ? 'LOCATION' : 'LOCATIONS'}
+              <span className="text-sm font-mono bg-[#111111] text-m4m-bg px-3 py-1 rounded-none">
+                {addresses.length}{" "}
+                {addresses.length === 1 ? "LOCATION" : "LOCATIONS"}
               </span>
             </h1>
           </div>
@@ -313,7 +323,7 @@ export const Addresses = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={handleOpenAddModal}
-              className="inline-flex items-center gap-2 bg-[#111111] text-[#F8F7F4] px-5 py-2.5 text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-all rounded-none shadow-xs"
+              className="inline-flex items-center gap-2 bg-[#111111] text-m4m-bg px-5 py-2.5 text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-all rounded-none shadow-xs"
             >
               <Plus className="w-4 h-4" />
               <span>Add New Address</span>
@@ -324,15 +334,16 @@ export const Addresses = () => {
         {/* Toast Notification Banner */}
         {toastMessage && (
           <div
-            className={`mb-8 p-4 border flex items-center justify-between text-xs font-mono uppercase tracking-wider transition-all ${toastMessage.type === 'success'
-                ? 'bg-emerald-50/80 border-emerald-300 text-emerald-900'
-                : toastMessage.type === 'error'
-                  ? 'bg-rose-50/80 border-rose-300 text-rose-900'
-                  : 'bg-amber-50/80 border-amber-300 text-amber-900'
-              }`}
+            className={`mb-8 p-4 border flex items-center justify-between text-xs font-mono uppercase tracking-wider transition-all ${
+              toastMessage.type === "success"
+                ? "bg-emerald-50/80 border-emerald-300 text-emerald-900"
+                : toastMessage.type === "error"
+                  ? "bg-rose-50/80 border-rose-300 text-rose-900"
+                  : "bg-amber-50/80 border-amber-300 text-amber-900"
+            }`}
           >
             <div className="flex items-center gap-3">
-              {toastMessage.type === 'success' ? (
+              {toastMessage.type === "success" ? (
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               ) : (
                 <AlertCircle className="w-4 h-4 text-rose-600" />
@@ -341,7 +352,7 @@ export const Addresses = () => {
             </div>
             <button
               onClick={() => setToastMessage(null)}
-              className="text-xs text-[#8E877F] hover:text-[#111111]"
+              className="text-xs text-m4m-accent hover:text-[#111111]"
             >
               ✕
             </button>
@@ -354,27 +365,29 @@ export const Addresses = () => {
           <div className="lg:col-span-8 space-y-6">
             {addresses.length === 0 ? (
               /* Empty Address State */
-              <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-8 sm:p-12 text-center space-y-6 shadow-xs">
-                <div className="w-20 h-20 mx-auto rounded-full bg-[#F8F7F4] border border-[#E5E3DF] flex items-center justify-center text-[#8E877F]">
-                  <MapPin className="w-10 h-10 stroke-[1.25] text-[#8E877F]" />
+              <div className="bg-m4m-card border border-m4m-border p-8 sm:p-12 text-center space-y-6 shadow-xs">
+                <div className="w-20 h-20 mx-auto rounded-full bg-m4m-bg border border-m4m-border flex items-center justify-center text-m4m-accent">
+                  <MapPin className="w-10 h-10 stroke-[1.25] text-m4m-accent" />
                 </div>
 
                 <div className="max-w-md mx-auto space-y-2">
-                  <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#8E877F]">
+                  <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-m4m-accent">
                     NO SAVED LOCATIONS
                   </span>
                   <h2 className="font-serif text-2xl sm:text-3xl uppercase tracking-wider text-[#111111]">
                     Your Address Book is Empty
                   </h2>
-                  <p className="text-xs text-[#666666] font-sans leading-relaxed">
-                    Save delivery locations and billing details for express checkout, order fulfillment tracking, and regional concierge delivery options.
+                  <p className="text-xs text-m4m-secondary font-sans leading-relaxed">
+                    Save delivery locations and billing details for express
+                    checkout, order fulfillment tracking, and regional concierge
+                    delivery options.
                   </p>
                 </div>
 
                 <div className="pt-2">
                   <button
                     onClick={handleOpenAddModal}
-                    className="inline-flex items-center gap-2 bg-[#111111] text-[#F8F7F4] px-7 py-3 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#333333] transition-colors"
+                    className="inline-flex items-center gap-2 bg-[#111111] text-m4m-bg px-7 py-3 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#333333] transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Add Your First Address</span>
@@ -387,10 +400,11 @@ export const Addresses = () => {
                 {addresses.map((addr) => (
                   <div
                     key={addr._id}
-                    className={`bg-[#FFFFFF] border p-6 flex flex-col justify-between space-y-5 shadow-xs relative transition-all ${addr.isDefaultShipping || addr.isDefaultBilling
-                        ? 'border-[#111111] ring-1 ring-[#111111]'
-                        : 'border-[#E5E3DF] hover:border-[#8E877F]'
-                      }`}
+                    className={`bg-m4m-card border p-6 flex flex-col justify-between space-y-5 shadow-xs relative transition-all ${
+                      addr.isDefaultShipping || addr.isDefaultBilling
+                        ? "border-[#111111] ring-1 ring-[#111111]"
+                        : "border-m4m-border hover:border-m4m-accent"
+                    }`}
                   >
                     {/* Header Badges & Type */}
                     <div className="space-y-3">
@@ -399,13 +413,13 @@ export const Addresses = () => {
 
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {addr.isDefaultShipping && (
-                            <span className="px-2 py-0.5 bg-[#111111] text-[#F8F7F4] text-[9px] font-mono uppercase tracking-widest flex items-center gap-1">
+                            <span className="px-2 py-0.5 bg-[#111111] text-m4m-bg text-[9px] font-mono uppercase tracking-widest flex items-center gap-1">
                               <Star className="w-2.5 h-2.5 fill-current" />
                               <span>DEFAULT SHIPPING</span>
                             </span>
                           )}
                           {addr.isDefaultBilling && (
-                            <span className="px-2 py-0.5 bg-[#8E877F] text-[#F8F7F4] text-[9px] font-mono uppercase tracking-widest flex items-center gap-1">
+                            <span className="px-2 py-0.5 bg-m4m-accent text-m4m-bg text-[9px] font-mono uppercase tracking-widest flex items-center gap-1">
                               <span>DEFAULT BILLING</span>
                             </span>
                           )}
@@ -417,31 +431,35 @@ export const Addresses = () => {
                         <h3 className="font-serif text-lg uppercase text-[#111111] font-medium tracking-tight">
                           {addr.recipientName}
                         </h3>
-                        <p className="text-xs font-mono text-[#8E877F] mt-0.5">{addr.phone}</p>
+                        <p className="text-xs font-mono text-m4m-accent mt-0.5">
+                          {addr.phone}
+                        </p>
                       </div>
 
                       {/* Address Lines */}
-                      <div className="text-xs text-[#444444] font-sans leading-relaxed space-y-0.5 pt-2 border-t border-[#E5E3DF]">
-                        <p className="font-medium text-[#111111]">{addr.street}</p>
+                      <div className="text-xs text-[#444444] font-sans leading-relaxed space-y-0.5 pt-2 border-t border-m4m-border">
+                        <p className="font-medium text-[#111111]">
+                          {addr.street}
+                        </p>
                         {addr.apartment && <p>{addr.apartment}</p>}
                         <p>
                           {addr.city}, {addr.state} {addr.postalCode}
                         </p>
-                        <p className="font-mono text-[11px] text-[#8E877F] uppercase tracking-wider pt-1">
+                        <p className="font-mono text-[11px] text-m4m-accent uppercase tracking-wider pt-1">
                           {addr.country}
                         </p>
                       </div>
                     </div>
 
                     {/* Actions Footer */}
-                    <div className="pt-4 border-t border-[#E5E3DF] space-y-3">
+                    <div className="pt-4 border-t border-m4m-border space-y-3">
                       {/* Set Default Buttons */}
                       <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono">
                         {!addr.isDefaultShipping && (
                           <button
                             type="button"
                             onClick={() => handleSetDefaultShipping(addr._id)}
-                            className="px-2.5 py-1 border border-[#E5E3DF] text-[#666666] hover:text-[#111111] hover:border-[#111111] transition-colors uppercase tracking-wider"
+                            className="px-2.5 py-1 border border-m4m-border text-m4m-secondary hover:text-[#111111] hover:border-[#111111] transition-colors uppercase tracking-wider"
                           >
                             Set Default Shipping
                           </button>
@@ -450,7 +468,7 @@ export const Addresses = () => {
                           <button
                             type="button"
                             onClick={() => handleSetDefaultBilling(addr._id)}
-                            className="px-2.5 py-1 border border-[#E5E3DF] text-[#666666] hover:text-[#111111] hover:border-[#111111] transition-colors uppercase tracking-wider"
+                            className="px-2.5 py-1 border border-m4m-border text-m4m-secondary hover:text-[#111111] hover:border-[#111111] transition-colors uppercase tracking-wider"
                           >
                             Set Default Billing
                           </button>
@@ -484,40 +502,40 @@ export const Addresses = () => {
             )}
 
             {/* Quick Navigation Menu (Matches Profile, Cart & Wishlist pages) */}
-            <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-6 space-y-3 shadow-xs">
-              <h3 className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#8E877F] mb-4">
+            <div className="bg-m4m-card border border-m4m-border p-6 space-y-3 shadow-xs">
+              <h3 className="text-[10px] font-mono uppercase tracking-[0.25em] text-m4m-accent mb-4">
                 CLIENT ACCOUNT NAVIGATION
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <Link
                   to="/profile"
-                  className="flex items-center gap-2.5 p-3 hover:bg-[#F8F7F4] border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  className="flex items-center gap-2.5 p-3 hover:bg-m4m-bg border border-m4m-border text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                 >
-                  <User className="w-4 h-4 text-[#8E877F]" />
+                  <User className="w-4 h-4 text-m4m-accent" />
                   <span>Profile</span>
                 </Link>
 
                 <Link
                   to="/orders"
-                  className="flex items-center gap-2.5 p-3 hover:bg-[#F8F7F4] border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  className="flex items-center gap-2.5 p-3 hover:bg-m4m-bg border border-m4m-border text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                 >
-                  <Package className="w-4 h-4 text-[#8E877F]" />
+                  <Package className="w-4 h-4 text-m4m-accent" />
                   <span>Orders</span>
                 </Link>
 
                 <Link
                   to="/wishlist"
-                  className="flex items-center gap-2.5 p-3 hover:bg-[#F8F7F4] border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  className="flex items-center gap-2.5 p-3 hover:bg-m4m-bg border border-m4m-border text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                 >
-                  <Heart className="w-4 h-4 text-[#8E877F]" />
+                  <Heart className="w-4 h-4 text-m4m-accent" />
                   <span>Wishlist</span>
                 </Link>
 
                 <Link
                   to="/cart"
-                  className="flex items-center gap-2.5 p-3 hover:bg-[#F8F7F4] border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  className="flex items-center gap-2.5 p-3 hover:bg-m4m-bg border border-m4m-border text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                 >
-                  <ShoppingBag className="w-4 h-4 text-[#8E877F]" />
+                  <ShoppingBag className="w-4 h-4 text-m4m-accent" />
                   <span>Active Bag</span>
                 </Link>
               </div>
@@ -527,34 +545,38 @@ export const Addresses = () => {
           {/* Right Column: Address Book Guidelines & Information (4 Cols) */}
           <div className="lg:col-span-4 space-y-6">
             {/* Overview Summary Box */}
-            <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-6 space-y-6 shadow-xs sticky top-8">
-              <div className="pb-4 border-b border-[#E5E3DF] flex items-center justify-between">
+            <div className="bg-m4m-card border border-m4m-border p-6 space-y-6 shadow-xs sticky top-8">
+              <div className="pb-4 border-b border-m4m-border flex items-center justify-between">
                 <h3 className="font-serif text-xl uppercase tracking-wider text-[#111111]">
                   Delivery Summary
                 </h3>
-                <span className="text-[10px] font-mono text-[#8E877F] uppercase tracking-widest">
+                <span className="text-[10px] font-mono text-m4m-accent uppercase tracking-widest">
                   PORTAL CONFIG
                 </span>
               </div>
 
               {/* Statistics */}
               <div className="space-y-4 text-xs font-mono">
-                <div className="flex justify-between items-center pb-3 border-b border-[#E5E3DF]/50">
-                  <span className="text-[#666666]">Total Locations</span>
-                  <span className="font-semibold text-[#111111]">{addresses.length}</span>
-                </div>
-
-                <div className="flex justify-between items-center pb-3 border-b border-[#E5E3DF]/50">
-                  <span className="text-[#666666]">Default Shipping</span>
-                  <span className="font-semibold text-[#111111] truncate max-w-[150px]">
-                    {addresses.find((a) => a.isDefaultShipping)?.recipientName || 'Not Set'}
+                <div className="flex justify-between items-center pb-3 border-b border-m4m-border/50">
+                  <span className="text-m4m-secondary">Total Locations</span>
+                  <span className="font-semibold text-[#111111]">
+                    {addresses.length}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center pb-3 border-b border-[#E5E3DF]/50">
-                  <span className="text-[#666666]">Default Billing</span>
+                <div className="flex justify-between items-center pb-3 border-b border-m4m-border/50">
+                  <span className="text-m4m-secondary">Default Shipping</span>
                   <span className="font-semibold text-[#111111] truncate max-w-[150px]">
-                    {addresses.find((a) => a.isDefaultBilling)?.recipientName || 'Not Set'}
+                    {addresses.find((a) => a.isDefaultShipping)
+                      ?.recipientName || "Not Set"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center pb-3 border-b border-m4m-border/50">
+                  <span className="text-m4m-secondary">Default Billing</span>
+                  <span className="font-semibold text-[#111111] truncate max-w-[150px]">
+                    {addresses.find((a) => a.isDefaultBilling)?.recipientName ||
+                      "Not Set"}
                   </span>
                 </div>
               </div>
@@ -563,14 +585,14 @@ export const Addresses = () => {
               <button
                 type="button"
                 onClick={handleOpenAddModal}
-                className="w-full bg-[#111111] text-[#F8F7F4] py-3.5 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#333333] transition-all flex items-center justify-center gap-2 group"
+                className="w-full bg-[#111111] text-m4m-bg py-3.5 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#333333] transition-all flex items-center justify-center gap-2 group"
               >
                 <Plus className="w-4 h-4" />
                 <span>ADD NEW ADDRESS</span>
               </button>
 
               {/* Delivery Protocol Information */}
-              <div className="pt-4 border-t border-[#E5E3DF] space-y-3 text-[11px] font-mono text-[#666666]">
+              <div className="pt-4 border-t border-m4m-border space-y-3 text-[11px] font-mono text-m4m-secondary">
                 <div className="flex items-center gap-2.5">
                   <ShieldCheck className="w-4 h-4 text-[#111111] shrink-0" />
                   <span>Encrypted Identity & Address Vault</span>
@@ -588,20 +610,22 @@ export const Addresses = () => {
       {/* Add / Edit Address Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111111]/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-[#FFFFFF] border border-[#E5E3DF] max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative my-8">
+          <div className="bg-m4m-card border border-m4m-border max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative my-8">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-[#8E877F] hover:text-[#111111] p-1"
+              className="absolute top-4 right-4 text-m4m-accent hover:text-[#111111] p-1"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="pb-4 border-b border-[#E5E3DF]">
-              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#8E877F] block mb-1">
-                {editingAddress ? 'EDIT ADDRESS LOCATION' : 'NEW DELIVERY LOCATION'}
+            <div className="pb-4 border-b border-m4m-border">
+              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-m4m-accent block mb-1">
+                {editingAddress
+                  ? "EDIT ADDRESS LOCATION"
+                  : "NEW DELIVERY LOCATION"}
               </span>
               <h2 className="font-serif text-2xl uppercase tracking-wider text-[#111111]">
-                {editingAddress ? 'Update Saved Address' : 'Add New Address'}
+                {editingAddress ? "Update Saved Address" : "Add New Address"}
               </h2>
             </div>
 
@@ -618,8 +642,11 @@ export const Addresses = () => {
                     value={formData.recipientName}
                     onChange={handleInputChange}
                     placeholder="e.g. Ayaan Ali"
-                    className={`w-full bg-[#F8F7F4] border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${formErrors.recipientName ? 'border-rose-500' : 'border-[#E5E3DF]'
-                      }`}
+                    className={`w-full bg-m4m-bg border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${
+                      formErrors.recipientName
+                        ? "border-rose-500"
+                        : "border-m4m-border"
+                    }`}
                   />
                   {formErrors.recipientName && (
                     <span className="text-[10px] font-mono text-rose-600 block">
@@ -638,8 +665,9 @@ export const Addresses = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     placeholder="e.g. +91 98765 43210"
-                    className={`w-full bg-[#F8F7F4] border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${formErrors.phone ? 'border-rose-500' : 'border-[#E5E3DF]'
-                      }`}
+                    className={`w-full bg-m4m-bg border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${
+                      formErrors.phone ? "border-rose-500" : "border-m4m-border"
+                    }`}
                   />
                   {formErrors.phone && (
                     <span className="text-[10px] font-mono text-rose-600 block">
@@ -656,9 +684,9 @@ export const Addresses = () => {
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { id: 'home', label: 'HOME', icon: Home },
-                    { id: 'work', label: 'WORK', icon: Briefcase },
-                    { id: 'other', label: 'OTHER', icon: Globe }
+                    { id: "home", label: "HOME", icon: Home },
+                    { id: "work", label: "WORK", icon: Briefcase },
+                    { id: "other", label: "OTHER", icon: Globe },
                   ].map((typeItem) => {
                     const IconComp = typeItem.icon;
                     const isSelected = formData.addressType === typeItem.id;
@@ -667,12 +695,16 @@ export const Addresses = () => {
                         type="button"
                         key={typeItem.id}
                         onClick={() =>
-                          setFormData((prev) => ({ ...prev, addressType: typeItem.id }))
+                          setFormData((prev) => ({
+                            ...prev,
+                            addressType: typeItem.id,
+                          }))
                         }
-                        className={`flex items-center justify-center gap-2 py-2.5 border text-xs font-mono uppercase tracking-wider transition-all ${isSelected
-                            ? 'bg-[#111111] border-[#111111] text-[#F8F7F4]'
-                            : 'bg-[#F8F7F4] border-[#E5E3DF] text-[#666666] hover:border-[#111111]'
-                          }`}
+                        className={`flex items-center justify-center gap-2 py-2.5 border text-xs font-mono uppercase tracking-wider transition-all ${
+                          isSelected
+                            ? "bg-[#111111] border-[#111111] text-m4m-bg"
+                            : "bg-m4m-bg border-m4m-border text-m4m-secondary hover:border-[#111111]"
+                        }`}
                       >
                         <IconComp className="w-3.5 h-3.5" />
                         <span>{typeItem.label}</span>
@@ -693,8 +725,9 @@ export const Addresses = () => {
                   value={formData.street}
                   onChange={handleInputChange}
                   placeholder="House number, street name, locality"
-                  className={`w-full bg-[#F8F7F4] border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${formErrors.street ? 'border-rose-500' : 'border-[#E5E3DF]'
-                    }`}
+                  className={`w-full bg-m4m-bg border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${
+                    formErrors.street ? "border-rose-500" : "border-m4m-border"
+                  }`}
                 />
                 {formErrors.street && (
                   <span className="text-[10px] font-mono text-rose-600 block">
@@ -713,7 +746,7 @@ export const Addresses = () => {
                   value={formData.apartment}
                   onChange={handleInputChange}
                   placeholder="Apt 4B, Floor 3, Building B"
-                  className="w-full bg-[#F8F7F4] border border-[#E5E3DF] px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111]"
+                  className="w-full bg-m4m-bg border border-m4m-border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111]"
                 />
               </div>
 
@@ -729,8 +762,9 @@ export const Addresses = () => {
                     value={formData.city}
                     onChange={handleInputChange}
                     placeholder="Mumbai"
-                    className={`w-full bg-[#F8F7F4] border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${formErrors.city ? 'border-rose-500' : 'border-[#E5E3DF]'
-                      }`}
+                    className={`w-full bg-m4m-bg border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${
+                      formErrors.city ? "border-rose-500" : "border-m4m-border"
+                    }`}
                   />
                   {formErrors.city && (
                     <span className="text-[10px] font-mono text-rose-600 block">
@@ -749,8 +783,9 @@ export const Addresses = () => {
                     value={formData.state}
                     onChange={handleInputChange}
                     placeholder="Maharashtra"
-                    className={`w-full bg-[#F8F7F4] border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${formErrors.state ? 'border-rose-500' : 'border-[#E5E3DF]'
-                      }`}
+                    className={`w-full bg-m4m-bg border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111] ${
+                      formErrors.state ? "border-rose-500" : "border-m4m-border"
+                    }`}
                   />
                   {formErrors.state && (
                     <span className="text-[10px] font-mono text-rose-600 block">
@@ -769,8 +804,11 @@ export const Addresses = () => {
                     value={formData.postalCode}
                     onChange={handleInputChange}
                     placeholder="400001"
-                    className={`w-full bg-[#F8F7F4] border px-3 py-2.5 text-xs font-mono text-[#111111] focus:outline-none focus:border-[#111111] ${formErrors.postalCode ? 'border-rose-500' : 'border-[#E5E3DF]'
-                      }`}
+                    className={`w-full bg-m4m-bg border px-3 py-2.5 text-xs font-mono text-[#111111] focus:outline-none focus:border-[#111111] ${
+                      formErrors.postalCode
+                        ? "border-rose-500"
+                        : "border-m4m-border"
+                    }`}
                   />
                   {formErrors.postalCode && (
                     <span className="text-[10px] font-mono text-rose-600 block">
@@ -789,12 +827,14 @@ export const Addresses = () => {
                   name="country"
                   value={formData.country}
                   onChange={handleInputChange}
-                  className="w-full bg-[#F8F7F4] border border-[#E5E3DF] px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111]"
+                  className="w-full bg-m4m-bg border border-m4m-border px-3 py-2.5 text-xs font-sans text-[#111111] focus:outline-none focus:border-[#111111]"
                 >
                   <option value="India">India</option>
                   <option value="United States">United States</option>
                   <option value="United Kingdom">United Kingdom</option>
-                  <option value="United Arab Emirates">United Arab Emirates</option>
+                  <option value="United Arab Emirates">
+                    United Arab Emirates
+                  </option>
                   <option value="Canada">Canada</option>
                   <option value="France">France</option>
                   <option value="Italy">Italy</option>
@@ -802,7 +842,7 @@ export const Addresses = () => {
               </div>
 
               {/* Default Flags Checkboxes */}
-              <div className="pt-2 border-t border-[#E5E3DF] space-y-2">
+              <div className="pt-2 border-t border-m4m-border space-y-2">
                 <label className="flex items-center gap-2.5 cursor-pointer">
                   <input
                     type="checkbox"
@@ -831,20 +871,20 @@ export const Addresses = () => {
               </div>
 
               {/* Modal Actions */}
-              <div className="pt-4 border-t border-[#E5E3DF] flex items-center justify-end gap-3">
+              <div className="pt-4 border-t border-m4m-border flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 border border-[#E5E3DF] text-xs font-mono uppercase tracking-wider text-[#666666] hover:text-[#111111] transition-colors"
+                  className="px-5 py-2.5 border border-m4m-border text-xs font-mono uppercase tracking-wider text-m4m-secondary hover:text-[#111111] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-[#111111] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors flex items-center gap-2"
+                  className="px-6 py-2.5 bg-[#111111] text-m4m-bg text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors flex items-center gap-2"
                 >
                   <Check className="w-3.5 h-3.5" />
-                  <span>{editingAddress ? 'Save Changes' : 'Add Address'}</span>
+                  <span>{editingAddress ? "Save Changes" : "Add Address"}</span>
                 </button>
               </div>
             </form>
@@ -855,7 +895,7 @@ export const Addresses = () => {
       {/* Delete Confirmation Modal */}
       {addressToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111111]/60 backdrop-blur-xs">
-          <div className="bg-[#FFFFFF] border border-[#E5E3DF] max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+          <div className="bg-m4m-card border border-m4m-border max-w-md w-full p-6 space-y-5 shadow-2xl relative">
             <div className="flex items-center gap-3 text-rose-600">
               <AlertCircle className="w-6 h-6 shrink-0" />
               <h3 className="font-serif text-lg uppercase tracking-wider text-[#111111]">
@@ -863,17 +903,20 @@ export const Addresses = () => {
               </h3>
             </div>
 
-            <p className="text-xs text-[#666666] font-sans leading-relaxed">
-              Are you sure you want to remove the address for{' '}
-              <strong className="text-[#111111]">{addressToDelete.recipientName}</strong> (
-              {addressToDelete.street}, {addressToDelete.city}) from your saved address book?
+            <p className="text-xs text-m4m-secondary font-sans leading-relaxed">
+              Are you sure you want to remove the address for{" "}
+              <strong className="text-[#111111]">
+                {addressToDelete.recipientName}
+              </strong>{" "}
+              ({addressToDelete.street}, {addressToDelete.city}) from your saved
+              address book?
             </p>
 
-            <div className="pt-3 border-t border-[#E5E3DF] flex items-center justify-end gap-3">
+            <div className="pt-3 border-t border-m4m-border flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setAddressToDelete(null)}
-                className="px-4 py-2 border border-[#E5E3DF] text-xs font-mono uppercase text-[#666666] hover:text-[#111111]"
+                className="px-4 py-2 border border-m4m-border text-xs font-mono uppercase text-m4m-secondary hover:text-[#111111]"
               >
                 Cancel
               </button>

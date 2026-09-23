@@ -3,11 +3,11 @@ import { customerReviews } from '../../data/marketplaceData';
 
 export const Testimonials = () => {
   return (
-    <section className="py-16 md:py-24 bg-[#FAF9F6] border-b border-[#E5E3DF]">
+    <section className="py-16 md:py-24 bg-[#FAF9F6] border-b border-m4m-border">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-12">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <span className="text-[10px] sm:text-[11px] font-mono tracking-[0.3em] uppercase text-[#666666] block mb-2">
+          <span className="text-[10px] sm:text-[11px] font-mono tracking-[0.3em] uppercase text-m4m-secondary block mb-2">
             CLIENT EXPERIENCES
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl text-[#111111] font-normal tracking-tight">
@@ -20,7 +20,7 @@ export const Testimonials = () => {
           {customerReviews.map((rev) => (
             <div
               key={rev.id}
-              className="bg-[#FFFFFF] border border-[#E5E3DF] p-8 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow"
+              className="bg-m4m-card border border-m4m-border p-8 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow"
             >
               <div>
                 {/* 5 Stars */}
@@ -37,17 +37,17 @@ export const Testimonials = () => {
               </div>
 
               {/* Author & Item */}
-              <div className="pt-6 border-t border-[#E5E3DF]">
+              <div className="pt-6 border-t border-m4m-border">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-sans font-medium text-xs text-[#111111] uppercase tracking-wide">
                     {rev.name}
                   </span>
                   <CheckCircle className="w-3.5 h-3.5 text-[#2e7d32]" />
                 </div>
-                <p className="text-[10px] font-mono text-[#8E877F] uppercase tracking-wider">
+                <p className="text-[10px] font-mono text-m4m-accent uppercase tracking-wider">
                   {rev.role}
                 </p>
-                <p className="text-[11px] text-[#666666] font-sans mt-2">
+                <p className="text-[11px] text-m4m-secondary font-sans mt-2">
                   Purchased: <span className="italic">{rev.itemBought}</span>
                 </p>
               </div>
