@@ -132,6 +132,34 @@ export const adminApi = {
    */
   async clearAllProducts() {
     return api.delete('/admin/products/clear-all');
+  },
+
+  /**
+   * Get all notifications for admin
+   */
+  async getNotifications() {
+    return api.get('/admin/notifications');
+  },
+
+  /**
+   * Mark notification as read
+   */
+  async markNotificationRead(id) {
+    return api.patch(`/admin/notifications/${id}/read`);
+  },
+
+  /**
+   * Mark all notifications as read
+   */
+  async markAllNotificationsRead() {
+    return api.patch('/admin/notifications/read-all');
+  },
+
+  /**
+   * Delete notification
+   */
+  async deleteNotification(id) {
+    return api.delete(`/admin/notifications/${id}`);
   }
 };
 

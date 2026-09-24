@@ -6,31 +6,20 @@ import categoryService from '../../services/categoryService';
 // ============================================
 
 export const mapBackendCategoryToItem = (category) => {
-  if (!category) {
-    return null;
-  }
-
-  const imageUrl =
-    typeof category.image === 'string'
-      ? category.image
-      : category.image?.url || '';
+  if (!category) return null;
 
   return {
     id: category._id || category.id,
     name: category.name || '',
     slug: category.slug || '',
     tagline: category.description || '',
-    image: category.image?.url ||
+    image:
+      category.image?.url ||
       (typeof category.image === 'string' ? category.image : ''),
     isActive: Boolean(category.isActive),
     displayOrder: category.displayOrder ?? 0,
-
-    // Backend productsCount ko UI ke itemCount mein map kar rahe hain
-    itemCount: category.productsCount ?? 0,
-
-    parentCategory:
-      category.parentCategory || null,
-
+    itemCount: Number(category.productsCount ?? 0),
+    parentCategory: category.parentCategory || null,
     createdAt: category.createdAt,
     updatedAt: category.updatedAt
   };

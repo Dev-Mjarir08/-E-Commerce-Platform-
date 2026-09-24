@@ -1,28 +1,38 @@
-import api from './api';
+import api from "./api";
 
 /**
- * Order API Service for Customer Operations
+ * Order API Service
  */
 export const orderApi = {
+  // Admin: get all marketplace orders
+  getAdminOrders: async (params = {}) => {
+    return api.get("/orders/admin", {
+      params,
+    });
+  },
+
   // Place a new order
   createOrder: async (orderPayload) => {
-    return await api.post('/orders', orderPayload);
+    return api.post("/orders", orderPayload);
   },
 
-  // Get user's orders with optional status & pagination
+  // Get logged-in customer's orders
   getMyOrders: async (params = {}) => {
-    return await api.get('/orders', { params });
+    return api.get("/orders", {
+      params,
+    });
   },
 
-  // Get single order details by ID or orderNumber
+  // Get single order details
+  // Admin can also access this endpoint
   getOrderById: async (orderId) => {
-    return await api.get(`/orders/${orderId}`);
+    return api.get(`/orders/${orderId}`);
   },
 
-  // Cancel order
+  // Cancel customer order
   cancelOrder: async (orderId, reason) => {
-    return await api.patch(`/orders/${orderId}/cancel`, { reason });
-  }
+    return api.patch(`/orders/${orderId}/cancel`, { reason });
+  },
 };
 
 export default orderApi;
