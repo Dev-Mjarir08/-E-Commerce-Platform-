@@ -13,6 +13,7 @@ import {
   FaTimes,
   FaImage,
 } from "react-icons/fa";
+import VendorSidebar from "./VendorSlideBar";
 
 // Sample Initial Vendor Products
 const initialProducts = [
@@ -58,53 +59,138 @@ export default function VendorProducts() {
   const [products, setProducts] = useState(initialProducts);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Modal States
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [viewingProduct, setViewingProduct] = useState(null);
 
   // New Product Form State
-  const [newProduct, setNewProduct] = useState({
+  const [formData, setFormData] = useState({
     name: "",
     category: "Electronics",
     price: "",
     stock: "",
-    status: "Active",
+    image: "",
   });
 
   // Filter Logic
   const filteredProducts = products.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "All" || item.status === statusFilter;
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "All" || item.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Dynamic Status Helper
+  const calculateStatus = (stock) => {
+    const parsedStock = parseInt(stock) || 0;
+    if (parsedStock === 0) return "Out of Stock";
+    if (parsedStock < 10) return "Low Stock";
+    return "Active";
+  };
 
   // Handle Delete
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to remove this product listing?")) {
-      setProducts(products.filter((item) => item.id !== id));
+      setProducts((prev) => prev.filter((item) => item.id !== id));
     }
   };
 
-  // Handle Create Product
-  const handleAddProduct = (e) => {
-    e.preventDefault();
-    const productToAdd = {
-      id: `PRD-${Math.floor(100 + Math.random() * 900)}`,
-      name: newProduct.name,
-      category: newProduct.category,
-      price: parseFloat(newProduct.price) || 0,
-      stock: parseInt(newProduct.stock) || 0,
-      status: parseInt(newProduct.stock) === 0 ? "Out of Stock" : parseInt(newProduct.stock) < 10 ? "Low Stock" : "Active",
-      image: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=150",
-    };
+  // Open Edit Modal
+  const handleEditClick = (product) => {
+    setEditingProduct(product);
+    setFormData({
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      stock: product.stock,
+      image: product.image,
+    });
+  };
 
-    setProducts([productToAdd, ...products]);
-    setIsModalOpen(false);
-    setNewProduct({ name: "", category: "Electronics", price: "", stock: "", status: "Active" });
+  // Reset Form and Modals
+  const closeModal = () => {
+    setIsAddModalOpen(false);
+    setEditingProduct(null);
+    setViewingProduct(null);
+    setFormData({ name: "", category: "Electronics", price: "", stock: "", image: "" });
+  };
+
+  // Handle Create or Update Product
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const parsedStock = parseInt(formData.stock) || 0;
+    const parsedPrice = parseFloat(formData.price) || 0;
+    const defaultImage = "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=150";
+
+    if (editingProduct) {
+      // Update existing
+      setProducts((prev) =>
+        prev.map((item) =>
+          item.id === editingProduct.id
+            ? {
+                ...item,
+                name: formData.name,
+                category: formData.category,
+                price: parsedPrice,
+                stock: parsedStock,
+                status: calculateStatus(parsedStock),
+                image: formData.image.trim() ? formData.image : item.image,
+              }
+            : item
+        )
+      );
+    } else {
+      // Create new
+      const productToAdd = {
+        id: `PRD-${Math.floor(100 + Math.random() * 900)}`,
+        name: formData.name,
+        category: formData.category,
+        price: parsedPrice,
+        stock: parsedStock,
+        status: calculateStatus(parsedStock),
+        image: formData.image.trim() ? formData.image : defaultImage,
+      };
+      setProducts([productToAdd, ...products]);
+    }
+
+    closeModal();
+  };
+
+  const getStatusBadge = (status) => {
+    const isMain = status === "Active";
+    const isLow = status === "Low Stock";
+    
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
+          isMain
+            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+            : isLow
+            ? "bg-amber-50 text-amber-800 border-amber-200"
+            : "bg-rose-50 text-rose-800 border-rose-200"
+        }`}
+      >
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${
+            isMain ? "bg-emerald-500" : isLow ? "bg-amber-500" : "bg-rose-500"
+          }`}
+        />
+        {status}
+      </span>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-50/50 flex flex-col md:flex-row">
+      {/* SIDEBAR */}
+      <VendorSidebar />
+
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6">
 
         {/* HEADER SECTION */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
@@ -115,8 +201,8 @@ export default function VendorProducts() {
             </p>
           </div>
           <button
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all"
+            onClick={() => setIsAddModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all w-full sm:w-auto"
           >
             <FaPlus className="text-xs" /> Add New Product
           </button>
@@ -162,7 +248,7 @@ export default function VendorProducts() {
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Stock Value</p>
               <h3 className="text-2xl font-bold text-slate-900 mt-1">
-                ${products.reduce((acc, item) => acc + item.price * item.stock, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ${products.reduce((acc, item) => acc + item.price * item.stock, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h3>
             </div>
             <div className="p-3 bg-blue-50 text-blue-700 rounded-xl">
@@ -172,11 +258,11 @@ export default function VendorProducts() {
         </div>
 
         {/* SEARCH & FILTERS BAR */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="relative w-full md:w-80">
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="relative w-full sm:w-80">
             <input
               type="text"
-              placeholder="Search by product name or ID..."
+              placeholder="Search by name or ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/20 transition-all"
@@ -184,14 +270,14 @@ export default function VendorProducts() {
             <FaSearch className="absolute left-3.5 top-3.5 text-slate-400 text-sm" />
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
               <FaFilter /> Status:
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700 transition"
+              className="w-full sm:w-auto rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700 transition"
             >
               <option value="All">All Items</option>
               <option value="Active">Active</option>
@@ -201,9 +287,11 @@ export default function VendorProducts() {
           </div>
         </div>
 
-        {/* PRODUCTS TABLE */}
+        {/* RESPONSIVE TABLE / CARDS CONTAINER */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
+          
+          {/* DESKTOP TABLE VIEW */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -224,7 +312,7 @@ export default function VendorProducts() {
                           <img
                             src={product.image}
                             alt={product.name}
-                            className="w-12 h-12 rounded-xl object-cover border border-slate-200/80"
+                            className="w-12 h-12 rounded-xl object-cover border border-slate-200/80 shrink-0"
                           />
                           <div>
                             <p className="font-semibold text-slate-900">{product.name}</p>
@@ -235,37 +323,18 @@ export default function VendorProducts() {
                       <td className="py-4 px-5 font-medium text-slate-600">{product.category}</td>
                       <td className="py-4 px-5 font-bold text-slate-900">${product.price.toFixed(2)}</td>
                       <td className="py-4 px-5 font-medium">{product.stock} units</td>
-                      <td className="py-4 px-5">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                            product.status === "Active"
-                              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                              : product.status === "Low Stock"
-                              ? "bg-amber-50 text-amber-800 border-amber-200"
-                              : "bg-rose-50 text-rose-800 border-rose-200"
-                          }`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              product.status === "Active"
-                                ? "bg-emerald-500"
-                                : product.status === "Low Stock"
-                                ? "bg-amber-500"
-                                : "bg-rose-500"
-                            }`}
-                          />
-                          {product.status}
-                        </span>
-                      </td>
+                      <td className="py-4 px-5">{getStatusBadge(product.status)}</td>
                       <td className="py-4 px-5 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1">
                           <button
-                            title="View Public Storefront Page"
+                            onClick={() => setViewingProduct(product)}
+                            title="View Product Preview"
                             className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
                           >
                             <FaEye className="text-sm" />
                           </button>
                           <button
+                            onClick={() => handleEditClick(product)}
                             title="Edit Listing Details"
                             className="p-2 rounded-lg text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition"
                           >
@@ -292,23 +361,90 @@ export default function VendorProducts() {
               </tbody>
             </table>
           </div>
+
+          {/* MOBILE CARDS VIEW (Visible only below md breakpoint) */}
+          <div className="block md:hidden divide-y divide-slate-100">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product) => (
+                <div key={product.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-12 h-12 rounded-xl object-cover border border-slate-200/80 shrink-0"
+                      />
+                      <div>
+                        <p className="font-semibold text-slate-900 text-sm leading-snug">{product.name}</p>
+                        <span className="text-xs text-slate-400">ID: {product.id}</span>
+                      </div>
+                    </div>
+                    {getStatusBadge(product.status)}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-xl text-xs">
+                    <div>
+                      <span className="text-slate-400 block">Category</span>
+                      <span className="font-semibold text-slate-700">{product.category}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block">Price</span>
+                      <span className="font-bold text-slate-900">${product.price.toFixed(2)}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block">Stock</span>
+                      <span className="font-semibold text-slate-700">{product.stock} units</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-50">
+                    <button
+                      onClick={() => setViewingProduct(product)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition"
+                    >
+                      <FaEye className="text-xs" /> View
+                    </button>
+                    <button
+                      onClick={() => handleEditClick(product)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-teal-800 bg-teal-50 hover:bg-teal-100 transition"
+                    >
+                      <FaEdit className="text-xs" /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 transition"
+                    >
+                      <FaTrash className="text-xs" /> Delete
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="py-10 text-center text-slate-400 text-sm">
+                No matching products found.
+              </div>
+            )}
+          </div>
+
         </div>
 
-        {/* MODAL: ADD PRODUCT */}
-        {isModalOpen && (
+        {/* MODAL: ADD / EDIT PRODUCT */}
+        {(isAddModalOpen || editingProduct) && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6">
+            <div className="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                <h3 className="text-lg font-bold text-slate-900">Add New Product Listing</h3>
+                <h3 className="text-lg font-bold text-slate-900">
+                  {editingProduct ? "Edit Product Listing" : "Add New Product Listing"}
+                </h3>
                 <button
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={closeModal}
                   className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg transition"
                 >
                   <FaTimes />
                 </button>
               </div>
 
-              <form onSubmit={handleAddProduct} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                     Product Title
@@ -316,21 +452,21 @@ export default function VendorProducts() {
                   <input
                     type="text"
                     required
-                    value={newProduct.name}
-                    onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g. Ergonomic Bluetooth Mouse"
                     className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/20"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                       Category
                     </label>
                     <select
-                      value={newProduct.category}
-                      onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                       className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-teal-700"
                     >
                       <option value="Electronics">Electronics</option>
@@ -348,8 +484,8 @@ export default function VendorProducts() {
                       type="number"
                       step="0.01"
                       required
-                      value={newProduct.price}
-                      onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       placeholder="49.99"
                       className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-teal-700"
                     />
@@ -358,22 +494,38 @@ export default function VendorProducts() {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
-                    Initial Stock Count
+                    Stock Count
                   </label>
                   <input
                     type="number"
                     required
-                    value={newProduct.stock}
-                    onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
+                    value={formData.stock}
+                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                     placeholder="25"
                     className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-teal-700"
                   />
                 </div>
 
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                    Image URL (Optional)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="url"
+                      value={formData.image}
+                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-teal-700"
+                    />
+                    <FaImage className="absolute left-3.5 top-3.5 text-slate-400 text-sm" />
+                  </div>
+                </div>
+
                 <div className="flex justify-end gap-3 pt-4">
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={closeModal}
                     className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
                   >
                     Cancel
@@ -382,7 +534,7 @@ export default function VendorProducts() {
                     type="submit"
                     className="px-5 py-2.5 rounded-xl bg-teal-800 hover:bg-teal-900 text-sm font-semibold text-white shadow-md transition"
                   >
-                    Publish Listing
+                    {editingProduct ? "Save Changes" : "Publish Listing"}
                   </button>
                 </div>
               </form>
@@ -390,7 +542,62 @@ export default function VendorProducts() {
           </div>
         )}
 
-      </div>
+        {/* MODAL: VIEW PRODUCT PREVIEW */}
+        {viewingProduct && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="text-base font-bold text-slate-900">Storefront Preview</h3>
+                <button
+                  onClick={closeModal}
+                  className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg transition"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <img
+                  src={viewingProduct.image}
+                  alt={viewingProduct.name}
+                  className="w-full h-48 object-cover rounded-2xl border border-slate-100"
+                />
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-md">
+                      {viewingProduct.category}
+                    </span>
+                    {getStatusBadge(viewingProduct.status)}
+                  </div>
+                  <h2 className="text-lg font-bold text-slate-900 mt-2">{viewingProduct.name}</h2>
+                  <p className="text-xs text-slate-400">SKU / ID: {viewingProduct.id}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl">
+                  <div>
+                    <p className="text-xs text-slate-400">Price</p>
+                    <p className="text-lg font-bold text-slate-900">${viewingProduct.price.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400">Available Stock</p>
+                    <p className="text-lg font-bold text-slate-900">{viewingProduct.stock} units</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={closeModal}
+                  className="w-full py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition"
+                >
+                  Close Preview
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </main>
     </div>
   );
 }

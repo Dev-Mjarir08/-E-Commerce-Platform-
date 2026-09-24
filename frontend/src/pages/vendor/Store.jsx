@@ -15,6 +15,7 @@ import {
   FaExternalLinkAlt,
   FaTruck,
   FaUndo,
+  FaArrowLeft,
 } from "react-icons/fa";
 
 // Initial Mock Vendor Store Data
@@ -46,9 +47,20 @@ const initialStoreSettings = {
   totalReviews: 328,
 };
 
-export default function VendorStore() {
+export default function VendorStore({ onBack }) {
   const [store, setStore] = useState(initialStoreSettings);
   const [isSaved, setIsSaved] = useState(false);
+
+  // Handle Back Button Click
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+    } else {
+      console.log("Navigate back");
+    }
+  };
 
   // Handle Input Changes
   const handleChange = (field, value) => {
@@ -83,6 +95,18 @@ export default function VendorStore() {
     <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
 
+        {/* BACK BUTTON */}
+        <div>
+          <button
+            type="button"
+            onClick={handleBack}
+            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors cursor-pointer group"
+          >
+            <FaArrowLeft className="text-slate-400 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Back</span>
+          </button>
+        </div>
+
         {/* TOP BAR / HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
           <div>
@@ -99,7 +123,7 @@ export default function VendorStore() {
               href={`https://marketplace.com/store/${store.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 transition shadow-sm"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 transition shadow-xs"
             >
               <FaExternalLinkAlt className="text-xs text-slate-400" /> View Live Store
             </a>
@@ -116,7 +140,7 @@ export default function VendorStore() {
         {isSaved && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl text-xs font-semibold flex items-center justify-between animate-fade-in">
             <span>Store settings and storefront branding have been updated successfully!</span>
-            <button onClick={() => setIsSaved(false)} className="text-emerald-600 hover:text-emerald-900">
+            <button onClick={() => setIsSaved(false)} className="text-emerald-600 hover:text-emerald-900 cursor-pointer">
               <FaTimes />
             </button>
           </div>
@@ -125,7 +149,7 @@ export default function VendorStore() {
         <form onSubmit={handleSave} className="space-y-6">
 
           {/* STORE BANNER & LOGO PREVIEW HEADER */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
             {/* Banner Area */}
             <div className="relative h-48 sm:h-64 bg-slate-100 overflow-hidden group">
               <img
@@ -187,7 +211,7 @@ export default function VendorStore() {
             <div className="lg:col-span-2 space-y-6">
 
               {/* General Store Details */}
-              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <FaStore className="text-teal-700" /> Store Profile & Bio
                 </h3>
@@ -201,7 +225,7 @@ export default function VendorStore() {
                     required
                     value={store.storeName}
                     onChange={(e) => handleChange("storeName", e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/20"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700 focus:ring-2 focus:ring-teal-700/20"
                   />
                 </div>
 
@@ -214,7 +238,7 @@ export default function VendorStore() {
                     value={store.tagline}
                     onChange={(e) => handleChange("tagline", e.target.value)}
                     placeholder="Short summary displayed under your store name"
-                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
                   />
                 </div>
 
@@ -226,13 +250,13 @@ export default function VendorStore() {
                     rows="4"
                     value={store.description}
                     onChange={(e) => handleChange("description", e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 p-4 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                    className="w-full rounded-xl border border-slate-200 p-4 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
                   />
                 </div>
               </div>
 
               {/* Contact Information */}
-              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <FaEnvelope className="text-teal-700" /> Public Contact Details
                 </h3>
@@ -247,7 +271,7 @@ export default function VendorStore() {
                         type="email"
                         value={store.email}
                         onChange={(e) => handleChange("email", e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
                       />
                       <FaEnvelope className="absolute left-3.5 top-3.5 text-slate-400 text-sm" />
                     </div>
@@ -262,7 +286,7 @@ export default function VendorStore() {
                         type="text"
                         value={store.phone}
                         onChange={(e) => handleChange("phone", e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
                       />
                       <FaPhone className="absolute left-3.5 top-3.5 text-slate-400 text-sm" />
                     </div>
@@ -279,7 +303,7 @@ export default function VendorStore() {
                         type="text"
                         value={store.address}
                         onChange={(e) => handleChange("address", e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
                       />
                       <FaMapMarkerAlt className="absolute left-3.5 top-3.5 text-slate-400 text-sm" />
                     </div>
@@ -294,7 +318,7 @@ export default function VendorStore() {
                         type="url"
                         value={store.website}
                         onChange={(e) => handleChange("website", e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
                       />
                       <FaGlobe className="absolute left-3.5 top-3.5 text-slate-400 text-sm" />
                     </div>
@@ -303,7 +327,7 @@ export default function VendorStore() {
               </div>
 
               {/* Vendor Policies */}
-              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <FaShieldAlt className="text-teal-700" /> Store Terms & Terms
                 </h3>
@@ -318,7 +342,7 @@ export default function VendorStore() {
                     onChange={(e) =>
                       handleNestedChange("policies", "shippingPolicy", e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                    className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
                   />
                 </div>
 
@@ -332,7 +356,7 @@ export default function VendorStore() {
                     onChange={(e) =>
                       handleNestedChange("policies", "returnPolicy", e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                    className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
                   />
                 </div>
               </div>
@@ -343,7 +367,7 @@ export default function VendorStore() {
             <div className="space-y-6">
 
               {/* Store Permalink */}
-              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-3">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Store Slug / URL
                 </h4>
@@ -355,13 +379,13 @@ export default function VendorStore() {
                     type="text"
                     value={store.slug}
                     onChange={(e) => handleChange("slug", e.target.value)}
-                    className="w-full bg-transparent px-3 py-2 text-xs font-mono text-slate-800 focus:outline-none"
+                    className="w-full bg-transparent px-3 py-2 text-xs font-mono text-slate-800 focus:outline-hidden"
                   />
                 </div>
               </div>
 
               {/* Support Operating Hours */}
-              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-4">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                   <FaClock className="text-slate-400" /> Customer Support Schedule
                 </h4>
@@ -377,7 +401,7 @@ export default function VendorStore() {
                       onChange={(e) =>
                         handleNestedChange("hours", "monday", e.target.value)
                       }
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
                     />
                   </div>
 
@@ -391,7 +415,7 @@ export default function VendorStore() {
                       onChange={(e) =>
                         handleNestedChange("hours", "saturday", e.target.value)
                       }
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
                     />
                   </div>
 
@@ -405,7 +429,7 @@ export default function VendorStore() {
                       onChange={(e) =>
                         handleNestedChange("hours", "sunday", e.target.value)
                       }
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
                     />
                   </div>
                 </div>

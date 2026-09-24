@@ -19,6 +19,7 @@ import {
     ChevronRight,
     ChevronDown,
 } from "lucide-react";
+import VendorSidebar from "./VendorSlideBar";
 
 export default function VendorOrdersPage() {
     const [activeTab, setActiveTab] = useState("All");
@@ -85,146 +86,9 @@ export default function VendorOrdersPage() {
     return (
         <div className="flex h-screen bg-slate-100 text-slate-800 font-sans overflow-hidden">
 
-            {/* ================= MOBILE MENU BUTTON ================= */}
-            {!sidebarOpen && (
-            <button
-                onClick={() => setSidebarOpen(true)}
-                className="fixed top-4 left-4 z-60 md:hidden
-                bg-emerald-600 text-white p-3 rounded-lg shadow-lg"
-                aria-label="Open menu"
-            >
-            <FaBars size={10} />
-            </button>
-        )}
+            {/* ================= vendor slidebar ================= */}
+            <VendorSidebar />
 
-            {/* ================= SIDEBAR ================= */}
-            <aside
-                className={`
-                    fixed md:static
-                    top-0 left-0
-                    z-50
-                    h-screen
-                    w-64
-                    bg-slate-900
-                    text-slate-300
-                    flex flex-col justify-between
-                    transform transition-transform duration-300 ease-in-out
-                    ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-                    md:translate-x-0
-                    shrink-0
-                `}
-            >
-                <div>
-                    {/* LOGO */}
-                    <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-700">
-
-                        <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-lg">
-                            C
-                        </div>
-
-                        <span className="font-semibold text-white text-base whitespace-nowrap">
-                            Craftsman Collective
-                        </span>
-
-                        {/* CLOSE BUTTON */}
-                        <button
-                            onClick={() => setSidebarOpen(false)}
-                            className="absolute top-7 right-2 text-slate-300 hover:text-white md:hidden min-[320px]:w-4"
-                            aria-label="Close menu"
-                        >
-                            <FaTimes size={22}  strokeWidth={1} />
-                        </button>
-                    </div>
-
-                    {/* NAVIGATION */}
-                    <nav className="p-4 space-y-1">
-
-                        <a
-                            href="#"
-                            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                        >
-                            <LayoutDashboard size={18} />
-                            <span className="text-sm font-medium">
-                                Dashboard
-                            </span>
-                        </a>
-
-                        <a
-                            href="#"
-                            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                        >
-                            <Package size={18} />
-                            <span className="text-sm font-medium">
-                                Products
-                            </span>
-                        </a>
-
-                        {/* ACTIVE ORDERS */}
-                        <a
-                            href="#"
-                            className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-medium"
-                        >
-                            <ShoppingBag size={18} />
-                            <span className="text-sm">
-                                Orders
-                            </span>
-                        </a>
-
-                        <a
-                            href="#"
-                            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                        >
-                            <Users size={18} />
-                            <span className="text-sm font-medium">
-                                Customers
-                            </span>
-                        </a>
-
-                        <a
-                            href="#"
-                            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                        >
-                            <Star size={18} />
-                            <span className="text-sm font-medium">
-                                Reviews
-                            </span>
-                        </a>
-
-                        <a
-                            href="#"
-                            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                        >
-                            <BarChart3 size={18} />
-                            <span className="text-sm font-medium">
-                                Analytics
-                            </span>
-                        </a>
-
-                        <a
-                            href="#"
-                            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                        >
-                            <Settings size={18} />
-                            <span className="text-sm font-medium">
-                                Settings
-                            </span>
-                        </a>
-                    </nav>
-                </div>
-
-                {/* BOTTOM SETTINGS */}
-                <div className="p-4 border-t border-slate-700">
-                    <a
-                        href="#"
-                        className="flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg transition-colors"
-                    >
-                        <Settings size={18} />
-                        <span className="text-sm font-medium">
-                            Settings
-                        </span>
-                    </a>
-                </div>
-            </aside>
 
             {/* ================= MAIN CONTENT ================= */}
             <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
@@ -382,10 +246,9 @@ export default function VendorOrdersPage() {
                                                 px-3 py-1 rounded-md
                                                 text-xs font-medium
                                                 transition-all whitespace-nowrap
-                                                ${
-                                                    activeTab === status
-                                                        ? "bg-white text-slate-800 shadow-sm"
-                                                        : "text-slate-600 hover:text-slate-900"
+                                                ${activeTab === status
+                                                    ? "bg-white text-slate-800 shadow-sm"
+                                                    : "text-slate-600 hover:text-slate-900"
                                                 }
                                             `}
                                         >
