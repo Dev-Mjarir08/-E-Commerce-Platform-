@@ -1,270 +1,328 @@
 /**
- * M4M For Men - Luxury Menswear Product Data
- * Curated catalog with high-resolution imagery, fabric details, sizing, swatches and styling notes.
+ * Global Multi-Category Marketplace Catalog
+ * Encompassing Electronics, Fashion & Apparel, Footwear, Watches, Home & Accessories
+ * Curated with high-resolution imagery, specifications, color swatches and details.
  */
 
 export const products = [
+  // --- 1. ELECTRONICS & GADGETS ---
   {
-    id: 'm4m-01',
+    id: 'prod-01',
+    name: 'Studio ANC Wireless Over-Ear Headphones',
+    subtitle: 'Adaptive Noise Cancellation & Lossless 40mm Drivers',
+    category: 'electronics',
+    categoryName: 'Electronics',
+    price: 18999,
+    compareAtPrice: 24999,
+    rating: 4.9,
+    reviewsCount: 142,
+    isNew: true,
+    isFeatured: true,
+    isBestSeller: true,
+    badge: 'BEST SELLER',
+    description: 'Custom 40mm titanium composite drivers with adaptive hybrid active noise cancellation, lossless Bluetooth 5.3 audio, and 45-hour battery endurance.',
+    fabric: 'Anodized aluminum, breathable perforated leather & memory foam.',
+    origin: 'Acoustic Engineering in Tokyo, Japan',
+    fit: 'Over-ear ergonomic clamping force with plush memory foam cushions.',
+    colors: [
+      { name: 'Matte Onyx', hex: '#111111', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1000&q=85' },
+      { name: 'Silver Platinum', hex: '#E5E3DF', image: 'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=1000&q=85' }
+    ],
+    sizes: ['Standard Edition', 'Studio Pro Edition'],
+    inStock: true,
+    stockCount: 12,
+    images: [
+      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=1200&q=85'
+    ],
+    hoverImage: 'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=1200&q=85'
+  },
+  {
+    id: 'prod-02',
+    name: 'Horizon Minimalist Mechanical Keyboard',
+    subtitle: 'Hot-Swappable Switches & CNC Aluminum Enclosure',
+    category: 'electronics',
+    categoryName: 'Electronics',
+    price: 8499,
+    compareAtPrice: 10999,
+    rating: 4.95,
+    reviewsCount: 96,
+    isNew: true,
+    isFeatured: true,
+    isBestSeller: false,
+    badge: 'NEW ARRIVAL',
+    description: 'CNC anodized aerospace aluminum body with hot-swappable tactile mechanical switches, sound-dampening gasket mount, and wireless multi-device pairing.',
+    fabric: '6063 Aluminum CNC chassis, PBT double-shot keycaps.',
+    origin: 'Crafted in Seoul, South Korea',
+    fit: 'Compact 75% tenkeyless form factor with customizable rotary knob.',
+    colors: [
+      { name: 'Space Grey', hex: '#34495E', image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1000&q=85' },
+      { name: 'Lunar White', hex: '#F2EFE9', image: 'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=1000&q=85' }
+    ],
+    sizes: ['65% Compact', '75% Custom Layout'],
+    inStock: true,
+    stockCount: 18,
+    images: [
+      'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=1200&q=85'
+    ],
+    hoverImage: 'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=1200&q=85'
+  },
+  {
+    id: 'prod-03',
+    name: 'Aura 360 Spatial Smart Sound Speaker',
+    subtitle: 'Room-Filling Acoustics & Kvadrat Wool Finish',
+    category: 'electronics',
+    categoryName: 'Electronics',
+    price: 14999,
+    compareAtPrice: 18999,
+    rating: 4.88,
+    reviewsCount: 78,
+    isNew: false,
+    isFeatured: true,
+    isBestSeller: true,
+    badge: 'TOP RATED',
+    description: 'Room-filling 360-degree omnidirectional acoustic field wrapped in Danish acoustic wool textile with integrated voice assistant and AirPlay 2.',
+    fabric: 'Kvadrat acoustic wool fabric, brushed aluminum base.',
+    origin: 'Designed in Copenhagen, Denmark',
+    fit: 'Compact cylindrical table-top architectural acoustic speaker.',
+    colors: [
+      { name: 'Charcoal Fabric', hex: '#2C3E50', image: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=1000&q=85' },
+      { name: 'Sand Cream', hex: '#EAE6DF', image: 'https://images.unsplash.com/photo-1543512214-318c7553f230?auto=format&fit=crop&w=1000&q=85' }
+    ],
+    sizes: ['Standard 50W', 'Pro Room 80W'],
+    inStock: true,
+    stockCount: 9,
+    images: [
+      'https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1543512214-318c7553f230?auto=format&fit=crop&w=1200&q=85'
+    ],
+    hoverImage: 'https://images.unsplash.com/photo-1543512214-318c7553f230?auto=format&fit=crop&w=1200&q=85'
+  },
+
+  // --- 2. FASHION & APPAREL ---
+  {
+    id: 'prod-04',
     name: 'Double-Breasted Cashmere Greatcoat',
     subtitle: '100% Mongolian Cashmere & Virgin Wool Blend',
-    category: 'outerwear',
-    categoryName: 'Outerwear',
-    price: 980,
-    compareAtPrice: 1250,
-    rating: 4.9,
+    category: 'fashion',
+    categoryName: 'Fashion',
+    price: 28500,
+    compareAtPrice: 34999,
+    rating: 4.95,
     reviewsCount: 38,
     isNew: true,
     isFeatured: true,
     isBestSeller: true,
     badge: 'COLLECTION SS/26',
-    description: 'An imposing double-breasted silhouette tailored from a heavy 580gsm blend of recycled virgin wool and grade-A Mongolian cashmere. Features peak lapels, horn buttons, full cupro lining, and deep welt pockets.',
+    description: 'An imposing double-breasted silhouette tailored from a heavy 580gsm blend of virgin wool and grade-A Mongolian cashmere with peak lapels and horn buttons.',
     fabric: '85% Virgin Wool, 15% Cashmere (580gsm). Cupro lining.',
     origin: 'Handmade in Biella, Italy',
-    fit: 'Relaxed structured silhouette. Fits true to size. For a closer fit, take one size down.',
+    fit: 'Relaxed structured silhouette. Fits true to size.',
     colors: [
       { name: 'Onyx Black', hex: '#111111', image: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=1000&q=85' },
       { name: 'Camel Tan', hex: '#C19A6B', image: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=1000&q=85' }
     ],
-    sizes: ['46 (S)', '48 (M)', '50 (L)', '52 (XL)', '54 (XXL)'],
+    sizes: ['46 (S)', '48 (M)', '50 (L)', '52 (XL)'],
     inStock: true,
     stockCount: 6,
     images: [
       'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1200&q=85'
+      'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=1200&q=85'
     ],
-    hoverImage: 'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=1200&q=85'
+    hoverImage: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=1200&q=85'
   },
   {
-    id: 'm4m-02',
-    name: 'Architectural Tailored Wool Blazer',
-    subtitle: 'Super 150s Loro Piana Wool',
-    category: 'tailoring',
-    categoryName: 'Tailoring',
-    price: 750,
-    compareAtPrice: null,
-    rating: 5.0,
-    reviewsCount: 24,
-    isNew: true,
-    isFeatured: true,
-    isBestSeller: false,
-    badge: 'NEW ARRIVAL',
-    description: 'Designed with soft natural shoulders and a clean, roped chest drape. Finished with pick-stitch detailing, floating canvas construction, and mother-of-pearl buttons.',
-    fabric: '100% Super 150s Wool. Bemberg lining.',
-    origin: 'Crafted in Naples, Italy',
-    fit: 'Modern tailored fit with slight chest suppression.',
-    colors: [
-      { name: 'Midnight Navy', hex: '#1C2833', image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1000&q=85' },
-      { name: 'Charcoal Grey', hex: '#34495E', image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=1000&q=85' }
-    ],
-    sizes: ['46 (S)', '48 (M)', '50 (L)', '52 (XL)'],
-    inStock: true,
-    stockCount: 4,
-    images: [
-      'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=1200&q=85'
-    ],
-    hoverImage: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=1200&q=85'
-  },
-  {
-    id: 'm4m-03',
-    name: 'Single-Pleat Wool Gabardine Trousers',
-    subtitle: 'High-Rise Relaxed Drape',
-    category: 'trousers',
-    categoryName: 'Trousers',
-    price: 340,
-    compareAtPrice: 420,
-    rating: 4.8,
-    reviewsCount: 52,
+    id: 'prod-05',
+    name: 'Oversized Heavyweight Combed Cotton Tee',
+    subtitle: '280gsm Long-Staple Organic Cotton',
+    category: 'fashion',
+    categoryName: 'Fashion',
+    price: 1899,
+    compareAtPrice: 2499,
+    rating: 4.87,
+    reviewsCount: 164,
     isNew: false,
     isFeatured: true,
     isBestSeller: true,
     badge: 'ESSENTIAL',
-    description: 'High-waisted silhouette with a clean single forward pleat, extended waist tab, side adjusters, and a subtle taper. Designed to drape effortlessly over tailored footwear.',
-    fabric: '100% High-Twist Wool Gabardine (320gsm).',
-    origin: 'Porto, Portugal',
-    fit: 'High rise with a generous thigh and slight taper.',
+    description: 'Engineered from 280gsm long-staple organic cotton. Cut with a boxy drop-shoulder silhouette, thick ribbed collar, and pre-shrunk finish.',
+    fabric: '100% GOTS Certified Long-Staple Cotton (280gsm).',
+    origin: 'Woven in Coimbatore, India',
+    fit: 'Boxy streetwear cut with drop shoulders.',
     colors: [
-      { name: 'Oatmeal Beige', hex: '#D2B48C', image: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&fit=crop&w=1000&q=85' },
-      { name: 'Espresso Brown', hex: '#3B2F2F', image: 'https://images.unsplash.com/photo-1479064555552-3ef4979f8908?auto=format&fit=crop&w=1000&q=85' }
-    ],
-    sizes: ['29', '30', '31', '32', '33', '34', '36'],
-    inStock: true,
-    stockCount: 12,
-    images: [
-      'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1479064555552-3ef4979f8908?auto=format&fit=crop&w=1200&q=85'
-    ],
-    hoverImage: 'https://images.unsplash.com/photo-1479064555552-3ef4979f8908?auto=format&fit=crop&w=1200&q=85'
-  },
-  {
-    id: 'm4m-04',
-    name: 'Chunky Ribbed Cashmere Mockneck',
-    subtitle: '7-Gauge Pure Cashmere Knit',
-    category: 'knitwear',
-    categoryName: 'Knitwear',
-    price: 490,
-    compareAtPrice: null,
-    rating: 4.9,
-    reviewsCount: 19,
-    isNew: true,
-    isFeatured: true,
-    isBestSeller: false,
-    badge: 'LIMITED EDITION',
-    description: 'Substantial 7-gauge knit spun from the finest combed Mongolian cashmere fibres. Features drop shoulders, raglan sleeve seams, and an architectural roll collar that retains its shape.',
-    fabric: '100% Grade-A Mongolian Cashmere.',
-    origin: 'Perugia, Italy',
-    fit: 'Relaxed contemporary fit.',
-    colors: [
-      { name: 'Alabaster Chalk', hex: '#EDE8E1', image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=1000&q=85' },
-      { name: 'Deep Sage', hex: '#4A5D4E', image: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=1000&q=85' }
+      { name: 'Chalk White', hex: '#F5F5F0', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85' },
+      { name: 'Onyx Black', hex: '#111111', image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=1000&q=85' }
     ],
     sizes: ['S', 'M', 'L', 'XL'],
     inStock: true,
-    stockCount: 5,
+    stockCount: 25,
     images: [
-      'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=1200&q=85'
+      'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=1200&q=85'
     ],
-    hoverImage: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=1200&q=85'
+    hoverImage: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=1200&q=85'
   },
+
+  // --- 3. FOOTWEAR & SHOES ---
   {
-    id: 'm4m-05',
-    name: 'Japanese Selvedge Twill Overshirt',
-    subtitle: '12oz Organic Cotton Loomstate Twill',
-    category: 'shirting',
-    categoryName: 'Shirting',
-    price: 280,
-    compareAtPrice: null,
-    rating: 4.7,
-    reviewsCount: 41,
-    isNew: false,
-    isFeatured: false,
-    isBestSeller: true,
-    badge: 'CRAFT SERIES',
-    description: 'Woven slowly on vintage shuttle looms in Okayama, Japan. Features dual chest patch pockets, matte horn buttons, reinforced side gussets, and contrast stitch detailing.',
-    fabric: '100% Organic Selvedge Cotton (12oz).',
-    origin: 'Okayama, Japan',
-    fit: 'Boxy overshirt silhouette ideal for layering over knits.',
-    colors: [
-      { name: 'Raw Ecru', hex: '#F0ECE1', image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=1000&q=85' },
-      { name: 'Olive Drab', hex: '#4B5320', image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=1000&q=85' }
-    ],
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    inStock: true,
-    stockCount: 15,
-    images: [
-      'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=1200&q=85'
-    ],
-    hoverImage: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=1200&q=85'
-  },
-  {
-    id: 'm4m-06',
-    name: 'Handcrafted Calfskin Belgian Loafer',
-    subtitle: 'Goodyear Welted & Glove Leather Insole',
+    id: 'prod-06',
+    name: 'Minimalist Italian Leather Court Trainers',
+    subtitle: 'Tuscan Full-Grain Calfskin & Margom Sole',
     category: 'footwear',
     categoryName: 'Footwear',
-    price: 520,
-    compareAtPrice: 650,
-    rating: 5.0,
-    reviewsCount: 31,
+    price: 11499,
+    compareAtPrice: 14999,
+    rating: 4.93,
+    reviewsCount: 112,
     isNew: true,
     isFeatured: true,
-    isBestSeller: false,
-    badge: 'ARTISANAL',
-    description: 'Hand-sewn apron construction featuring French box calf leather, a stacked leather heel, subtle piping accents, and an unlined vamp for instantaneous glove-like comfort.',
-    fabric: 'Full-Grain French Box Calfskin. Oak Bark Tanned Sole.',
-    origin: 'Tuscany, Italy',
-    fit: 'Fits true to UK/EU sizing. Select your standard dress shoe size.',
+    isBestSeller: true,
+    badge: 'ICONIC',
+    description: 'Clean court low-top silhouette crafted from full-grain Tuscan calfskin with Margom Italian vulcanized rubber outsoles and calf leather lining.',
+    fabric: 'Full-Grain Italian Calfskin, Natural Margom Rubber Sole.',
+    origin: 'Handcrafted in Civitanova Marche, Italy',
+    fit: 'Fits true to European sizing. Order normal size.',
     colors: [
-      { name: 'Bordeaux Oxblood', hex: '#4A0E17', image: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?auto=format&fit=crop&w=1000&q=85' },
-      { name: 'Noir Black', hex: '#111111', image: 'https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&w=1000&q=85' }
+      { name: 'Pure White', hex: '#FFFFFF', image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=1000&q=85' },
+      { name: 'Triple Black', hex: '#111111', image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=1000&q=85' }
     ],
-    sizes: ['40 (US 7)', '41 (US 8)', '42 (US 9)', '43 (US 10)', '44 (US 11)', '45 (US 12)'],
+    sizes: ['40 (UK 6)', '41 (UK 7)', '42 (UK 8)', '43 (UK 9)', '44 (UK 10)'],
     inStock: true,
-    stockCount: 7,
+    stockCount: 14,
     images: [
-      'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&w=1200&q=85'
+      'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=1200&q=85'
     ],
-    hoverImage: 'https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&w=1200&q=85'
+    hoverImage: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=1200&q=85'
   },
   {
-    id: 'm4m-07',
-    name: 'Minimalist Raglan Trench Coat',
-    subtitle: 'Water-Repellent Japanese Gabardine',
-    category: 'outerwear',
-    categoryName: 'Outerwear',
-    price: 820,
-    compareAtPrice: null,
-    rating: 4.8,
-    reviewsCount: 16,
-    isNew: true,
-    isFeatured: false,
-    isBestSeller: false,
-    badge: 'WEATHERPROOF',
-    description: 'An ultra-refined take on the timeless macintosh. Constructed from high-density Japanese water-resistant cotton-poly gabardine with concealed horn-button placket and throat latch.',
-    fabric: '65% Japanese Cotton, 35% Technical Poly. Water-repellent finish.',
-    origin: 'London, UK',
-    fit: 'Fluid oversized A-line drape.',
+    id: 'prod-07',
+    name: 'Goodyear-Welted Suede Chelsea Boots',
+    subtitle: 'Water-Repellent English Reverse Suede',
+    category: 'footwear',
+    categoryName: 'Footwear',
+    price: 16999,
+    compareAtPrice: 21999,
+    rating: 4.9,
+    reviewsCount: 84,
+    isNew: false,
+    isFeatured: true,
+    isBestSeller: true,
+    badge: 'HANDMADE',
+    description: 'Water-resistant European reverse suede with 360-degree Goodyear welt construction, Dainite studded rubber sole, and heavy elastic gussets.',
+    fabric: 'English Reverse Calf Suede, Dainite Rubber Outsole.',
+    origin: 'Manufactured in Northampton, England',
+    fit: 'Standard classic boot last with generous toe box.',
     colors: [
-      { name: 'Desert Sand', hex: '#D7C4A5', image: 'https://images.unsplash.com/photo-1516257984-b1b4d707412e?auto=format&fit=crop&w=1000&q=85' },
-      { name: 'Deep Coal', hex: '#222222', image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1000&q=85' }
+      { name: 'Snuff Suede Brown', hex: '#6E473B', image: 'https://images.unsplash.com/photo-1608256246200-53e635b5b65f?auto=format&fit=crop&w=1000&q=85' },
+      { name: 'Charcoal Black', hex: '#222222', image: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?auto=format&fit=crop&w=1000&q=85' }
     ],
-    sizes: ['46 (S)', '48 (M)', '50 (L)', '52 (XL)'],
+    sizes: ['40 (UK 6)', '41 (UK 7)', '42 (UK 8)', '43 (UK 9)', '44 (UK 10)'],
     inStock: true,
     stockCount: 8,
     images: [
-      'https://images.unsplash.com/photo-1516257984-b1b4d707412e?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85'
+      'https://images.unsplash.com/photo-1608256246200-53e635b5b65f?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?auto=format&fit=crop&w=1200&q=85'
     ],
-    hoverImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85'
+    hoverImage: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?auto=format&fit=crop&w=1200&q=85'
   },
+
+  // --- 4. WATCHES & HOROLOGY ---
   {
-    id: 'm4m-08',
-    name: 'Full-Grain Bridle Leather Weekender',
-    subtitle: 'Solid Brass Hardware & Suede Lining',
-    category: 'accessories',
-    categoryName: 'Accessories',
-    price: 680,
-    compareAtPrice: 850,
-    rating: 4.9,
-    reviewsCount: 44,
-    isNew: false,
+    id: 'prod-08',
+    name: 'Chronograph Automatic Mechanical Timepiece',
+    subtitle: 'Sapphire Crystal & Swiss Automatic Movement',
+    category: 'watches',
+    categoryName: 'Watches',
+    price: 42999,
+    compareAtPrice: 54999,
+    rating: 4.98,
+    reviewsCount: 92,
+    isNew: true,
     isFeatured: true,
     isBestSeller: true,
-    badge: 'SIGNATURE PIECE',
-    description: 'Cut from 3.5mm thick English bridle leather that patinas richly over decades. Features hand-burnished edges, solid cast brass buckles, Swiss Riri zippers, and an interior laptop sleeve.',
-    fabric: '100% Vegetable-Tanned English Bridle Leather. Italian Pigskin Suede lining.',
-    origin: 'Walsall, England',
-    fit: 'Carry-on approved dimensions (52cm x 30cm x 26cm).',
+    badge: 'HOROLOGY',
+    description: 'Swiss-designed automatic mechanical column-wheel chronograph. Features double-domed sapphire crystal with anti-reflective coating and 100m water resistance.',
+    fabric: '316L Surgical Stainless Steel, Horween Shell Cordovan Strap.',
+    origin: 'Swiss Movement assembled in Geneva',
+    fit: '40mm case diameter, 20mm lug width.',
     colors: [
-      { name: 'Havanna Cognac', hex: '#7E481F', image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1000&q=85' },
-      { name: 'Midnight Black', hex: '#111111', image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=1000&q=85' }
+      { name: 'Brushed Steel & Black', hex: '#111111', image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=1000&q=85' }
     ],
-    sizes: ['One Size (42L)'],
+    sizes: ['40mm Case', '42mm Case'],
     inStock: true,
-    stockCount: 9,
+    stockCount: 5,
+    images: [
+      'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&q=85'
+    ],
+    hoverImage: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&q=85'
+  },
+
+  // --- 5. ACCESSORIES & BAGS ---
+  {
+    id: 'prod-09',
+    name: 'Bridle Leather Daily Carryall Briefcase',
+    subtitle: 'Vegetable-Tanned English Bridle Leather',
+    category: 'accessories',
+    categoryName: 'Accessories',
+    price: 14999,
+    compareAtPrice: 19999,
+    rating: 4.94,
+    reviewsCount: 78,
+    isNew: true,
+    isFeatured: true,
+    isBestSeller: false,
+    badge: 'ARTISAN',
+    description: 'Constructed from 2.5mm vegetable-tanned full-grain bridle leather with solid antiqued brass buckles and padded microfiber 16-inch laptop sleeve.',
+    fabric: '100% English Bridle Leather, Solid Cast Brass Hardware.',
+    origin: 'Artisanal Studio in London, UK',
+    fit: '16-inch laptop capacity with multiple document organizers.',
+    colors: [
+      { name: 'Vintage Havana Tan', hex: '#8B4513', image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1000&q=85' },
+      { name: 'Midnight Onyx', hex: '#111111', image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=1000&q=85' }
+    ],
+    sizes: ['15-Inch Capacity', '16-Inch Capacity'],
+    inStock: true,
+    stockCount: 7,
     images: [
       'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=85',
       'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=1200&q=85'
     ],
     hoverImage: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=1200&q=85'
+  },
+  {
+    id: 'prod-10',
+    name: 'Titanium Aviator Sunglasses with Polarized Optics',
+    subtitle: 'Japanese Beta-Titanium & CR-39 Lenses',
+    category: 'accessories',
+    categoryName: 'Accessories',
+    price: 9499,
+    compareAtPrice: 12499,
+    rating: 4.89,
+    reviewsCount: 52,
+    isNew: false,
+    isFeatured: true,
+    isBestSeller: true,
+    badge: 'POLARIZED',
+    description: 'Featherlight Japanese titanium frame with polarized CR-39 mineral lenses offering 100% UVA/UVB blockage and anti-reflective backing.',
+    fabric: 'Japanese Beta-Titanium wireframe, Polarized CR-39 glass.',
+    origin: 'Precision Handcrafted in Sabae, Japan',
+    fit: 'Classic teardrop aviator frame with flexible spring hinges.',
+    colors: [
+      { name: 'Gold & Olive Green Lens', hex: '#D4AF37', image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=1000&q=85' },
+      { name: 'Matte Gunmetal', hex: '#4A4A4A', image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=1000&q=85' }
+    ],
+    sizes: ['Standard 54mm', 'Wide 57mm'],
+    inStock: true,
+    stockCount: 15,
+    images: [
+      'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=1200&q=85'
+    ],
+    hoverImage: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=1200&q=85'
   }
 ];
 
-export const currencySymbols = {
-  USD: '$',
-  EUR: '€',
-  GBP: '£',
-  JPY: '¥'
-};
-
-export const currencyRates = {
-  USD: 1,
-  EUR: 0.92,
-  GBP: 0.79,
-  JPY: 155
-};
+export default products;

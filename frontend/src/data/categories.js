@@ -1,60 +1,63 @@
 /**
- * M4M For Men - Category Taxonomy & Editorial Imagery
+ * Multi-Category Taxonomy & Editorial Department Imagery
+ * Compatible with all e-commerce categories: Electronics, Fashion, Footwear, Watches, Home & Accessories
  */
 
 export const categories = [
   {
-    id: 'outerwear',
-    name: 'Outerwear',
-    tagline: 'Sculpted Silhouettes & Heavyweight Cashmere',
-    itemCount: '18 Styles',
+    id: 'electronics',
+    name: 'Electronics & Audio',
+    tagline: 'High-Fidelity Acoustics, ANC Audio & Smart Computing',
+    itemCount: '48 Gadgets',
+    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=85',
+    link: '#catalog',
+    badge: 'SMART TECH'
+  },
+  {
+    id: 'fashion',
+    name: 'Fashion & Apparel',
+    tagline: 'Sculpted Silhouettes, Heavy Cashmere & Tailoring',
+    itemCount: '124 Styles',
     image: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=1200&q=85',
     link: '#catalog',
     badge: 'COLLECTION SS/26'
   },
   {
-    id: 'tailoring',
-    name: 'Tailoring',
-    tagline: 'Naples Canvas & Super 150s Wool',
-    itemCount: '14 Styles',
-    image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1200&q=85',
-    link: '#catalog',
-    badge: 'SARTORIAL'
-  },
-  {
-    id: 'knitwear',
-    name: 'Knitwear',
-    tagline: '7-Gauge Mongolian Cashmere & Fine Merino',
-    itemCount: '22 Styles',
-    image: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=1200&q=85',
-    link: '#catalog',
-    badge: 'ESSENTIALS'
-  },
-  {
-    id: 'trousers',
-    name: 'Trousers',
-    tagline: 'Single-Pleat Drape & Wool Gabardine',
-    itemCount: '12 Styles',
-    image: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&fit=crop&w=1200&q=85',
-    link: '#catalog',
-    badge: 'CORE'
-  },
-  {
     id: 'footwear',
-    name: 'Footwear',
-    tagline: 'Tuscan Calfskin & Goodyear Construction',
-    itemCount: '8 Styles',
-    image: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?auto=format&fit=crop&w=1200&q=85',
+    name: 'Footwear & Sneakers',
+    tagline: 'Tuscan Calfskin Trainers & Goodyear-Welted Boots',
+    itemCount: '36 Styles',
+    image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=1200&q=85',
     link: '#catalog',
     badge: 'HANDCRAFTED'
   },
   {
+    id: 'watches',
+    name: 'Watches & Horology',
+    tagline: 'Automatic Column-Wheel Chronographs & Titanium Field Dials',
+    itemCount: '28 Pieces',
+    image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=1200&q=85',
+    link: '#catalog',
+    badge: 'MASTER HOROLOGY'
+  },
+  {
+    id: 'home',
+    name: 'Home & Living',
+    tagline: '360° Omnidirectional Speakers & Minimalist Accents',
+    itemCount: '22 Objects',
+    image: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=1200&q=85',
+    link: '#catalog',
+    badge: 'LIFESTYLE'
+  },
+  {
     id: 'accessories',
-    name: 'Leather & Accs',
-    tagline: 'English Bridle Leather & Brass Hardware',
-    itemCount: '16 Styles',
+    name: 'Leather & Accessories',
+    tagline: 'Bridle Leather Briefcases & Japanese Titanium Optics',
+    itemCount: '45 Items',
     image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=85',
     link: '#catalog',
     badge: 'ARTISAN'
   }
 ];
+
+export default categories;

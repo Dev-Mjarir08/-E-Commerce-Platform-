@@ -15,9 +15,21 @@ import {
   Users,
   CreditCard,
   BarChart3,
+  Wallet,
+  RotateCcw,
+  Star,
+  Image,
+  Tags,
+  Truck,
+  Bell,
 } from "lucide-react";
 
-const AdminSidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen }) => {
+const AdminSidebar = ({
+  isCollapsed,
+  setIsCollapsed,
+  isMobileOpen,
+  setIsMobileOpen,
+}) => {
   const user = useSelector((state) => state.auth.user);
   const totalProducts = useSelector((state) => state.products.items.length);
 
@@ -25,9 +37,14 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen }) => {
   const totalCoupons = useSelector((state) => state.coupons.items.length);
   const [productsOpen, setProductsOpen] = useState(false);
   const [vendorsOpen, setVendorsOpen] = useState(false);
+  const [ordersOpen, setOrdersOpen] = useState(false);
 
   const mainNavItems = [
-    { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
+    {
+      name: "Dashboard",
+      path: "/admin/dashboard",
+      icon: LayoutDashboard,
+    },
     {
       name: "Stores",
       path: "/admin/stores",
@@ -62,6 +79,46 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen }) => {
       name: "Analytics",
       path: "/admin/analytics",
       icon: BarChart3,
+    },
+    {
+      name: "Payouts",
+      path: "/admin/payouts",
+      icon: Wallet,
+    },
+    {
+      name: "Reviews",
+      path: "/admin/reviews",
+      icon: Star,
+    },
+    {
+      name: "Refunds",
+      path: "/admin/refunds",
+      icon: RotateCcw,
+    },
+    {
+      name: "Vendor KYC",
+      path: "/admin/vendor-requests",
+      icon: ShieldCheck,
+    },
+    {
+      name: "Banners & Sliders",
+      path: "/admin/banners",
+      icon: Image,
+    },
+    {
+      name: "Brands",
+      path: "/admin/brands",
+      icon: Tags,
+    },
+    {
+      name: "Shipping",
+      path: "/admin/shipping",
+      icon: Truck,
+    },
+    {
+      name: "Notifications",
+      path: "/admin/notifications",
+      icon: Bell,
     },
   ];
 

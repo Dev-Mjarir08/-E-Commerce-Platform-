@@ -111,11 +111,19 @@ export const createOrder = async (req, res) => {
     if (incomingItems && Array.isArray(incomingItems) && incomingItems.length > 0) {
       // Items sent in request
       for (const item of incomingItems) {
-        const product = await Product.findById(item.productId || item.product || item.id).session(session);
+        const prodId = item.productId || item.product || item.id;
+        let product = null;
+
+        if (mongoose.Types.ObjectId.isValid(prodId)) {
+          product = await Product.findById(prodId).session(session);
+        } else if (prodId) {
+          product = await Product.findOne({ slug: prodId }).session(session);
+        }
+
         if (!product) {
           await session.abortTransaction();
           session.endSession();
-          return res.status(404).json({ success: false, message: `Product ${item.name || item.productId} not found.` });
+          return res.status(404).json({ success: false, message: `Product ${item.name || prodId} not found.` });
         }
 
         if (product.stock < item.quantity) {

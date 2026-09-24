@@ -17,9 +17,11 @@ import {
   deleteCoupon,
   toggleCouponStatus
 } from '../../redux/slices/couponSlice';
+import { useConfirm } from '../../context/ModalContext';
 
 const Coupons = () => {
   const dispatch = useDispatch();
+  const { confirm, alert: modalAlert } = useConfirm();
   const couponList = useSelector((state) => state.coupons.items);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -91,8 +93,15 @@ const Coupons = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteCoupon = (id, code) => {
-    if (window.confirm(`Are you sure you want to delete coupon "${code}"?`)) {
+  const handleDeleteCoupon = async (id, code) => {
+    const ok = await confirm({
+      title: 'Delete Promotional Voucher',
+      message: `Are you sure you want to permanently delete coupon "${code}"? Customers will no longer be able to redeem this code.`,
+      confirmText: 'Delete Coupon',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    if (ok) {
       dispatch(deleteCoupon(id));
     }
   };
@@ -100,7 +109,11 @@ const Coupons = () => {
   const handleSubmitForm = (e) => {
     e.preventDefault();
     if (!formData.code.trim() || !formData.discountValue) {
-      alert('Please provide coupon code and discount value.');
+      modalAlert({
+        title: 'Missing Coupon Details',
+        message: 'Please provide both coupon code and discount value before creating.',
+        type: 'warning'
+      });
       return;
     }
 

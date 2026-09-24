@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Store,
@@ -10,20 +10,16 @@ import {
   ShieldCheck,
   Edit2,
   Trash2,
-  X
+  X,
+  RotateCcw
 } from 'lucide-react';
-import { stores as initialStores } from '../../data/stores';
+import { useConfirm } from '../../context/ModalContext';
+import adminApi from '../../services/adminApi';
 
 const Vendors = () => {
-  const [vendorList, setVendorList] = useState(
-    initialStores.map((s, idx) => ({
-      ...s,
-      status: idx === 3 ? 'pending' : 'active',
-      ownerEmail: `contact@${s.slug}.com`,
-      salesVolume: `₹${((idx + 1) * 1420000).toLocaleString()}`,
-      productsCount: 15 + idx * 8
-    }))
-  );
+  const { confirm, alert: modalAlert } = useConfirm();
+  const [vendorList, setVendorList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,23 +40,49 @@ const Vendors = () => {
     image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1000&q=85'
   });
 
+  // Fetch live vendor directory from MongoDB
+  const fetchLiveVendors = async () => {
+    setIsLoading(true);
+    try {
+      const response = await adminApi.getAllVendors();
+      const list = response?.data || response;
+      if (Array.isArray(list)) {
+        setVendorList(list);
+      }
+    } catch (err) {
+      console.warn('Notice loading live vendors:', err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveVendors();
+  }, []);
+
   // Filtered vendors
   const filteredVendors = useMemo(() => {
     return vendorList.filter((v) => {
-      const matchesSearch =
-        v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (v.city && v.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (v.ownerEmail && v.ownerEmail.toLowerCase().includes(searchQuery.toLowerCase()));
+      const name = v.storeName || v.name || '';
+      const slug = v.slug || '';
+      const city = v.city || '';
+      const email = v.email || v.ownerEmail || '';
 
-      const matchesTab = activeTab === 'all' || v.status === activeTab;
+      const matchesSearch =
+        name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        email.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const status = v.storeStatus || v.status || 'active';
+      const matchesTab = activeTab === 'all' || status === activeTab;
       return matchesSearch && matchesTab;
     });
   }, [vendorList, searchQuery, activeTab]);
 
-  const activeCount = vendorList.filter((v) => v.status === 'active').length;
-  const pendingCount = vendorList.filter((v) => v.status === 'pending').length;
-  const suspendedCount = vendorList.filter((v) => v.status === 'suspended').length;
+  const activeCount = vendorList.filter((v) => (v.storeStatus || v.status) === 'active').length;
+  const pendingCount = vendorList.filter((v) => (v.storeStatus || v.status) === 'pending').length;
+  const suspendedCount = vendorList.filter((v) => (v.storeStatus || v.status) === 'suspended').length;
 
   const handleOpenAddModal = () => {
     setEditingVendor(null);
@@ -82,13 +104,13 @@ const Vendors = () => {
   const handleOpenEditModal = (vendor) => {
     setEditingVendor(vendor);
     setFormData({
-      name: vendor.name,
+      name: vendor.storeName || vendor.name,
       slug: vendor.slug,
-      ownerEmail: vendor.ownerEmail || `contact@${vendor.slug}.com`,
+      ownerEmail: vendor.email || vendor.ownerEmail || '',
       city: vendor.city || '',
       category: vendor.category || '',
       tagline: vendor.tagline || '',
-      status: vendor.status || 'active',
+      status: vendor.storeStatus || vendor.status || 'active',
       rating: vendor.rating || 4.9,
       logo: vendor.logo || '',
       image: vendor.image || ''
@@ -96,22 +118,43 @@ const Vendors = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteVendor = (id) => {
-    if (window.confirm('Are you sure you want to deactivate and remove this vendor tenant?')) {
-      setVendorList((prev) => prev.filter((v) => v.id !== id));
+  const handleDeleteVendor = async (id) => {
+    const ok = await confirm({
+      title: 'Deactivate Vendor Tenant',
+      message: 'Are you sure you want to deactivate and suspend this live vendor in MongoDB?',
+      confirmText: 'Deactivate Vendor',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    if (ok) {
+      try {
+        await adminApi.deleteVendor(id);
+      } catch (err) {
+        console.warn('Notice deactivating vendor:', err.message);
+      }
+      setVendorList((prev) => prev.filter((v) => (v._id || v.id) !== id));
     }
   };
 
-  const handleToggleStatus = (id, newStatus) => {
+  const handleToggleStatus = async (id, newStatus) => {
+    try {
+      await adminApi.updateVendorStatus(id, { status: newStatus });
+    } catch (err) {
+      console.warn('Notice updating status:', err.message);
+    }
     setVendorList((prev) =>
-      prev.map((v) => (v.id === id ? { ...v, status: newStatus } : v))
+      prev.map((v) => ((v._id || v.id) === id ? { ...v, status: newStatus, storeStatus: newStatus } : v))
     );
   };
 
   const handleSubmitForm = (e) => {
     e.preventDefault();
     if (!formData.name || !formData.slug) {
-      alert('Please provide store name and slug.');
+      modalAlert({
+        title: 'Missing Fields',
+        message: 'Please provide store name and URL slug before saving.',
+        type: 'warning'
+      });
       return;
     }
 
@@ -275,7 +318,14 @@ const Vendors = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
-              {filteredVendors.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan="6" className="py-16 text-center text-slate-500">
+                    <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                    <p className="font-semibold text-slate-700">Loading live vendors from database...</p>
+                  </td>
+                </tr>
+              ) : filteredVendors.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="py-12 text-center text-slate-500">
                     <Store size={36} className="mx-auto text-slate-300 mb-2" />
@@ -283,114 +333,122 @@ const Vendors = () => {
                   </td>
                 </tr>
               ) : (
-                filteredVendors.map((vendor) => (
-                  <tr key={vendor.id} className="hover:bg-slate-50/70 transition-colors">
-                    {/* Store details */}
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={vendor.logo || vendor.image}
-                          alt={vendor.name}
-                          className="w-11 h-11 rounded-lg object-cover border border-slate-200 shrink-0"
-                        />
-                        <div className="min-w-0 max-w-xs">
-                          <div className="flex items-center gap-1.5">
-                            <h4 className="font-bold text-slate-900 truncate">{vendor.name}</h4>
-                            {vendor.status === 'active' && (
-                              <ShieldCheck size={14} className="text-emerald-600 shrink-0" title="Verified Atelier" />
+                filteredVendors.map((vendor) => {
+                  const id = vendor._id || vendor.id;
+                  const currentStatus = vendor.storeStatus || vendor.status || 'active';
+                  return (
+                    <tr key={id} className="hover:bg-slate-50/70 transition-colors">
+                      {/* Store details */}
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={vendor.logo || vendor.image || 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=200&q=80'}
+                            alt={vendor.storeName || vendor.name}
+                            className="w-11 h-11 rounded-lg object-cover border border-slate-200 shrink-0"
+                          />
+                          <div className="min-w-0 max-w-xs">
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="font-bold text-slate-900 truncate">
+                                {vendor.storeName || vendor.name}
+                              </h4>
+                              {currentStatus === 'active' && (
+                                <ShieldCheck size={14} className="text-emerald-600 shrink-0" title="Verified Atelier" />
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-400 truncate">{vendor.email || vendor.ownerEmail}</p>
+                            {vendor.slug && (
+                              <span className="text-[10px] font-mono text-indigo-600 block mt-0.5">
+                                /store/{vendor.slug}
+                              </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-slate-400 truncate">{vendor.ownerEmail}</p>
-                          <span className="text-[10px] font-mono text-indigo-600 block mt-0.5">
-                            /store/{vendor.slug}
-                          </span>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Location & Specialty */}
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-1 text-slate-800 font-semibold">
-                        <MapPin size={13} className="text-slate-400" />
-                        <span>{vendor.city || 'Global Atelier'}</span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 truncate max-w-xs mt-0.5">
-                        {vendor.category || vendor.tagline}
-                      </p>
-                    </td>
+                      {/* Location & Specialty */}
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-1 text-slate-800 font-semibold">
+                          <MapPin size={13} className="text-slate-400" />
+                          <span>{vendor.city || 'Global Atelier'}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 truncate max-w-xs mt-0.5">
+                          {vendor.category || vendor.tagline}
+                        </p>
+                      </td>
 
-                    {/* Rating */}
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-1 font-bold text-slate-900">
-                        <Star size={14} className="text-amber-500 fill-amber-500" />
-                        <span>{vendor.rating || 4.9}</span>
-                        <span className="text-[11px] font-normal text-slate-400">
-                          ({vendor.reviewsCount || 100}+)
+                      {/* Rating & Products */}
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-1 font-bold text-slate-900">
+                          <Star size={14} className="text-amber-500 fill-amber-500" />
+                          <span>{vendor.rating || 5.0}</span>
+                        </div>
+                        <span className="text-[10px] text-slate-500 block mt-0.5 font-mono font-semibold">
+                          {vendor.productsCount || 0} Products
                         </span>
-                      </div>
-                      <span className="text-[10px] text-slate-500 block mt-0.5">
-                        {vendor.productsCount || 20} Products
-                      </span>
-                    </td>
+                      </td>
 
-                    {/* Sales */}
-                    <td className="py-4 px-4">
-                      <span className="font-extrabold text-slate-900 block">
-                        {vendor.salesVolume || '₹28,40,000'}
-                      </span>
-                      <span className="text-[10px] text-emerald-700 font-bold">● Active Payouts</span>
-                    </td>
+                      {/* Sales */}
+                      <td className="py-4 px-4">
+                        <span className="font-extrabold text-slate-900 block font-mono">
+                          {vendor.salesVolume || '₹0'}
+                        </span>
+                        <span className="text-[10px] text-emerald-700 font-bold">● Active Storefront</span>
+                      </td>
 
-                    {/* Status Dropdown/Badge */}
-                    <td className="py-4 px-4">
-                      <select
-                        value={vendor.status}
-                        onChange={(e) => handleToggleStatus(vendor.id, e.target.value)}
-                        className={`text-xs font-bold px-2.5 py-1 rounded-full border focus:outline-none ${vendor.status === 'active'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                            : vendor.status === 'pending'
+                      {/* Status Dropdown/Badge */}
+                      <td className="py-4 px-4">
+                        <select
+                          value={currentStatus}
+                          onChange={(e) => handleToggleStatus(id, e.target.value)}
+                          className={`text-xs font-bold px-2.5 py-1 rounded-full border focus:outline-none cursor-pointer ${
+                            currentStatus === 'active'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : currentStatus === 'pending'
                               ? 'bg-amber-50 text-amber-800 border-amber-200'
                               : 'bg-rose-50 text-rose-800 border-rose-200'
                           }`}
-                      >
-                        <option value="active">Active (Live)</option>
-                        <option value="pending">Pending Approval</option>
-                        <option value="suspended">Suspended</option>
-                      </select>
-                    </td>
+                        >
+                          <option value="active">Active (Live)</option>
+                          <option value="pending">Pending Review</option>
+                          <option value="suspended">Suspended</option>
+                        </select>
+                      </td>
 
-                    {/* Actions */}
-                    <td className="py-4 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link
-                          to={`/store/${vendor.slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors"
-                          title="View Live Storefront"
-                        >
-                          <ExternalLink size={15} />
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditModal(vendor)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors"
-                          title="Edit Credentials"
-                        >
-                          <Edit2 size={15} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteVendor(vendor.id)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                          title="Remove Vendor"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      {/* Actions */}
+                      <td className="py-4 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {vendor.slug && (
+                            <Link
+                              to={`/store/${vendor.slug}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors"
+                              title="View Live Storefront"
+                            >
+                              <ExternalLink size={15} />
+                            </Link>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditModal(vendor)}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors"
+                            title="Edit Vendor"
+                          >
+                            <Edit2 size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteVendor(id)}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            title="Deactivate Vendor"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

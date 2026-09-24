@@ -24,6 +24,35 @@ export const adminApi = {
   },
 
   /**
+   * Get all live vendors from MongoDB
+   * @param {Object} params - { search, status, page, limit }
+   */
+  async getAllVendors(params = {}) {
+    return api.get('/admin/vendors', { params });
+  },
+
+  /**
+   * Get single vendor details by ID
+   */
+  async getVendorById(id) {
+    return api.get(`/admin/vendors/${id}`);
+  },
+
+  /**
+   * Update vendor/store status (active, pending, suspended)
+   */
+  async updateVendorStatus(id, statusData) {
+    return api.put(`/admin/vendors/${id}/status`, statusData);
+  },
+
+  /**
+   * Deactivate/delete vendor
+   */
+  async deleteVendor(id) {
+    return api.delete(`/admin/vendors/${id}`);
+  },
+
+  /**
    * Get all products for admin table
    * @param {Object} params - { search, category, store, sort, page, limit }
    */

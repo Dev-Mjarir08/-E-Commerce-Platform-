@@ -17,6 +17,11 @@ if (!fs.existsSync(categoryUploadDir)) {
   fs.mkdirSync(categoryUploadDir, { recursive: true });
 }
 
+const avatarUploadDir = path.join(__dirname, '../uploads/avatars');
+if (!fs.existsSync(avatarUploadDir)) {
+  fs.mkdirSync(avatarUploadDir, { recursive: true });
+}
+
 // Configure disk storage for products
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -38,6 +43,18 @@ const categoryStorage = multer.diskStorage({
     const ext = path.extname(file.originalname).toLowerCase();
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     cb(null, `cat-${uniqueSuffix}${ext}`);
+  }
+});
+
+// Configure disk storage for avatars
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, avatarUploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `avatar-${uniqueSuffix}${ext}`);
   }
 });
 
@@ -69,6 +86,30 @@ export const uploadCategoryImage = multer({
   },
   fileFilter
 }).single('image');
+
+export const uploadAvatar = multer({
+  storage: avatarStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5 MB limit
+  },
+  fileFilter
+}).single('avatar');
+
+export const uploadSingleImageMiddleware = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10 MB limit
+  },
+  fileFilter
+}).single('image');
+
+export const uploadMultipleImagesMiddleware = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10 MB limit
+  },
+  fileFilter
+}).array('images', 20);
 
 /**
  * Utility helper to delete an image file from disk / Cloudinary

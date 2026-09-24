@@ -1,43 +1,44 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import {
   Package,
-  Truck,
-  CheckCircle2,
-  Clock,
-  RotateCcw,
   ArrowLeft,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Truck,
+  RotateCcw,
+  RefreshCw,
+  ShoppingBag,
+  ExternalLink,
   MapPin,
   CreditCard,
-  Printer,
-  AlertCircle,
-  RefreshCw,
   Building,
   ShieldCheck,
   FileText,
-  X
+  X,
+  Printer
 } from 'lucide-react';
 import orderApi from '../../services/orderApi';
+import { useToast } from '../../context/ToastContext';
 
 export const OrderDetails = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { showToast: triggerToast } = useToast();
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState(null);
 
   // Cancellation modal
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
 
-  const showToast = (type, text) => {
-    setToastMessage({ type, text });
-    setTimeout(() => setToastMessage(null), 4000);
-  };
+  const showToast = useCallback((type, text) => {
+    triggerToast(text, type);
+  }, [triggerToast]);
 
-  const fetchOrderDetails = async () => {
+  const fetchOrderDetails = useCallback(async () => {
     setLoading(true);
     try {
       const response = await orderApi.getOrderById(id);
@@ -49,13 +50,13 @@ export const OrderDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, showToast]);
 
   useEffect(() => {
     if (id) {
       fetchOrderDetails();
     }
-  }, [id]);
+  }, [id, fetchOrderDetails]);
 
   const handleCancelOrder = async (e) => {
     e.preventDefault();

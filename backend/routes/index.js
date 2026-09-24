@@ -8,12 +8,23 @@ import wishlistRouter from "./wishlist.route.js";
 import addressRouter from "./address.route.js";
 import orderRouter from "./order.route.js";
 import customerRouter from "./customer.route.js";
+import vendorRouter from "./vendor.route.js";
+import storeRouter from "./store.route.js";
+import inventoryRouter from "./inventory.route.js";
+import couponRouter from "./coupon.route.js";
+import uploadRouter from "./upload.route.js";
 
 const router = Router();
 
 router.use('/api/auth', authRouter);
 router.use('/api/admin', adminRouter);
+router.use('/api/vendors', vendorRouter);
+router.use('/api/vendor', vendorRouter);
+router.use('/api/stores', storeRouter);
 router.use('/api/products', productRouter);
+router.use('/api/inventory', inventoryRouter);
+router.use('/api/coupons', couponRouter);
+router.use('/api/uploads', uploadRouter);
 router.use('/api/categories', categoryRouter);
 router.use('/api/cart', cartRouter);
 router.use('/api/wishlist', wishlistRouter);
@@ -22,4 +33,3 @@ router.use('/api/orders', orderRouter);
 router.use('/api/customer', customerRouter);
 
 export default router;
-

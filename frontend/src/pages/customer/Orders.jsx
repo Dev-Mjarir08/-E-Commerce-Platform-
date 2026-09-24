@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Package,
@@ -16,19 +16,19 @@ import {
   Filter
 } from 'lucide-react';
 import orderApi from '../../services/orderApi';
+import { useToast } from '../../context/ToastContext';
 
 export const Orders = () => {
+  const { showToast: triggerToast } = useToast();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState('all');
-  const [toastMessage, setToastMessage] = useState(null);
 
-  const showToast = (type, text) => {
-    setToastMessage({ type, text });
-    setTimeout(() => setToastMessage(null), 4000);
-  };
+  const showToast = useCallback((type, text) => {
+    triggerToast(text, type);
+  }, [triggerToast]);
 
-  const fetchOrders = async (status = selectedStatus) => {
+  const fetchOrders = useCallback(async (status) => {
     setLoading(true);
     try {
       const params = {};
@@ -44,11 +44,11 @@ export const Orders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     fetchOrders(selectedStatus);
-  }, [selectedStatus]);
+  }, [fetchOrders, selectedStatus]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -136,32 +136,6 @@ export const Orders = () => {
             <span>Continue Shopping</span>
           </Link>
         </div>
-
-        {/* Toast Notification */}
-        {toastMessage && (
-          <div
-            className={`mb-8 p-4 border flex items-center justify-between text-xs font-mono uppercase tracking-wider ${
-              toastMessage.type === 'success'
-                ? 'bg-emerald-50/90 border-emerald-300 text-emerald-900'
-                : 'bg-rose-50/90 border-rose-300 text-rose-900'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              {toastMessage.type === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-rose-600" />
-              )}
-              <span>{toastMessage.text}</span>
-            </div>
-            <button
-              onClick={() => setToastMessage(null)}
-              className="text-xs text-[#8E877F] hover:text-[#111111]"
-            >
-              ✕
-            </button>
-          </div>
-        )}
 
         {/* Filter Tabs */}
         <div className="flex items-center gap-2 border-b border-[#E5E3DF] pb-4 mb-8 overflow-x-auto">

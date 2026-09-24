@@ -7,8 +7,10 @@ import {
   X
 } from 'lucide-react';
 import { categories as initialCategories } from '../../data/categories';
+import { useConfirm } from '../../context/ModalContext';
 
 const Categories = () => {
+  const { confirm, alert: modalAlert } = useConfirm();
   const [categoryList, setCategoryList] = useState(
     initialCategories.map((c, i) => ({
       ...c,
@@ -75,8 +77,15 @@ const Categories = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteCategory = (id) => {
-    if (window.confirm('Are you sure you want to delete this taxonomy category?')) {
+  const handleDeleteCategory = async (id) => {
+    const ok = await confirm({
+      title: 'Delete Taxonomy Category',
+      message: 'Are you sure you want to delete this taxonomy category? Products assigned to this category will need reassignment.',
+      confirmText: 'Delete Category',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    if (ok) {
       setCategoryList((prev) => prev.filter((c) => c.id !== id));
     }
   };
@@ -90,7 +99,11 @@ const Categories = () => {
   const handleSubmitForm = (e) => {
     e.preventDefault();
     if (!formData.name || !formData.slug) {
-      alert('Please fill category name and slug');
+      modalAlert({
+        title: 'Missing Required Fields',
+        message: 'Please provide both category name and URL slug.',
+        type: 'warning'
+      });
       return;
     }
 

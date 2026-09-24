@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   Heart,
   ShoppingBag,
@@ -27,28 +27,29 @@ import { toggleWishlist, clearWishlist } from '../../redux/slices/wishlistSlice'
 import { addToCart } from '../../redux/slices/cartSlice';
 import { products as catalogProducts } from '../../data/products';
 
+import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ModalContext';
+
 export const Wishlist = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const { showToast: triggerToast } = useToast();
+  const { confirm } = useConfirm();
 
   // Redux store state
   const wishlistIds = useSelector((state) => state.wishlist.items || []);
   const adminProducts = useSelector((state) => state.products?.items || []);
-  const { user } = useSelector((state) => state.auth);
 
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
-  const [toastMessage, setToastMessage] = useState(null);
   const [selectedSizeMap, setSelectedSizeMap] = useState({});
   const [isClearing, setIsClearing] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
 
-  // Toast feedback helper
+  // Toast feedback helper via global ToastContext
   const showToast = (type, text) => {
-    setToastMessage({ type, text });
-    setTimeout(() => setToastMessage(null), 4000);
+    triggerToast(text, type);
   };
 
   // Resolve full product objects for the IDs saved in wishlist
@@ -143,15 +144,22 @@ export const Wishlist = () => {
     showToast('success', `Transferred ${filteredProducts.length} items to your shopping bag.`);
   };
 
-  const handleClearWishlist = () => {
-    if (window.confirm('Are you sure you want to clear your saved wishlist archive?')) {
-      setIsClearing(true);
-      setTimeout(() => {
-        dispatch(clearWishlist());
-        setIsClearing(false);
-        showToast('info', 'Your wishlist archive has been cleared.');
-      }, 300);
-    }
+  const handleClearWishlist = async () => {
+    const ok = await confirm({
+      title: 'Clear Wishlist Archive',
+      message: 'Are you sure you want to clear your saved wishlist archive? All saved pieces will be removed.',
+      confirmText: 'Clear Archive',
+      cancelText: 'Keep Saved Items',
+      type: 'danger'
+    });
+    if (!ok) return;
+
+    setIsClearing(true);
+    setTimeout(() => {
+      dispatch(clearWishlist());
+      setIsClearing(false);
+      showToast('info', 'Your wishlist archive has been cleared.');
+    }, 300);
   };
 
   const handleSizeChange = (productId, size) => {
@@ -198,34 +206,6 @@ export const Wishlist = () => {
             </Link>
           </div>
         </div>
-
-        {/* Toast Notification */}
-        {toastMessage && (
-          <div
-            className={`mb-8 p-4 border flex items-center justify-between text-xs font-mono uppercase tracking-wider transition-all ${
-              toastMessage.type === 'success'
-                ? 'bg-emerald-50/80 border-emerald-300 text-emerald-900'
-                : toastMessage.type === 'error'
-                ? 'bg-rose-50/80 border-rose-300 text-rose-900'
-                : 'bg-amber-50/80 border-amber-300 text-amber-900'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              {toastMessage.type === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-rose-600" />
-              )}
-              <span>{toastMessage.text}</span>
-            </div>
-            <button
-              onClick={() => setToastMessage(null)}
-              className="text-xs text-[#8E877F] hover:text-[#111111]"
-            >
-              ✕
-            </button>
-          </div>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main Wishlist Content Column (8 or 12 cols depending on layout) */}

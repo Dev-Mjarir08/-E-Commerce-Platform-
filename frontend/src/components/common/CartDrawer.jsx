@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { X, Plus, Minus, Trash2, ArrowRight, ShoppingBag, ShieldCheck } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { X, Plus, Minus, Trash2, ArrowRight, ShoppingBag, ShieldCheck, ExternalLink } from 'lucide-react';
 import { closeCart, removeFromCart, updateQuantity, applyPromo, removePromo } from '../../redux/slices/cartSlice';
 
 export const CartDrawer = ({ onOpenCheckout }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { items, isOpen, promoCode, discountPercent } = useSelector((state) => state.cart);
   const [promoInput, setPromoInput] = useState('');
   const [promoMsg, setPromoMsg] = useState('');
@@ -241,19 +243,33 @@ export const CartDrawer = ({ onOpenCheckout }) => {
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                dispatch(closeCart());
-                if (onOpenCheckout) onOpenCheckout();
-                else alert('Proceeding to secure checkout.');
-              }}
-              className="w-full bg-[#111111] text-[#F8F7F4] py-3.5 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#2B2B2B] transition-all flex items-center justify-center gap-2 group"
-            >
-              <span>PROCEED TO CHECKOUT</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </button>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  dispatch(closeCart());
+                  if (onOpenCheckout) onOpenCheckout();
+                  else navigate('/checkout');
+                }}
+                className="w-full bg-[#111111] text-[#F8F7F4] py-3.5 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#2B2B2B] transition-all flex items-center justify-center gap-2 group shadow-sm"
+              >
+                <span>PROCEED TO CHECKOUT</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </button>
 
-            <div className="flex items-center justify-center gap-2 text-[10px] text-[#666666] uppercase font-mono tracking-wider">
+              <button
+                type="button"
+                onClick={() => {
+                  dispatch(closeCart());
+                  navigate('/cart');
+                }}
+                className="w-full bg-[#FFFFFF] border border-[#111111] text-[#111111] py-2.5 text-xs font-mono uppercase tracking-[0.2em] hover:bg-[#F2EFE9] transition-all flex items-center justify-center gap-1.5"
+              >
+                <span>VIEW FULL BAG PAGE</span>
+              </button>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-[10px] text-[#666666] uppercase font-mono tracking-wider pt-1">
               <ShieldCheck className="w-3.5 h-3.5 text-[#111111]" />
               <span>Free Shipping Over ₹999 • 7-Day Easy Returns</span>
             </div>

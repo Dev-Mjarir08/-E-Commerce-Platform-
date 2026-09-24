@@ -1,167 +1,266 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Home from "../pages/public/Home";
-import StoreDetails from "../pages/public/StoreDetails";
-import Login from "../pages/auth/Login";
-import Register from "../pages/auth/Register";
-
-// Customer imports
-import CustomerLayout from "../layouts/CustomerLayout";
-import Profile from "../pages/customer/Profile";
-import Cart from "../pages/customer/Cart";
-import Wishlist from "../pages/customer/Wishlist";
-import Addresses from "../pages/customer/Addresses";
-import CustomerOrders from "../pages/customer/Orders";
-import OrderDetails from "../pages/customer/OrderDetails";
-import Checkout from "../pages/customer/Checkout";
-import OrderSuccess from "../pages/customer/OrderSuccess";
-import OrderFailed from "../pages/customer/OrderFailed";
-import CustomerSettings from "../pages/customer/Settings";
-
-// Admin imports
-import AdminLayout from "../layouts/AdminLayout";
-import Dashboard from "../pages/admin/Dashboard";
-import Products from "../pages/admin/Products";
-import AddProduct from "../pages/admin/products/AddProduct";
-import Stores from "../pages/admin/Stores";
-import Coupons from "../pages/admin/Coupons";
-import OrdersAdmin from "../pages/admin/Orders";
-import SettingsAdmin from "../pages/admin/Settings";
-import Customers from "../pages/admin/Customers";
-import Payment from "../pages/admin/Payment";
-import Categories from "../pages/admin/Categories";
-import Inventory from "../pages/admin/products/Inventory";
-import Vendors from "../pages/admin/Vendors";
-import VendorDetails from "../pages/admin/vendors/VendorDetails";
-import Analytics from "../pages/admin/Analytics";
-
-// Security & Auth
+import PageLoader from "../components/common/PageLoader";
 import ProtectedRoute from "../components/common/ProtectedRoute";
+
+// Layouts
+import CustomerLayout from "../layouts/CustomerLayout";
+import AdminLayout from "../layouts/AdminLayout";
+
+// Lazy-loaded Public Routes
+const Home = lazy(() => import("../pages/public/Home"));
+const StoreDetails = lazy(() => import("../pages/public/StoreDetails"));
+const Shop = lazy(() => import("../pages/public/Shop"));
+const ProductDetails = lazy(() => import("../pages/public/ProductDetails"));
+const Login = lazy(() => import("../pages/auth/Login"));
+const Register = lazy(() => import("../pages/auth/Register"));
+const ForgotPassword = lazy(() => import("../pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("../pages/auth/ResetPassword"));
+
+// Lazy-loaded Customer Routes
+const Profile = lazy(() => import("../pages/customer/Profile"));
+const Cart = lazy(() => import("../pages/customer/Cart"));
+const Wishlist = lazy(() => import("../pages/customer/Wishlist"));
+const Addresses = lazy(() => import("../pages/customer/Addresses"));
+const CustomerOrders = lazy(() => import("../pages/customer/Orders"));
+const OrderDetails = lazy(() => import("../pages/customer/OrderDetails"));
+const Checkout = lazy(() => import("../pages/customer/Checkout"));
+const OrderSuccess = lazy(() => import("../pages/customer/OrderSuccess"));
+const OrderFailed = lazy(() => import("../pages/customer/OrderFailed"));
+const CustomerSettings = lazy(() => import("../pages/customer/Settings"));
+
+// Lazy-loaded Vendor Routes
+const VendorDashboard = lazy(() => import("../pages/vendor/Dashboard"));
+const VendorOrders = lazy(() => import("../pages/vendor/Orders"));
+const VendorOrderDetails = lazy(() => import("../pages/vendor/OrderDetails"));
+const VendorProducts = lazy(() => import("../pages/vendor/Products"));
+const VendorCreateProduct = lazy(() => import("../pages/vendor/CreateProduct"));
+const VendorEditProduct = lazy(() => import("../pages/vendor/EditProduct"));
+const VendorInventory = lazy(() => import("../pages/vendor/Inventory"));
+const VendorCoupons = lazy(() => import("../pages/vendor/Coupons"));
+const VendorCustomers = lazy(() => import("../pages/vendor/Customers"));
+const VendorAnalytics = lazy(() => import("../pages/vendor/Analytics"));
+const VendorStore = lazy(() => import("../pages/vendor/Store"));
+const VendorStoreSettings = lazy(() => import("../pages/vendor/StoreSettings"));
+const VendorProfile = lazy(() => import("../pages/vendor/Profile"));
+
+// Lazy-loaded Admin Routes
+const Dashboard = lazy(() => import("../pages/admin/Dashboard"));
+const Products = lazy(() => import("../pages/admin/Products"));
+const AddProduct = lazy(() => import("../pages/admin/products/AddProduct"));
+const Categories = lazy(() => import("../pages/admin/Categories"));
+const Inventory = lazy(() => import("../pages/admin/products/Inventory"));
+const Stores = lazy(() => import("../pages/admin/Stores"));
+const AdminStoreDetails = lazy(
+  () => import("../pages/admin/stores/StoreDetails"),
+);
+const Vendors = lazy(() => import("../pages/admin/Vendors"));
+const VendorDetails = lazy(
+  () => import("../pages/admin/vendors/VendorDetails"),
+);
+const Coupons = lazy(() => import("../pages/admin/Coupons"));
+const OrdersAdmin = lazy(() => import("../pages/admin/Orders"));
+const AdminOrderDetails = lazy(
+  () => import("../pages/admin/orders/OrderDetails"),
+);
+const SettingsAdmin = lazy(() => import("../pages/admin/Settings"));
+const Customers = lazy(() => import("../pages/admin/Customers"));
+const CustomerDetails = lazy(
+  () => import("../pages/admin/customers/CustomerDetails"),
+);
+const Payment = lazy(() => import("../pages/admin/Payment"));
+const Analytics = lazy(() => import("../pages/admin/Analytics"));
+const Payouts = lazy(() => import("../pages/admin/Payouts"));
+const Reviews = lazy(() => import("../pages/admin/Reviews"));
+const Refunds = lazy(() => import("../pages/admin/Refunds"));
+const VendorRequests = lazy(() => import("../pages/admin/VendorRequests"));
+const Banners = lazy(() => import("../pages/admin/Banners"));
+const Brands = lazy(() => import("../pages/admin/Brands"));
+const Shipping = lazy(() => import("../pages/admin/Shipping"));
+const Notifications = lazy(() => import("../pages/admin/Notifications"));
 
 export const AppRoutes = () => {
   return (
-    <Routes>
-      {/* Public Client Routes */}
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/store/:slug" element={<StoreDetails />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Public Client Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/products" element={<Shop />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/products/:id" element={<ProductDetails />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route
+          path="/customer/cart"
+          element={<Navigate to="/cart" replace />}
+        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-otp" element={<ResetPassword />} />
+        <Route path="/store/:slug" element={<StoreDetails />} />
 
-      {/* Customer Routes - Protected for authenticated users */}
-      <Route
-        element={
-          <ProtectedRoute allowedRoles={["customer", "seller", "admin"]} />
-        }
-      >
-        <Route element={<CustomerLayout />}>
-          <Route path="/profile" element={<Profile />} />
-          <Route
-            path="/customer/profile"
-            element={<Navigate to="/profile" replace />}
-          />
-          <Route path="/cart" element={<Cart />} />
-          <Route
-            path="/customer/cart"
-            element={<Navigate to="/cart" replace />}
-          />
-          <Route path="/wishlist" element={<Wishlist />} />
-          <Route
-            path="/customer/wishlist"
-            element={<Navigate to="/wishlist" replace />}
-          />
-          <Route path="/addresses" element={<Addresses />} />
-          <Route
-            path="/customer/addresses"
-            element={<Navigate to="/addresses" replace />}
-          />
-          <Route path="/orders" element={<CustomerOrders />} />
-          <Route
-            path="/customer/orders"
-            element={<Navigate to="/orders" replace />}
-          />
-          <Route path="/orders/:id" element={<OrderDetails />} />
-          <Route
-            path="/customer/orders/:id"
-            element={<OrderDetails />}
-          />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route
-            path="/customer/checkout"
-            element={<Navigate to="/checkout" replace />}
-          />
-          <Route path="/order-success" element={<OrderSuccess />} />
-          <Route path="/order/success/:id" element={<OrderSuccess />} />
-          <Route path="/orders/success" element={<OrderSuccess />} />
-          <Route
-            path="/customer/order-success"
-            element={<Navigate to="/order-success" replace />}
-          />
-          <Route
-            path="/customer/orders/success"
-            element={<Navigate to="/order-success" replace />}
-          />
-          <Route path="/order-failed" element={<OrderFailed />} />
-          <Route path="/order/failed" element={<OrderFailed />} />
-          <Route path="/orders/failed" element={<OrderFailed />} />
-          <Route
-            path="/customer/order-failed"
-            element={<Navigate to="/order-failed" replace />}
-          />
-          <Route
-            path="/customer/orders/failed"
-            element={<Navigate to="/order-failed" replace />}
-          />
-          <Route path="/settings" element={<CustomerSettings />} />
-          <Route
-            path="/customer/settings"
-            element={<Navigate to="/settings" replace />}
-          />
+        {/* Customer Routes - Protected for authenticated users */}
+        <Route
+          element={
+            <ProtectedRoute allowedRoles={["customer", "seller", "admin"]} />
+          }
+        >
+          <Route element={<CustomerLayout />}>
+            <Route path="/profile" element={<Profile />} />
+            <Route
+              path="/customer/profile"
+              element={<Navigate to="/profile" replace />}
+            />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route
+              path="/customer/wishlist"
+              element={<Navigate to="/wishlist" replace />}
+            />
+            <Route path="/addresses" element={<Addresses />} />
+            <Route
+              path="/customer/addresses"
+              element={<Navigate to="/addresses" replace />}
+            />
+            <Route path="/orders" element={<CustomerOrders />} />
+            <Route
+              path="/customer/orders"
+              element={<Navigate to="/orders" replace />}
+            />
+            <Route path="/orders/:id" element={<OrderDetails />} />
+            <Route path="/customer/orders/:id" element={<OrderDetails />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route
+              path="/customer/checkout"
+              element={<Navigate to="/checkout" replace />}
+            />
+            <Route path="/order-success" element={<OrderSuccess />} />
+            <Route path="/order/success/:id" element={<OrderSuccess />} />
+            <Route path="/orders/success" element={<OrderSuccess />} />
+            <Route
+              path="/customer/order-success"
+              element={<Navigate to="/order-success" replace />}
+            />
+            <Route
+              path="/customer/orders/success"
+              element={<Navigate to="/order-success" replace />}
+            />
+            <Route path="/order-failed" element={<OrderFailed />} />
+            <Route path="/order/failed" element={<OrderFailed />} />
+            <Route path="/orders/failed" element={<OrderFailed />} />
+            <Route
+              path="/customer/order-failed"
+              element={<Navigate to="/order-failed" replace />}
+            />
+            <Route
+              path="/customer/orders/failed"
+              element={<Navigate to="/order-failed" replace />}
+            />
+            <Route path="/settings" element={<CustomerSettings />} />
+            <Route
+              path="/customer/settings"
+              element={<Navigate to="/settings" replace />}
+            />
+          </Route>
         </Route>
-      </Route>
 
-      {/* Admin Operations Suite - Protected for 'admin' role only */}
-      <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        {/* Vendor Operations Portal */}
+        <Route
+          path="/vendor"
+          element={<Navigate to="/vendor/dashboard" replace />}
+        />
+        <Route path="/vendor/dashboard" element={<VendorDashboard />} />
+        <Route path="/vendor/orders" element={<VendorOrders />} />
+        <Route path="/vendor/orders/:id" element={<VendorOrderDetails />} />
+        <Route path="/vendor/products" element={<VendorProducts />} />
+        <Route
+          path="/vendor/products/create"
+          element={<VendorCreateProduct />}
+        />
+        <Route
+          path="/vendor/products/edit/:id"
+          element={<VendorEditProduct />}
+        />
+        <Route path="/vendor/inventory" element={<VendorInventory />} />
+        <Route path="/vendor/coupons" element={<VendorCoupons />} />
+        <Route path="/vendor/customers" element={<VendorCustomers />} />
+        <Route path="/vendor/analytics" element={<VendorAnalytics />} />
+        <Route path="/vendor/store" element={<VendorStore />} />
+        <Route path="/vendor/settings" element={<VendorStoreSettings />} />
+        <Route path="/vendor/profile" element={<VendorProfile />} />
 
-          <Route path="dashboard" element={<Dashboard />} />
+        {/* Admin Operations Suite - Protected for 'admin' role only */}
+        <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
 
-          {/* Products */}
-          <Route path="products" element={<Products />} />
-          <Route path="products/add" element={<AddProduct />} />
-          <Route path="products/categories" element={<Categories />} />
-          <Route path="products/inventory" element={<Inventory />} />
+            <Route path="dashboard" element={<Dashboard />} />
 
-          {/* Stores */}
-          <Route path="stores" element={<Stores />} />
+            {/* Products */}
+            <Route path="products" element={<Products />} />
+            <Route path="products/add" element={<AddProduct />} />
+            <Route path="products/categories" element={<Categories />} />
+            <Route path="products/inventory" element={<Inventory />} />
 
-          {/* Vendors */}
-          <Route path="vendors" element={<Vendors />} />
-          <Route path="vendor-details" element={<VendorDetails />} />
+            {/* Stores */}
+            <Route path="stores" element={<Stores />} />
+            <Route path="stores/:id" element={<AdminStoreDetails />} />
 
-          {/* Coupons */}
-          <Route path="coupons" element={<Coupons />} />
+            {/* Vendors */}
+            <Route path="vendors" element={<Vendors />} />
+            <Route path="vendor-details" element={<VendorDetails />} />
 
-          {/* Orders */}
-          <Route path="orders" element={<OrdersAdmin />} />
+            {/* Coupons */}
+            <Route path="coupons" element={<Coupons />} />
 
-          {/* Payments */}
-          <Route path="payments" element={<Payment />} />
+            {/* Orders */}
+            <Route path="orders" element={<OrdersAdmin />} />
+            <Route path="orders/:id" element={<AdminOrderDetails />} />
 
-          {/* Customers */}
-          <Route path="customers" element={<Customers />} />
+            {/* Payments */}
+            <Route path="payments" element={<Payment />} />
 
-          {/* Settings */}
-          <Route path="settings" element={<SettingsAdmin />} />
+            {/* Customers */}
+            <Route path="customers" element={<Customers />} />
+            <Route path="customers/:id" element={<CustomerDetails />} />
 
-          {/* Analytics */}
-          <Route path="analytics" element={<Analytics />} />
+            {/* Finance */}
+            <Route path="payouts" element={<Payouts />} />
+
+            {/* Moderation */}
+            <Route path="reviews" element={<Reviews />} />
+
+            {/* Post Order */}
+            <Route path="refunds" element={<Refunds />} />
+
+            {/* Vendor Requests */}
+            <Route path="vendor-requests" element={<VendorRequests />} />
+
+            {/* Banners */}
+            <Route path="banners" element={<Banners />} />
+
+            {/* Brands */}
+            <Route path="brands" element={<Brands />} />
+
+            {/* Settings */}
+            <Route path="settings" element={<SettingsAdmin />} />
+
+            {/* Analytics */}
+            <Route path="analytics" element={<Analytics />} />
+
+            {/* Shipping */}
+            <Route path="shipping" element={<Shipping />} />
+
+            {/* Notifications */}
+            <Route path="notifications" element={<Notifications />} />
+          </Route>
         </Route>
-      </Route>
 
-      {/* Fallback to Home */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Fallback to Home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 };
 

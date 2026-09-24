@@ -1,22 +1,68 @@
 import api from './api';
 
 /**
- * Customer Profile & Settings API Service
+ * Customer & Admin Customer Management API Service
+ * Note: api.js response interceptor already returns response.data
  */
 export const customerApi = {
-  // Get customer profile and dashboard summary stats
+  // --- Admin Customer APIs ---
+
+  /**
+   * Get all customers with search, tier, status & pagination
+   * @param {Object} params - { search, tier, status, page, limit }
+   */
+  getAllCustomers: async (params = {}) => {
+    return api.get('/admin/customers', { params });
+  },
+
+  /**
+   * Get customer details by ID with order history & addresses
+   * @param {string} id - Customer MongoDB ObjectId
+   */
+  getCustomerById: async (id) => {
+    return api.get(`/admin/customers/${id}`);
+  },
+
+  /**
+   * Update customer status (active, suspended, etc.)
+   * @param {string} id - Customer ID
+   * @param {string} status - New status
+   */
+  updateCustomerStatus: async (id, status) => {
+    return api.put(`/admin/customers/${id}/status`, { status });
+  },
+
+  /**
+   * Delete customer account
+   * @param {string} id - Customer ID
+   */
+  deleteCustomer: async (id) => {
+    return api.delete(`/admin/customers/${id}`);
+  },
+
+  // --- Customer Self-Service Profile APIs ---
+
+  /**
+   * Get logged-in customer's profile & stats
+   */
   getProfile: async () => {
-    return await api.get('/customer/profile');
+    return api.get('/customer/profile');
   },
 
-  // Update personal profile information
+  /**
+   * Update personal profile information
+   * @param {Object} profileData - { name, phone, avatar }
+   */
   updateProfile: async (profileData) => {
-    return await api.put('/customer/profile', profileData);
+    return api.put('/customer/profile', profileData);
   },
 
-  // Change account password
+  /**
+   * Change account password
+   * @param {Object} passwordData - { currentPassword, newPassword }
+   */
   changePassword: async (passwordData) => {
-    return await api.put('/customer/change-password', passwordData);
+    return api.put('/customer/change-password', passwordData);
   }
 };
 

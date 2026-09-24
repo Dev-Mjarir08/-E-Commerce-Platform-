@@ -15,11 +15,37 @@ import {
 import { protect, authorize } from '../middlewares/auth.middleware.js';
 import { uploadProductMedia } from '../middlewares/upload.middleware.js';
 
+import {
+  getAllCustomers,
+  getCustomerById,
+  updateCustomerStatus,
+  deleteCustomer
+} from '../controllers/adminCustomer.controller.js';
+
+import {
+  getAllVendors,
+  getVendorById,
+  updateVendorStatus,
+  deleteVendor
+} from '../controllers/adminVendor.controller.js';
+
 const adminRouter = Router();
 
 // Live MongoDB Statistics
 adminRouter.get('/stats', getDashboardStats);
 adminRouter.get('/dashboard', getDashboardStats);
+
+// Customer Management
+adminRouter.get('/customers', getAllCustomers);
+adminRouter.get('/customers/:id', getCustomerById);
+adminRouter.put('/customers/:id/status', updateCustomerStatus);
+adminRouter.delete('/customers/:id', deleteCustomer);
+
+// Vendor & Tenant Management (Live MongoDB Data)
+adminRouter.get('/vendors', getAllVendors);
+adminRouter.get('/vendors/:id', getVendorById);
+adminRouter.put('/vendors/:id/status', updateVendorStatus);
+adminRouter.delete('/vendors/:id', deleteVendor);
 
 // Bulk Operations (Batch Import, 1-Click Seed, Multi-Delete, Clear-All)
 adminRouter.post('/products/bulk', createBulkProducts);

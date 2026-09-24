@@ -28,17 +28,20 @@ import {
   clearCart
 } from '../../redux/slices/cartSlice';
 
+import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ModalContext';
+
 export const Cart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { showToast: triggerToast } = useToast();
+  const { confirm } = useConfirm();
 
   // Redux state
   const { items, promoCode, discountPercent } = useSelector((state) => state.cart);
-  const { user } = useSelector((state) => state.auth);
 
   // Local state for interactive feedback
   const [promoInput, setPromoInput] = useState('');
-  const [toastMessage, setToastMessage] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
 
   // Calculations
@@ -53,10 +56,9 @@ export const Cart = () => {
   const amountToFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Handlers
+  // Handlers via ToastContext
   const showToast = (type, text) => {
-    setToastMessage({ type, text });
-    setTimeout(() => setToastMessage(null), 4000);
+    triggerToast(text, type);
   };
 
   const handleApplyPromo = (e) => {
@@ -101,15 +103,22 @@ export const Cart = () => {
     }
   };
 
-  const handleClearCart = () => {
-    if (window.confirm('Are you sure you want to empty your active shopping bag?')) {
-      setIsClearing(true);
-      setTimeout(() => {
-        dispatch(clearCart());
-        setIsClearing(false);
-        showToast('info', 'Your shopping bag has been cleared.');
-      }, 300);
-    }
+  const handleClearCart = async () => {
+    const ok = await confirm({
+      title: 'Empty Shopping Bag',
+      message: 'Are you sure you want to remove all items from your active shopping bag?',
+      confirmText: 'Empty Bag',
+      cancelText: 'Keep Items',
+      type: 'danger'
+    });
+    if (!ok) return;
+
+    setIsClearing(true);
+    setTimeout(() => {
+      dispatch(clearCart());
+      setIsClearing(false);
+      showToast('info', 'Your shopping bag has been cleared.');
+    }, 300);
   };
 
   const handleProceedToCheckout = () => {
@@ -138,42 +147,14 @@ export const Cart = () => {
           </div>
           <div className="flex items-center gap-3">
             <Link
-              to="/"
+              to="/shop"
               className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E3DF] hover:border-[#111111] hover:bg-[#111111] hover:text-[#F8F7F4] text-[#111111] text-xs font-mono uppercase tracking-wider transition-all rounded-none"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Continue Shopping</span>
+              <span>Explore Collection</span>
             </Link>
           </div>
         </div>
-
-        {/* Toast Notification */}
-        {toastMessage && (
-          <div
-            className={`mb-8 p-4 border flex items-center justify-between text-xs font-mono uppercase tracking-wider transition-all ${
-              toastMessage.type === 'success'
-                ? 'bg-emerald-50/80 border-emerald-300 text-emerald-900'
-                : toastMessage.type === 'error'
-                ? 'bg-rose-50/80 border-rose-300 text-rose-900'
-                : 'bg-amber-50/80 border-amber-300 text-amber-900'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              {toastMessage.type === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-rose-600" />
-              )}
-              <span>{toastMessage.text}</span>
-            </div>
-            <button
-              onClick={() => setToastMessage(null)}
-              className="text-xs text-[#8E877F] hover:text-[#111111]"
-            >
-              ✕
-            </button>
-          </div>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Column: Cart Items & Navigation (8 Cols) */}

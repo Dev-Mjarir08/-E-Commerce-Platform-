@@ -69,6 +69,93 @@ const storeSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: false
+    },
+    settings: {
+      // Banking & Payouts
+      payoutMethod: {
+        type: String,
+        enum: ['bank', 'paypal'],
+        default: 'bank'
+      },
+      bankName: {
+        type: String,
+        default: ''
+      },
+      accountHolder: {
+        type: String,
+        default: ''
+      },
+      accountNumber: {
+        type: String,
+        default: ''
+      },
+      routingNumber: {
+        type: String,
+        default: ''
+      },
+      paypalEmail: {
+        type: String,
+        default: ''
+      },
+      payoutSchedule: {
+        type: String,
+        enum: ['Daily', 'Weekly', 'Monthly'],
+        default: 'Weekly'
+      },
+
+      // Tax & Compliance
+      taxId: {
+        type: String,
+        default: ''
+      },
+      businessType: {
+        type: String,
+        default: 'LLC'
+      },
+      collectTax: {
+        type: Boolean,
+        default: true
+      },
+      defaultTaxRate: {
+        type: String,
+        default: '8.25'
+      },
+
+      // Fulfillment & Shipping Defaults
+      freeShippingThreshold: {
+        type: String,
+        default: '75.00'
+      },
+      processingTime: {
+        type: String,
+        default: '1-2 Business Days'
+      },
+      autoFulfillDigital: {
+        type: Boolean,
+        default: true
+      },
+      enableLocalPickup: {
+        type: Boolean,
+        default: false
+      },
+
+      // Store Notifications
+      orderEmailAlerts: {
+        type: Boolean,
+        default: true
+      },
+      lowStockAlerts: {
+        type: Boolean,
+        default: true
+      },
+      lowStockThreshold: {
+        type: String,
+        default: '5'
+      },
+      customerSmsAlerts: {
+        type: Boolean,
+        default: false
+      }
     }
   },
   {
