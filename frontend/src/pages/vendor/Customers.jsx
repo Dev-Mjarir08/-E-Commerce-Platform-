@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import vendorApi from "../../services/vendorApi";
 import {
   FaUsers,
   FaUserCheck,
@@ -79,10 +80,30 @@ const initialCustomers = [
 ];
 
 export default function VendorCustomers() {
-  const [customers] = useState(initialCustomers);
+  const [customers, setCustomers] = useState(initialCustomers);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+
+  useEffect(() => {
+    vendorApi.getCustomers().then((res) => {
+      const data = res?.data?.customers || res?.customers || res?.data;
+      if (Array.isArray(data) && data.length > 0) {
+        setCustomers(data.map((c, idx) => ({
+          id: c._id || `CUST-${800 + idx}`,
+          name: c.name || c.user?.name || "Client",
+          email: c.email || c.user?.email || "customer@example.com",
+          phone: c.phone || "+1 555 0100",
+          location: c.city || "San Francisco, USA",
+          totalOrders: c.totalOrders || c.ordersCount || 1,
+          totalSpent: c.totalSpent || 100,
+          lastOrderDate: c.lastOrderDate ? new Date(c.lastOrderDate).toISOString().split('T')[0] : "2026-03-20",
+          status: c.totalSpent > 1000 ? "VIP" : "Active",
+          orders: c.orders || []
+        })));
+      }
+    }).catch((err) => console.warn('Customers fetch fallback:', err));
+  }, []);
 
   // Filter Logic
   const filteredCustomers = customers.filter((cust) => {

@@ -50,6 +50,14 @@ const storeSchema = new mongoose.Schema(
       postalCode: String,
       country: String
     },
+    website: {
+      type: String,
+      default: ''
+    },
+    category: {
+      type: String,
+      default: 'General'
+    },
     status: {
       type: String,
       enum: ['pending', 'active', 'suspended', 'closed'],

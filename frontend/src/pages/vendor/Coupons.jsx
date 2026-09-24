@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import couponApi from "../../services/couponApi";
 import {
   FaTag,
   FaPlus,
@@ -69,6 +70,25 @@ export default function VendorCoupons() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [copiedCode, setCopiedCode] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    couponApi.getCoupons().then((res) => {
+      const data = res?.data?.coupons || res?.coupons || res?.data;
+      if (Array.isArray(data) && data.length > 0) {
+        setCoupons(data.map((c, idx) => ({
+          id: c._id || `CPN-${100 + idx}`,
+          code: c.code,
+          discountType: c.discountType === 'percentage' ? 'Percentage' : 'Fixed Amount',
+          discountValue: c.discountAmount || c.discountPercent || 10,
+          minSpend: c.minOrderAmount || 0,
+          usageLimit: c.usageLimit || 100,
+          usedCount: c.usageCount || 0,
+          expiryDate: c.expiresAt ? new Date(c.expiresAt).toISOString().split('T')[0] : "2026-12-31",
+          status: c.isActive ? 'Active' : 'Paused'
+        })));
+      }
+    }).catch((err) => console.warn('Coupons fetch fallback:', err));
+  }, []);
 
   // New Coupon Form State
   const [newCoupon, setNewCoupon] = useState({

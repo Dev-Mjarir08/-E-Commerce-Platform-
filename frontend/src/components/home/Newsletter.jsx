@@ -16,9 +16,9 @@ export const Newsletter = ({ onShowToast }) => {
   };
 
   return (
-    <section className="py-16 md:py-24 bg-[#EFECE6] border-b border-[#E5E3DF]">
+    <section className="py-16 md:py-24 bg-m4m-stone border-b border-m4m-border">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-        <span className="text-[10px] md:text-[11px] font-mono uppercase tracking-[0.3em] text-[#666666] block mb-3">
+        <span className="text-[10px] md:text-[11px] font-mono uppercase tracking-[0.3em] text-m4m-secondary block mb-3">
           DISPATCH & PRIVILEGE
         </span>
 
@@ -26,12 +26,12 @@ export const Newsletter = ({ onShowToast }) => {
           Stay In The Loop
         </h2>
 
-        <p className="text-xs sm:text-sm text-[#666666] font-sans max-w-lg mx-auto mb-8 leading-relaxed">
+        <p className="text-xs sm:text-sm text-m4m-secondary font-sans max-w-lg mx-auto mb-8 leading-relaxed">
           Get first access to new collections, exclusive drops and special offers from our collective of independent stores.
         </p>
 
         {subscribed ? (
-          <div className="bg-[#FFFFFF] border border-[#E5E3DF] p-6 max-w-md mx-auto flex items-center justify-center gap-3 text-xs font-mono uppercase tracking-wider text-[#111111]">
+          <div className="bg-m4m-card border border-m4m-border p-6 max-w-md mx-auto flex items-center justify-center gap-3 text-xs font-mono uppercase tracking-wider text-[#111111]">
             <CheckCircle2 className="w-4 h-4 text-[#111111]" />
             <span>YOU ARE SUBSCRIBED TO ATELIER DISPATCHES.</span>
           </div>
@@ -43,11 +43,11 @@ export const Newsletter = ({ onShowToast }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ENTER YOUR EMAIL"
-              className="flex-1 bg-[#FFFFFF] border border-[#E5E3DF] px-4 py-3.5 text-xs font-mono uppercase tracking-wider text-[#111111] placeholder-[#8E877F] focus:outline-none focus:border-[#111111] transition-colors"
+              className="flex-1 bg-m4m-card border border-m4m-border px-4 py-3.5 text-xs font-mono uppercase tracking-wider text-[#111111] placeholder-m4m-accent focus:outline-none focus:border-[#111111] transition-colors"
             />
             <button
               type="submit"
-              className="bg-[#111111] text-[#F8F7F4] text-xs font-mono uppercase tracking-[0.2em] px-6 py-3.5 hover:bg-[#2B2B2B] transition-colors flex items-center justify-center gap-2"
+              className="bg-[#111111] text-m4m-bg text-xs font-mono uppercase tracking-[0.2em] px-6 py-3.5 hover:bg-[#2B2B2B] transition-colors flex items-center justify-center gap-2"
             >
               <span>JOIN US</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -55,7 +55,7 @@ export const Newsletter = ({ onShowToast }) => {
           </form>
         )}
 
-        <p className="text-[10px] text-[#8E877F] font-mono tracking-wider uppercase mt-4">
+        <p className="text-[10px] text-m4m-accent font-mono tracking-wider uppercase mt-4">
           Strictly confidential. Unsubscribe at any time.
         </p>
       </div>

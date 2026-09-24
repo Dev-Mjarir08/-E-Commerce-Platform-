@@ -48,12 +48,10 @@ export const createOrder = async (req, res) => {
       if (!savedAddr) {
         await session.abortTransaction();
         session.endSession();
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Selected shipping address not found.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Selected shipping address not found.",
+        });
       }
       finalShippingAddress = {
         recipientName: savedAddr.recipientName,
@@ -75,12 +73,10 @@ export const createOrder = async (req, res) => {
       ) {
         await session.abortTransaction();
         session.endSession();
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Incomplete shipping address provided.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Incomplete shipping address provided.",
+        });
       }
       finalShippingAddress = inlineShipping;
     } else {
@@ -103,12 +99,10 @@ export const createOrder = async (req, res) => {
       } else {
         await session.abortTransaction();
         session.endSession();
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Please provide a valid shipping address.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Please provide a valid shipping address.",
+        });
       }
     }
 
@@ -157,12 +151,10 @@ export const createOrder = async (req, res) => {
         if (!product) {
           await session.abortTransaction();
           session.endSession();
-          return res
-            .status(404)
-            .json({
-              success: false,
-              message: `Product ${item.name || prodId} not found.`,
-            });
+          return res.status(404).json({
+            success: false,
+            message: `Product ${item.name || prodId} not found.`,
+          });
         }
 
         if (product.stock < item.quantity) {

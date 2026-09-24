@@ -2,7 +2,7 @@ import { ArrowRight } from 'lucide-react';
 
 export const EditorialBanner = ({ onShopEdit }) => {
   return (
-    <section className="relative min-h-[70vh] lg:min-h-[80vh] flex items-center justify-center overflow-hidden bg-[#111111] text-[#FFFFFF]">
+    <section className="relative min-h-[70vh] lg:min-h-[80vh] flex items-center justify-center overflow-hidden bg-[#111111] text-m4m-card">
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
@@ -11,7 +11,7 @@ export const EditorialBanner = ({ onShopEdit }) => {
           className="w-full h-full object-cover object-center scale-100 hover:scale-[1.03] transition-transform duration-1000 ease-out"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#111111]/90 via-[#111111]/50 to-[#111111]/40" />
+        <div className="absolute inset-0 bg-linear-to-t from-[#111111]/90 via-[#111111]/50 to-[#111111]/40" />
       </div>
 
       {/* Overlay Content */}
@@ -20,7 +20,7 @@ export const EditorialBanner = ({ onShopEdit }) => {
           EDITORIAL CAMPAIGN • EDITION 03
         </span>
 
-        <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-normal leading-tight tracking-tight uppercase mb-6 text-[#FFFFFF]">
+        <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-normal leading-tight tracking-tight uppercase mb-6 text-m4m-card">
           The New Standard
         </h2>
 
@@ -31,7 +31,7 @@ export const EditorialBanner = ({ onShopEdit }) => {
         <a
           href="#new-arrivals"
           onClick={onShopEdit}
-          className="inline-flex items-center gap-2.5 bg-[#FFFFFF] text-[#111111] text-[11px] font-mono uppercase tracking-[0.22em] px-8 py-4 hover:bg-[#D4CEC5] transition-all duration-300 shadow-md group"
+          className="inline-flex items-center gap-2.5 bg-m4m-card text-[#111111] text-[11px] font-mono uppercase tracking-[0.22em] px-8 py-4 hover:bg-[#D4CEC5] transition-all duration-300 shadow-md group"
         >
           <span>SHOP THE EDIT</span>
           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />

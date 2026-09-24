@@ -49,7 +49,13 @@ const mockExistingProduct = {
   ],
 };
 
+import { useParams, useNavigate } from "react-router-dom";
+import productApi from "../../services/productApi";
+
 export default function EditProduct({ onBack }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
   // Product state loaded with existing data
   const [productData, setProductData] = useState(mockExistingProduct);
   const [pricing, setPricing] = useState(mockExistingProduct.pricing);
@@ -61,6 +67,35 @@ export default function EditProduct({ onBack }) {
 
   // Unsaved changes detector
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      productApi.getProductById(id).then((res) => {
+        const p = res?.data?.product || res?.product || res?.data;
+        if (p) {
+          setProductData((prev) => ({
+            ...prev,
+            id: p._id || id,
+            title: p.name || prev.title,
+            description: p.description || prev.description,
+            category: p.category?.name || p.category || prev.category,
+            status: p.status === 'active' ? 'Active' : 'Draft',
+          }));
+          if (p.price) {
+            setPricing((prev) => ({ ...prev, price: p.price.toString(), stockQuantity: (p.stock || 0).toString() }));
+          }
+          if (p.images && p.images.length > 0) {
+            setImages(p.images.map((img, idx) => ({ id: `img-${idx}`, url: img.url || img, name: `image-${idx}` })));
+          }
+        }
+      }).catch((err) => console.warn('Product load fallback:', err));
+    }
+  }, [id]);
+
+  const handleBack = () => {
+    if (onBack) onBack();
+    else navigate('/vendor/products');
+  };
 
   const markChanged = () => {
     if (!hasUnsavedChanges) setHasUnsavedChanges(true);
@@ -162,7 +197,7 @@ export default function EditProduct({ onBack }) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
           <div className="flex items-center gap-3">
             <button
-              onClick={onBack}
+              onClick={handleBack}
               className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 transition"
               title="Back to Catalog"
             >

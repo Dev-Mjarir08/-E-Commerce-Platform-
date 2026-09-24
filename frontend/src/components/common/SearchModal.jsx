@@ -68,15 +68,15 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
           isOpen ? 'translate-y-0' : '-translate-y-6'
         }`}
       >
-        <div className="bg-[#FFFFFF] p-6 sm:p-10 shadow-2xl border border-[#E5E3DF]">
+        <div className="bg-m4m-card p-6 sm:p-10 shadow-2xl border border-m4m-border">
           {/* Header with Close */}
-          <div className="flex items-center justify-between border-b border-[#E5E3DF] pb-4 mb-6">
-            <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#666666]">
+          <div className="flex items-center justify-between border-b border-m4m-border pb-4 mb-6">
+            <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-m4m-secondary">
               UNIFIED MARKETPLACE SEARCH
             </span>
             <button
               onClick={handleClose}
-              className="text-[#666666] hover:text-[#111111] p-1 transition-colors"
+              className="text-m4m-secondary hover:text-[#111111] p-1 transition-colors"
               aria-label="Close search"
             >
               <X className="w-5 h-5" />
@@ -85,14 +85,14 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
 
           {/* Search Input */}
           <div className="relative mb-6">
-            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8E877F]" />
+            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-m4m-accent" />
             <input
               ref={inputRef}
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search products, brands or stores..."
-              className="w-full bg-[#F8F7F4] border border-[#E5E3DF] py-4 pl-12 pr-12 text-sm sm:text-base font-sans placeholder-[#8E877F] text-[#111111] focus:outline-none focus:border-[#111111] transition-colors"
+              className="w-full bg-m4m-bg border border-m4m-border py-4 pl-12 pr-12 text-sm sm:text-base font-sans placeholder-m4m-accent text-[#111111] focus:outline-none focus:border-[#111111] transition-colors"
             />
             {searchTerm && (
               <button
@@ -108,7 +108,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
           {!searchTerm && (
             <div className="space-y-6">
               <div>
-                <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8E877F] mb-3">
+                <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-m4m-accent mb-3">
                   RECENT SEARCHES
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -116,7 +116,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
                     <button
                       key={tag}
                       onClick={() => setSearchTerm(tag)}
-                      className="text-xs font-sans px-3.5 py-1.5 bg-[#FAF9F6] border border-[#E5E3DF] hover:border-[#111111] text-[#111111] transition-all"
+                      className="text-xs font-sans px-3.5 py-1.5 bg-[#FAF9F6] border border-m4m-border hover:border-[#111111] text-[#111111] transition-all"
                     >
                       {tag}
                     </button>
@@ -125,7 +125,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
               </div>
 
               <div>
-                <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8E877F] mb-3">
+                <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-m4m-accent mb-3">
                   TRENDING SEARCHES
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -133,7 +133,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
                     <button
                       key={tag}
                       onClick={() => setSearchTerm(tag)}
-                      className="text-xs font-sans px-3.5 py-1.5 bg-[#F8F7F4] border border-[#E5E3DF] hover:border-[#111111] hover:bg-[#FFFFFF] text-[#111111] transition-all tracking-wide"
+                      className="text-xs font-sans px-3.5 py-1.5 bg-m4m-bg border border-m4m-border hover:border-[#111111] hover:bg-m4m-card text-[#111111] transition-all tracking-wide"
                     >
                       {tag}
                     </button>
@@ -142,8 +142,8 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
               </div>
 
               {/* Popular Stores */}
-              <div className="pt-4 border-t border-[#E5E3DF]">
-                <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8E877F] mb-3">
+              <div className="pt-4 border-t border-m4m-border">
+                <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-m4m-accent mb-3">
                   FEATURED BRANDS & STORES
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -152,9 +152,9 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
                       key={s.id}
                       to={`/store/${s.slug}`}
                       onClick={onClose}
-                      className="p-3 border border-[#E5E3DF] hover:border-[#111111] transition-all flex items-center gap-2 group"
+                      className="p-3 border border-m4m-border hover:border-[#111111] transition-all flex items-center gap-2 group"
                     >
-                      <Store className="w-4 h-4 text-[#8E877F] group-hover:text-[#111111]" />
+                      <Store className="w-4 h-4 text-m4m-accent group-hover:text-[#111111]" />
                       <span className="text-xs font-mono uppercase tracking-wider text-[#111111] truncate">
                         {s.name}
                       </span>
@@ -167,11 +167,11 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
 
           {/* Results State */}
           {searchTerm && (
-            <div className="mt-6 border-t border-[#E5E3DF] pt-6 max-h-[60vh] overflow-y-auto pr-2 space-y-6">
+            <div className="mt-6 border-t border-m4m-border pt-6 max-h-[60vh] overflow-y-auto pr-2 space-y-6">
               {/* Stores matched */}
               {filteredStores.length > 0 && (
                 <div>
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-[#8E877F] block mb-3">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-m4m-accent block mb-3">
                     MATCHING STORES ({filteredStores.length})
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -180,17 +180,17 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
                         key={s.id}
                         to={`/store/${s.slug}`}
                         onClick={onClose}
-                        className="p-3 bg-[#FAF9F6] border border-[#E5E3DF] hover:border-[#111111] flex items-center justify-between group"
+                        className="p-3 bg-[#FAF9F6] border border-m4m-border hover:border-[#111111] flex items-center justify-between group"
                       >
                         <div>
                           <h5 className="font-serif text-sm text-[#111111] group-hover:underline">
                             {s.name}
                           </h5>
-                          <p className="text-[11px] text-[#666666] font-sans truncate max-w-xs">
+                          <p className="text-[11px] text-m4m-secondary font-sans truncate max-w-xs">
                             {s.tagline}
                           </p>
                         </div>
-                        <ArrowRight className="w-3.5 h-3.5 text-[#8E877F] group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight className="w-3.5 h-3.5 text-m4m-accent group-hover:translate-x-1 transition-transform" />
                       </Link>
                     ))}
                   </div>
@@ -199,7 +199,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
 
               {/* Products matched */}
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-[#8E877F] block mb-3">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-m4m-accent block mb-3">
                   MATCHING PRODUCTS ({filteredProducts.length})
                 </span>
 
@@ -208,7 +208,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
                     <p className="font-serif text-lg text-[#111111]">
                       No results found for "{searchTerm}"
                     </p>
-                    <p className="text-xs text-[#666666] mt-1 font-sans">
+                    <p className="text-xs text-m4m-secondary mt-1 font-sans">
                       Try another search or explore our latest collections.
                     </p>
                   </div>
@@ -221,15 +221,15 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
                           onClose();
                           if (onSelectProduct) onSelectProduct(p);
                         }}
-                        className="group flex gap-4 p-3 border border-[#E5E3DF] hover:border-[#111111] hover:bg-[#F8F7F4] transition-all cursor-pointer"
+                        className="group flex gap-4 p-3 border border-m4m-border hover:border-[#111111] hover:bg-m4m-bg transition-all cursor-pointer"
                       >
                         <img
                           src={p.images[0]}
                           alt={p.name}
-                          className="w-16 h-20 object-cover bg-[#EFECE6] shrink-0"
+                          className="w-16 h-20 object-cover bg-m4m-stone shrink-0"
                         />
                         <div className="flex-1 flex flex-col justify-center">
-                          <span className="text-[10px] font-mono uppercase tracking-wider text-[#8E877F]">
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-m4m-accent">
                             {p.storeName}
                           </span>
                           <h4 className="text-xs font-medium uppercase tracking-wide text-[#111111] group-hover:underline line-clamp-1">

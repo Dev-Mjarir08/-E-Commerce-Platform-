@@ -13,3 +13,4 @@ export { default as customerApi } from './customerApi';
 export { default as cartApi } from './cartApi';
 export { default as wishlistApi } from './wishlistApi';
 export { default as addressApi } from './addressApi';
+export { default as paymentApi } from './paymentApi';

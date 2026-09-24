@@ -45,6 +45,20 @@ const orderSchema = new mongoose.Schema(
       enum: ['pending', 'paid', 'failed', 'refunded'],
       default: 'pending'
     },
+    stripePaymentIntentId: {
+      type: String,
+      default: null
+    },
+    stripeSessionId: {
+      type: String,
+      default: null
+    },
+    paymentResult: {
+      id: { type: String },
+      status: { type: String },
+      update_time: { type: String },
+      email_address: { type: String }
+    },
     orderStatus: {
       type: String,
       enum: ['placed', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
