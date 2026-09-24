@@ -5,6 +5,7 @@ import ProtectedRoute from "../components/common/ProtectedRoute";
 
 // Layouts
 import CustomerLayout from "../layouts/CustomerLayout";
+import VendorLayout from "../layouts/VendorLayout";
 import AdminLayout from "../layouts/AdminLayout";
 
 // Lazy-loaded Public Routes
@@ -45,6 +46,8 @@ const VendorInventory = lazy(() => import("../pages/vendor/Inventory"));
 const VendorCoupons = lazy(() => import("../pages/vendor/Coupons"));
 const VendorCustomers = lazy(() => import("../pages/vendor/Customers"));
 const VendorAnalytics = lazy(() => import("../pages/vendor/Analytics"));
+const VendorReviews = lazy(() => import("../pages/vendor/Reviews"));
+const VendorNotifications = lazy(() => import("../pages/vendor/Notifications"));
 const VendorStore = lazy(() => import("../pages/vendor/Store"));
 const VendorStoreSettings = lazy(() => import("../pages/vendor/StoreSettings"));
 const VendorProfile = lazy(() => import("../pages/vendor/Profile"));
@@ -187,30 +190,40 @@ export const AppRoutes = () => {
           </Route>
         </Route>
 
-        {/* Vendor Operations Portal */}
+        {/* Vendor Operations Suite - Protected for 'vendor', 'seller', 'admin' */}
         <Route
-          path="/vendor"
-          element={<Navigate to="/vendor/dashboard" replace />}
-        />
-        <Route path="/vendor/dashboard" element={<VendorDashboard />} />
-        <Route path="/vendor/orders" element={<VendorOrders />} />
-        <Route path="/vendor/orders/:id" element={<VendorOrderDetails />} />
-        <Route path="/vendor/products" element={<VendorProducts />} />
-        <Route
-          path="/vendor/products/create"
-          element={<VendorCreateProduct />}
-        />
-        <Route
-          path="/vendor/products/edit/:id"
-          element={<VendorEditProduct />}
-        />
-        <Route path="/vendor/inventory" element={<VendorInventory />} />
-        <Route path="/vendor/coupons" element={<VendorCoupons />} />
-        <Route path="/vendor/customers" element={<VendorCustomers />} />
-        <Route path="/vendor/analytics" element={<VendorAnalytics />} />
-        <Route path="/vendor/store" element={<VendorStore />} />
-        <Route path="/vendor/settings" element={<VendorStoreSettings />} />
-        <Route path="/vendor/profile" element={<VendorProfile />} />
+          element={
+            <ProtectedRoute allowedRoles={["vendor", "seller", "admin"]} />
+          }
+        >
+          <Route path="/vendor" element={<VendorLayout />}>
+            <Route
+              index
+              element={<Navigate to="/vendor/dashboard" replace />}
+            />
+            <Route path="dashboard" element={<VendorDashboard />} />
+            <Route path="orders" element={<VendorOrders />} />
+            <Route path="orders/:id" element={<VendorOrderDetails />} />
+            <Route path="products" element={<VendorProducts />} />
+            <Route
+              path="products/create"
+              element={<VendorCreateProduct />}
+            />
+            <Route
+              path="products/edit/:id"
+              element={<VendorEditProduct />}
+            />
+            <Route path="inventory" element={<VendorInventory />} />
+            <Route path="coupons" element={<VendorCoupons />} />
+            <Route path="customers" element={<VendorCustomers />} />
+            <Route path="analytics" element={<VendorAnalytics />} />
+            <Route path="reviews" element={<VendorReviews />} />
+            <Route path="notifications" element={<VendorNotifications />} />
+            <Route path="store" element={<VendorStore />} />
+            <Route path="settings" element={<VendorStoreSettings />} />
+            <Route path="profile" element={<VendorProfile />} />
+          </Route>
+        </Route>
 
         {/* Admin Operations Suite - Protected for 'admin' role only */}
         <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>

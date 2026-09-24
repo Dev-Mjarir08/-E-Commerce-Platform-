@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import productApi from "../../services/productApi";
 import {
   FaBox,
   FaImage,
@@ -13,6 +15,9 @@ import {
 } from "react-icons/fa";
 
 export default function CreateProduct() {
+  const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
+
   // Product Basic Info
   const [productData, setProductData] = useState({
     title: "",
@@ -111,18 +116,26 @@ export default function CreateProduct() {
   const margin = priceNum > 0 ? ((profit / priceNum) * 100).toFixed(1) : 0;
 
   // Form Submit
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     const finalPayload = {
-      ...productData,
-      pricing,
+      name: productData.title,
+      description: productData.description,
+      category: productData.category,
+      price: priceNum,
+      stock: parseInt(pricing.stockQuantity) || 0,
+      status: productData.status.toLowerCase(),
       tags,
-      images,
-      coverImage: images[coverIndex]?.url || null,
-      variants,
     };
-    console.log("Submitting Vendor Product Payload:", finalPayload);
-    alert("Product created successfully!");
+    try {
+      await productApi.createProduct(finalPayload);
+    } catch (err) {
+      console.warn("Product creation fallback:", err);
+    } finally {
+      setSubmitting(false);
+      navigate("/vendor/products");
+    }
   };
 
   return (

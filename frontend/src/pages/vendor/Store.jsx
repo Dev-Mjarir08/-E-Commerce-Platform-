@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaStore,
   FaImage,
@@ -15,16 +15,18 @@ import {
   FaExternalLinkAlt,
   FaTruck,
   FaUndo,
+  FaSpinner
 } from "react-icons/fa";
+import vendorApi from "../../services/vendorApi";
 
 // Initial Mock Vendor Store Data
 const initialStoreSettings = {
-  storeName: "Aura Tech & Lifestyle",
-  tagline: "Premium Audio & Daily Ergonomic Essentials",
+  storeName: "Aura Tech & Lifestyle Atelier",
+  tagline: "Curated ergonomic accessories, workspace essentials, and acoustic audio products.",
   slug: "aura-tech-lifestyle",
   email: "support@auratech.com",
   phone: "+1 (555) 019-2834",
-  address: "742 Evergreen Terrace, Suite 100, Austin, TX 78701",
+  address: "742 Evergreen Terrace, Suite 100, San Francisco, CA 94107",
   website: "https://auratech.example.com",
   description:
     "We design and curate top-tier personal audio equipment and everyday ergonomic workspace accessories. Dedicated to sustainable packaging and lifetime support.",
@@ -43,12 +45,46 @@ const initialStoreSettings = {
     warranty: "1-Year limited manufacturer warranty on all electronics.",
   },
   rating: 4.9,
-  totalReviews: 328,
+  totalReviews: 18,
 };
 
 export default function VendorStore() {
   const [store, setStore] = useState(initialStoreSettings);
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Fetch real registered store from backend
+  useEffect(() => {
+    const fetchRegisteredStore = async () => {
+      try {
+        const response = await vendorApi.getProfile();
+        const data = response?.data || response;
+        if (data?.store) {
+          const s = data.store;
+          setStore((prev) => ({
+            ...prev,
+            storeName: s.name || prev.storeName,
+            tagline: s.description ? s.description.slice(0, 70) + "..." : prev.tagline,
+            slug: s.slug || prev.slug,
+            email: s.email || prev.email,
+            phone: s.phone || prev.phone,
+            address: s.address?.street
+              ? `${s.address.street}, ${s.address.city || ""}, ${s.address.state || ""} ${s.address.postalCode || ""}`
+              : prev.address,
+            website: s.website || prev.website,
+            description: s.description || prev.description,
+            bannerUrl: s.banner?.url || prev.bannerUrl,
+            logoUrl: s.logo?.url || prev.logoUrl,
+            rating: s.ratingAverage || prev.rating,
+            totalReviews: s.ratingCount || prev.totalReviews,
+          }));
+        }
+      } catch (err) {
+        console.warn("Could not fetch remote store, using defaults:", err);
+      }
+    };
+    fetchRegisteredStore();
+  }, []);
 
   // Handle Input Changes
   const handleChange = (field, value) => {
@@ -62,7 +98,7 @@ export default function VendorStore() {
     }));
   };
 
-  // Image Upload Simulation
+  // Image Upload
   const handleImageUpload = (field, event) => {
     const file = event.target.files[0];
     if (file) {
@@ -71,12 +107,27 @@ export default function VendorStore() {
     }
   };
 
-  // Save Settings Form
-  const handleSave = (e) => {
-    e.preventDefault();
-    console.log("Saving Store Settings Payload:", store);
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+  // Save Settings to Backend API
+  const handleSave = async (e) => {
+    if (e) e.preventDefault();
+    setIsSaving(true);
+    try {
+      await vendorApi.updateProfile({
+        storeName: store.storeName,
+        storeDescription: store.description,
+        storeEmail: store.email,
+        storePhone: store.phone,
+        website: store.website,
+        logo: { url: store.logoUrl },
+        banner: { url: store.bannerUrl }
+      });
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (err) {
+      console.error("Save error:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

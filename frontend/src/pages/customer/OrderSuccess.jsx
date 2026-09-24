@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import {
   CheckCircle2,
   Package,
@@ -7,15 +7,37 @@ import {
   ShoppingBag,
   ShieldCheck,
   Mail,
-  Truck
+  Truck,
+  CreditCard
 } from 'lucide-react';
+import paymentApi from '../../services/paymentApi';
 
 export const OrderSuccess = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get('session_id');
+  const [paymentVerified, setPaymentVerified] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+
+    if (sessionId) {
+      setIsVerifying(true);
+      paymentApi.verifyPayment({ orderId: id, sessionId })
+        .then((res) => {
+          if (res && res.isPaid) {
+            setPaymentVerified(true);
+          }
+        })
+        .catch((err) => {
+          console.error('Error verifying Stripe payment:', err);
+        })
+        .finally(() => {
+          setIsVerifying(false);
+        });
+    }
+  }, [id, sessionId]);
 
   return (
     <div className="min-h-screen bg-[#F8F7F4] text-[#111111] py-16 px-4 sm:px-6 lg:px-12 font-sans flex items-center justify-center">
@@ -48,6 +70,17 @@ export const OrderSuccess = () => {
           <span className="font-mono text-lg font-bold text-[#111111] tracking-wider block">
             {id ? (id.startsWith('ATL-') ? id : id.toUpperCase()) : 'ATL-CONFIRMED'}
           </span>
+          {paymentVerified && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-mono uppercase tracking-wider mt-2">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Payment Authenticated via Stripe</span>
+            </div>
+          )}
+          {isVerifying && (
+            <p className="text-[10px] font-mono text-[#8E877F] animate-pulse">
+              Authenticating Stripe payment status...
+            </p>
+          )}
           <p className="text-[11px] text-[#8E877F] font-sans">
             A confirmation receipt and courier tracking dossier have been transmitted to your client email.
           </p>

@@ -1,7 +1,21 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { ArrowRight, Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
+import {
+  ArrowRight,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  ArrowLeft,
+  AlertCircle,
+  CheckCircle2,
+  Sparkles,
+  Store,
+  Shield,
+  UserCheck
+} from 'lucide-react';
 import { loginUser, clearError } from '../../redux/slices/authSlice';
 
 const Login = () => {
@@ -84,6 +98,32 @@ const Login = () => {
       }, 900);
     } catch (err) {
       console.warn('Login rejected:', err);
+    }
+  };
+
+  const handleQuickFill = async (email, password) => {
+    setFormData({ email, password, rememberMe: true });
+    setFormErrors({});
+    if (error) dispatch(clearError());
+    try {
+      const data = await dispatch(loginUser({ email, password })).unwrap();
+      const user = data.user || { email, role: 'customer' };
+      let targetPath = '/';
+      if (user.role === 'admin') {
+        targetPath = '/admin/dashboard';
+        setSuccessMessage(`Welcome, Administrator ${user.name}. Opening Admin Suite...`);
+      } else if (user.role === 'vendor' || user.role === 'seller') {
+        targetPath = redirectParam ? decodeURIComponent(redirectParam) : '/vendor/dashboard';
+        setSuccessMessage(`Welcome, Partner ${user.name}. Opening Vendor Portal...`);
+      } else {
+        targetPath = redirectParam ? decodeURIComponent(redirectParam) : '/';
+        setSuccessMessage(`Welcome back, ${user.name}. Redirecting to boutique...`);
+      }
+      setTimeout(() => {
+        navigate(targetPath);
+      }, 700);
+    } catch (err) {
+      console.warn('Quick login rejected:', err);
     }
   };
 
@@ -307,6 +347,63 @@ const Login = () => {
                 )}
               </button>
             </form>
+
+            {/* Quick Demo Access Bar */}
+            <div className="mt-6 pt-5 border-t border-[#E5E3DF]">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#8E877F] flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-amber-500" />
+                  <span>1-CLICK DEMO ACCESS</span>
+                </span>
+                <span className="text-[9px] font-mono text-[#8E877F]">AUTO-LOGIN</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleQuickFill('vendor@atelier.com', 'vendor123')}
+                  className="p-2.5 bg-[#FAF9F6] hover:bg-[#111111] hover:text-white border border-[#E5E3DF] transition-all text-left group"
+                >
+                  <div className="flex items-center gap-1.5 mb-1 text-[#111111] group-hover:text-white">
+                    <Store className="w-3.5 h-3.5 text-amber-600 group-hover:text-amber-300" />
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Vendor</span>
+                  </div>
+                  <span className="text-[9px] text-[#8E877F] group-hover:text-neutral-300 block truncate">
+                    Partner Suite
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleQuickFill('admin@atelier.com', 'admin123')}
+                  className="p-2.5 bg-[#FAF9F6] hover:bg-[#111111] hover:text-white border border-[#E5E3DF] transition-all text-left group"
+                >
+                  <div className="flex items-center gap-1.5 mb-1 text-[#111111] group-hover:text-white">
+                    <Shield className="w-3.5 h-3.5 text-indigo-600 group-hover:text-indigo-300" />
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Admin</span>
+                  </div>
+                  <span className="text-[9px] text-[#8E877F] group-hover:text-neutral-300 block truncate">
+                    Management
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleQuickFill('client@atelier.com', 'password123')}
+                  className="p-2.5 bg-[#FAF9F6] hover:bg-[#111111] hover:text-white border border-[#E5E3DF] transition-all text-left group"
+                >
+                  <div className="flex items-center gap-1.5 mb-1 text-[#111111] group-hover:text-white">
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-600 group-hover:text-emerald-300" />
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Client</span>
+                  </div>
+                  <span className="text-[9px] text-[#8E877F] group-hover:text-neutral-300 block truncate">
+                    Boutique
+                  </span>
+                </button>
+              </div>
+            </div>
 
 
             {/* Register Switch Link */}

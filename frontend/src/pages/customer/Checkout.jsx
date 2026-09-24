@@ -22,6 +22,7 @@ import { clearCart } from '../../redux/slices/cartSlice';
 import addressApi from '../../services/addressApi';
 import orderApi from '../../services/orderApi';
 import cartApi from '../../services/cartApi';
+import paymentApi from '../../services/paymentApi';
 
 export const Checkout = () => {
   const dispatch = useDispatch();
@@ -185,6 +186,21 @@ export const Checkout = () => {
         const createdOrder = response.data.order;
         // Clear local Redux cart
         dispatch(clearCart());
+
+        if (paymentMethod === 'stripe') {
+          try {
+            const checkoutRes = await paymentApi.createCheckoutSession({
+              orderId: createdOrder._id
+            });
+            if (checkoutRes && checkoutRes.url) {
+              window.location.href = checkoutRes.url;
+              return;
+            }
+          } catch (stripeErr) {
+            console.error('Stripe Checkout Session error:', stripeErr);
+          }
+        }
+
         // Navigate to confirmation page
         navigate(`/order/success/${createdOrder._id || createdOrder.orderNumber}`);
       }

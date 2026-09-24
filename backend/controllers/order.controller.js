@@ -249,7 +249,7 @@ export const createOrder = async (req, res) => {
           shippingAddress: finalShippingAddress,
           billingAddress: finalBillingAddress,
           paymentMethod,
-          paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
+          paymentStatus: req.body.paymentStatus || 'pending',
           orderStatus: 'placed',
           subtotal,
           taxPrice,

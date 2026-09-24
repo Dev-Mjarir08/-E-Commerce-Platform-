@@ -44,7 +44,10 @@ export const getVendorProfile = async (req, res) => {
     if (store) {
       const [totalProducts, activeProducts, storeOrderItems, productsList] = await Promise.all([
         Product.countDocuments({ store: store._id }),
-        Product.countDocuments({ store: store._id, status: 'active' }),
+        Product.countDocuments({
+          store: store._id,
+          $or: [{ isActive: true }, { status: 'active' }]
+        }),
         OrderItem.find({ store: store._id }),
         Product.find({ store: store._id }).sort({ createdAt: -1 }).limit(5)
       ]);
@@ -63,9 +66,9 @@ export const getVendorProfile = async (req, res) => {
 
       topProducts = productsList.map(p => ({
         id: p._id,
-        name: p.title,
-        price: p.price,
-        stock: p.stockQuantity || 0,
+        name: p.title || p.name,
+        price: p.basePrice ?? p.price ?? 0,
+        stock: p.stock ?? p.stockQuantity ?? 0,
         images: p.images
       }));
 
@@ -204,6 +207,19 @@ export const updateVendorProfile = async (req, res) => {
 
       if (banner) {
         store.banner = typeof banner === 'object' ? banner : { url: banner, public_id: null };
+      }
+
+      if (req.body.category !== undefined) {
+        store.category = req.body.category ? req.body.category.trim() : store.category;
+      }
+
+      if (req.body.website !== undefined) {
+        store.website = req.body.website ? req.body.website.trim() : store.website;
+      }
+
+      if (req.body.taxId !== undefined) {
+        if (!store.settings) store.settings = {};
+        store.settings.taxId = req.body.taxId.trim();
       }
 
       await store.save();

@@ -13,6 +13,7 @@ import storeRouter from "./store.route.js";
 import inventoryRouter from "./inventory.route.js";
 import couponRouter from "./coupon.route.js";
 import uploadRouter from "./upload.route.js";
+import paymentRouter from "./payment.route.js";
 
 const router = Router();
 
@@ -31,5 +32,7 @@ router.use('/api/wishlist', wishlistRouter);
 router.use('/api/addresses', addressRouter);
 router.use('/api/orders', orderRouter);
 router.use('/api/customer', customerRouter);
+router.use('/api/payment', paymentRouter);
+router.use('/api/payments', paymentRouter);
 
 export default router;
