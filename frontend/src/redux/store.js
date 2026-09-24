@@ -8,6 +8,7 @@ import couponReducer from './slices/couponSlice';
 import customerReducer from './slices/customerSlice';
 import vendorReducer from './slices/vendorSlice';
 import categoryReducer from './slices/categorySlice';
+import orderReducer from "./slices/orderSlice";
 
 export const store = configureStore({
   reducer: {
@@ -19,7 +20,8 @@ export const store = configureStore({
     categories: categoryReducer,
     coupons: couponReducer,
     customers: customerReducer,
-    vendor: vendorReducer
+    vendor: vendorReducer,
+    orders: orderReducer,
   }
 });
 

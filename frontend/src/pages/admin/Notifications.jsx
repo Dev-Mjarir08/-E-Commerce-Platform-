@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { adminApi } from '../../services/adminApi';
 import {
   Bell,
   CheckCircle2,
@@ -121,12 +122,29 @@ const notificationConfig = {
 };
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState(
-    initialNotifications
-  );
+  const [notifications, setNotifications] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchNotifications = async () => {
+    try {
+      setIsLoading(true);
+
+      const response = await adminApi.getNotifications();
+
+      setNotifications(response.notifications || []);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
   const unreadCount = notifications.filter(
     (notification) => !notification.read
@@ -150,29 +168,47 @@ const Notifications = () => {
     });
   }, [notifications, filter, search]);
 
-  const markAsRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((notification) =>
-        notification.id === id
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
+  const markAsRead = async (id) => {
+    try {
+      await adminApi.markNotificationRead(id);
+
+      setNotifications((prev) =>
+        prev.map((notification) =>
+          notification.id === id
+            ? { ...notification, read: true }
+            : notification
+        )
+      );
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications((prev) =>
-      prev.map((notification) => ({
-        ...notification,
-        read: true
-      }))
-    );
+  const markAllAsRead = async () => {
+    try {
+      await adminApi.markAllNotificationsRead();
+
+      setNotifications((prev) =>
+        prev.map((notification) => ({
+          ...notification,
+          read: true
+        }))
+      );
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
+    }
   };
 
-  const removeNotification = (id) => {
-    setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
-    );
+  const removeNotification = async (id) => {
+    try {
+      await adminApi.deleteNotification(id);
+
+      setNotifications((prev) =>
+        prev.filter((notification) => notification.id !== id)
+      );
+    } catch (error) {
+      console.error('Failed to remove notification:', error);
+    }
   };
 
   const clearRead = () => {
@@ -181,12 +217,12 @@ const Notifications = () => {
     );
   };
 
-  const refreshNotifications = () => {
+  const refreshNotifications = async () => {
     setIsRefreshing(true);
 
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 800);
+    await fetchNotifications();
+
+    setIsRefreshing(false);
   };
 
   return (
@@ -336,11 +372,10 @@ const Notifications = () => {
                 <button
                   type="button"
                   onClick={() => setFilter('all')}
-                  className={`px-3 py-2 text-xs font-semibold ${
-                    filter === 'all'
-                      ? 'bg-indigo-50 text-indigo-700'
-                      : 'text-slate-500 hover:bg-slate-50'
-                  }`}
+                  className={`px-3 py-2 text-xs font-semibold ${filter === 'all'
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-slate-500 hover:bg-slate-50'
+                    }`}
                 >
                   All
                 </button>
@@ -348,11 +383,10 @@ const Notifications = () => {
                 <button
                   type="button"
                   onClick={() => setFilter('unread')}
-                  className={`px-3 py-2 text-xs font-semibold border-l border-slate-100 ${
-                    filter === 'unread'
-                      ? 'bg-indigo-50 text-indigo-700'
-                      : 'text-slate-500 hover:bg-slate-50'
-                  }`}
+                  className={`px-3 py-2 text-xs font-semibold border-l border-slate-100 ${filter === 'unread'
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-slate-500 hover:bg-slate-50'
+                    }`}
                 >
                   Unread
                 </button>
@@ -360,11 +394,10 @@ const Notifications = () => {
                 <button
                   type="button"
                   onClick={() => setFilter('read')}
-                  className={`px-3 py-2 text-xs font-semibold border-l border-slate-100 ${
-                    filter === 'read'
-                      ? 'bg-indigo-50 text-indigo-700'
-                      : 'text-slate-500 hover:bg-slate-50'
-                  }`}
+                  className={`px-3 py-2 text-xs font-semibold border-l border-slate-100 ${filter === 'read'
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-slate-500 hover:bg-slate-50'
+                    }`}
                 >
                   Read
                 </button>
@@ -396,11 +429,10 @@ const Notifications = () => {
               return (
                 <div
                   key={notification.id}
-                  className={`p-4 sm:p-5 flex items-start gap-4 transition-colors ${
-                    notification.read
-                      ? 'bg-white hover:bg-slate-50'
-                      : 'bg-indigo-50/30 hover:bg-indigo-50/50'
-                  }`}
+                  className={`p-4 sm:p-5 flex items-start gap-4 transition-colors ${notification.read
+                    ? 'bg-white hover:bg-slate-50'
+                    : 'bg-indigo-50/30 hover:bg-indigo-50/50'
+                    }`}
                 >
                   {/* Icon */}
                   <div
@@ -418,11 +450,10 @@ const Notifications = () => {
                         )}
 
                         <h4
-                          className={`text-xs ${
-                            notification.read
-                              ? 'font-semibold text-slate-700'
-                              : 'font-bold text-slate-900'
-                          }`}
+                          className={`text-xs ${notification.read
+                            ? 'font-semibold text-slate-700'
+                            : 'font-bold text-slate-900'
+                            }`}
                         >
                           {notification.title}
                         </h4>

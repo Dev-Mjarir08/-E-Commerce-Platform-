@@ -13,11 +13,13 @@ import storeRouter from "./store.route.js";
 import inventoryRouter from "./inventory.route.js";
 import couponRouter from "./coupon.route.js";
 import uploadRouter from "./upload.route.js";
+import notificationRouter from "./notification.route.js";
 
 const router = Router();
 
 router.use('/api/auth', authRouter);
 router.use('/api/admin', adminRouter);
+router.use('/api/admin/notifications', notificationRouter);
 router.use('/api/vendors', vendorRouter);
 router.use('/api/vendor', vendorRouter);
 router.use('/api/stores', storeRouter);
