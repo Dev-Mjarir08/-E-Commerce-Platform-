@@ -1,5 +1,5 @@
 import { stores } from '../data/stores';
-import { products } from '../data/products';
+import api from './api';
 
 /**
  * Store Service for Multi-Tenant E-Commerce SaaS
@@ -19,8 +19,12 @@ export const storeService = {
 
   // GET /api/stores/:slug/products
   async getStoreProducts(slug) {
-    const storeProds = products.filter(p => p.storeSlug === slug);
-    return Promise.resolve(storeProds.length > 0 ? storeProds : [...products]);
+    try {
+      const res = await api.get('/products', { params: { store: slug } });
+      return res.data?.data || res.data?.products || [];
+    } catch {
+      return [];
+    }
   }
 };
 

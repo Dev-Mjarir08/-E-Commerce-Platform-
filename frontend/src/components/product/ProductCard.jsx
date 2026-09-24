@@ -8,24 +8,40 @@ import { addToCart } from '../../redux/slices/cartSlice';
 export const ProductCard = ({ product, onQuickView, onShowToast }) => {
   const dispatch = useDispatch();
   const wishlistItems = useSelector((state) => state.wishlist.items);
-  const isWishlisted = wishlistItems.includes(product.id);
 
   const [activeColor, setActiveColor] = useState(
     product.colors && product.colors.length > 0 ? product.colors[0] : null
   );
 
-  const primaryImage = product.images[0];
-  const secondaryImage = product.hoverImage || (product.images.length > 1 ? product.images[1] : primaryImage);
+  const getImgUrl = (img) => {
+    if (!img) return '';
+    if (typeof img === 'string') return img;
+    return img.url || '';
+  };
+
+  const primaryImage =
+    getImgUrl(product.images?.[0]) ||
+    product.image ||
+    'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=80';
+  const secondaryImage =
+    product.hoverImage ||
+    (product.images?.length > 1 ? getImgUrl(product.images[1]) : primaryImage);
+
+  const prodId = product.id || product._id || product.slug;
+  const isWishlisted = wishlistItems.includes(prodId) || wishlistItems.includes(product._id) || wishlistItems.includes(product.id);
+  const prodName = product.name || product.title || 'Curated Atelier Piece';
+  const prodPrice = Number(product.price ?? product.basePrice ?? product.discountPrice ?? 0);
+  const prodOriginalPrice = product.originalPrice ?? product.compareAtPrice ?? null;
 
   const handleWishlist = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    dispatch(toggleWishlist(product.id));
+    dispatch(toggleWishlist(prodId));
     if (onShowToast) {
       onShowToast(
         isWishlisted
-          ? `Removed ${product.name} from wishlist.`
-          : `Saved ${product.name} to wishlist.`
+          ? `Removed ${prodName} from wishlist.`
+          : `Saved ${prodName} to wishlist.`
       );
     }
   };
@@ -35,14 +51,25 @@ export const ProductCard = ({ product, onQuickView, onShowToast }) => {
     e.stopPropagation();
     dispatch(
       addToCart({
-        product,
+        product: {
+          id: prodId,
+          _id: prodId,
+          name: prodName,
+          title: prodName,
+          price: prodPrice,
+          basePrice: prodPrice,
+          images: [primaryImage],
+          image: primaryImage,
+          sizes: product.sizes,
+          colors: product.colors
+        },
         size: product.sizes ? product.sizes[0] : 'M',
         color: activeColor?.name || 'Standard',
         quantity: 1
       })
     );
     if (onShowToast) {
-      onShowToast(`Added ${product.name} (Size: ${product.sizes ? product.sizes[0] : 'M'}) to bag.`);
+      onShowToast(`Added ${prodName} (Size: ${product.sizes ? product.sizes[0] : 'M'}) to bag.`);
     }
   };
 
@@ -134,30 +161,30 @@ export const ProductCard = ({ product, onQuickView, onShowToast }) => {
           {/* Store / Brand Name */}
           <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-widest text-m4m-accent mb-1">
             <Link
-              to={`/store/${product.storeSlug}`}
+              to={`/store/${product.storeSlug || product.store?.slug || 'flagship'}`}
               className="hover:text-[#111111] hover:underline transition-colors"
             >
-              {product.storeName}
+              {product.storeName || product.store?.name || product.brand || 'Atelier'}
             </Link>
-            {product.rating && (
+            {(product.rating || product.ratingsAverage) ? (
               <span className="flex items-center text-[#111111] font-mono">
                 <Star className="w-3 h-3 fill-[#111111] text-[#111111] mr-1" />
-                {product.rating}
+                {product.rating || product.ratingsAverage}
               </span>
-            )}
+            ) : null}
           </div>
 
           {/* Product Name */}
           <Link
-            to={`/product/${product.id || product._id || product.slug}`}
+            to={`/product/${prodId}`}
             className="block font-serif text-base sm:text-lg font-normal text-[#111111] hover:underline line-clamp-1 mb-1"
           >
-            {product.name}
+            {prodName}
           </Link>
 
           {/* Fabric Specification */}
           <p className="text-[11px] text-m4m-secondary font-sans line-clamp-1 mb-3">
-            {product.fabric}
+            {product.fabric || product.description || 'Curated luxury craftsmanship'}
           </p>
         </div>
 
@@ -177,7 +204,7 @@ export const ProductCard = ({ product, onQuickView, onShowToast }) => {
                 >
                   <span
                     className="block w-full h-full rounded-full"
-                    style={{ backgroundColor: c.hex }}
+                    style={{ backgroundColor: c.hex || c.code || '#111111' }}
                   />
                 </button>
               ))}
@@ -187,11 +214,11 @@ export const ProductCard = ({ product, onQuickView, onShowToast }) => {
           {/* Price with Rupee symbol (₹) */}
           <div className="flex items-baseline gap-2 pt-2 border-t border-m4m-border/60">
             <span className="text-sm sm:text-base font-mono font-medium text-[#111111]">
-              ₹{product.price.toLocaleString('en-IN')}
+              ₹{prodPrice.toLocaleString('en-IN')}
             </span>
-            {product.originalPrice && (
+            {prodOriginalPrice && (
               <span className="text-xs font-mono text-m4m-accent line-through">
-                ₹{product.originalPrice.toLocaleString('en-IN')}
+                ₹{Number(prodOriginalPrice).toLocaleString('en-IN')}
               </span>
             )}
           </div>

@@ -25,7 +25,6 @@ import { addToCart, openCart } from '../../redux/slices/cartSlice';
 import { toggleWishlist } from '../../redux/slices/wishlistSlice';
 import { useToast } from '../../context/ToastContext';
 import productApi from '../../services/productApi';
-import { products as localProducts } from '../../data/products';
 
 export const ProductDetails = () => {
   const { showToast } = useToast();
@@ -45,12 +44,14 @@ export const ProductDetails = () => {
   const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
+    let isCancelled = false;
+
     const fetchProduct = async () => {
       setLoading(true);
       try {
         const res = await productApi.getProductById(id);
         const fetched = res?.data || res?.product;
-        if (fetched) {
+        if (fetched && !isCancelled) {
           // Normalize fetched product
           const normalized = {
             id: fetched._id || fetched.id,
@@ -80,16 +81,34 @@ export const ProductDetails = () => {
           setSelectedColor(normalized.colors[0]);
           setSelectedSize(normalized.sizes[2] || normalized.sizes[0] || 'M');
 
-          // Set related products
-          const related = localProducts
-            .filter((p) => p.id !== normalized.id)
-            .slice(0, 4);
-          setRelatedProducts(related);
+          // Fetch related products dynamically
+          try {
+            const relRes = await productApi.getProducts({
+              limit: 5,
+              category: fetched.category?.slug || fetched.category?._id || undefined
+            });
+            const list = relRes?.data || relRes?.products || [];
+            const related = list
+              .filter((p) => (p._id || p.id) !== normalized.id)
+              .slice(0, 4);
+            if (!isCancelled) {
+              setRelatedProducts(related);
+            }
+          } catch {
+            if (!isCancelled) setRelatedProducts([]);
+          }
+        } else if (!isCancelled) {
+          setProduct(null);
         }
       } catch (err) {
-        console.error('Failed to load product:', err);
+        console.error('Error fetching product from API:', err);
+        if (!isCancelled) {
+          setProduct(null);
+        }
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     };
 
@@ -97,6 +116,10 @@ export const ProductDetails = () => {
       fetchProduct();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    return () => {
+      isCancelled = true;
+    };
   }, [id]);
 
   if (loading) {
@@ -146,31 +169,49 @@ export const ProductDetails = () => {
   const isWishlisted = wishlistItems.includes(product.id);
 
   const handleAddToCart = () => {
+    const prodId = product.id || product._id || product.slug;
+    const prodName = product.name || product.title || 'Curated Atelier Piece';
+    const prodPrice = Number(product.price ?? product.basePrice ?? 0);
+    const prodImage = product.images?.[selectedImage] || product.images?.[0] || product.image || '';
+
     dispatch(
       addToCart({
         product: {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.images[selectedImage] || product.images[0]
+          id: prodId,
+          _id: prodId,
+          name: prodName,
+          title: prodName,
+          price: prodPrice,
+          basePrice: prodPrice,
+          images: product.images,
+          image: prodImage
         },
         size: selectedSize,
         color: selectedColor?.name || 'Standard',
         quantity
       })
     );
-    showToast(`Added ${quantity}x ${product.name} (${selectedSize} / ${selectedColor?.name || 'Standard'}) to your bag.`);
+    showToast(`Added ${quantity}x ${prodName} (${selectedSize} / ${selectedColor?.name || 'Standard'}) to your bag.`);
     dispatch(openCart());
   };
 
   const handleBuyNow = () => {
+    const prodId = product.id || product._id || product.slug;
+    const prodName = product.name || product.title || 'Curated Atelier Piece';
+    const prodPrice = Number(product.price ?? product.basePrice ?? 0);
+    const prodImage = product.images?.[selectedImage] || product.images?.[0] || product.image || '';
+
     dispatch(
       addToCart({
         product: {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.images[selectedImage] || product.images[0]
+          id: prodId,
+          _id: prodId,
+          name: prodName,
+          title: prodName,
+          price: prodPrice,
+          basePrice: prodPrice,
+          images: product.images,
+          image: prodImage
         },
         size: selectedSize,
         color: selectedColor?.name || 'Standard',

@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { ProductCard } from "../../components/product/ProductCard";
 import { categories as catalogCategories } from "../../data/categories";
-import { products as catalogProducts } from "../../data/products";
+import { useShopData } from "../../context/ShopDataContext";
 
 const PRICE_OPTIONS = [
   { value: "all", label: "All prices" },
@@ -23,18 +23,21 @@ const PRICE_OPTIONS = [
 
 const normalizeProduct = (product) => ({
   ...product,
+  id: product._id || product.id,
+  name: product.title || product.name,
+  price: product.basePrice ?? product.price,
   originalPrice: product.originalPrice || product.compareAtPrice || null,
-  storeName: product.storeName || "Atelier House",
-  storeSlug: product.storeSlug || "atelier-house",
+  storeName: product.store?.name || product.storeName || "Atelier House",
+  storeSlug: product.store?.slug || product.storeSlug || "atelier-house",
 });
 
-const getProducts = (adminProducts) => {
-  const available = catalogProducts.map(normalizeProduct);
+const getProducts = (adminProducts, shopProducts = []) => {
+  const available = shopProducts.map(normalizeProduct);
   adminProducts.forEach((product) => {
     const normalized = normalizeProduct(product);
     if (
       !available.some(
-        (item) => item.id === normalized.id || item._id === normalized._id,
+        (item) => (item.id || item._id) === (normalized.id || normalized._id),
       )
     ) {
       available.push(normalized);
@@ -45,6 +48,7 @@ const getProducts = (adminProducts) => {
 
 export const Categories = () => {
   const navigate = useNavigate();
+  const { products: shopProducts } = useShopData();
   const adminProducts = useSelector((state) => state.products?.items || []);
   const [searchTerm, setSearchTerm] = useState("");
   const [priceRange, setPriceRange] = useState("all");
@@ -52,7 +56,7 @@ export const Categories = () => {
   const [loadError, setLoadError] = useState("");
   const [toast, setToast] = useState("");
 
-  const products = useMemo(() => getProducts(adminProducts), [adminProducts]);
+  const products = useMemo(() => getProducts(adminProducts, shopProducts), [adminProducts, shopProducts]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

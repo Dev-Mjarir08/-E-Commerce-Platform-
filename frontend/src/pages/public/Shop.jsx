@@ -17,7 +17,6 @@ import { ProductCard } from '../../components/product/ProductCard';
 import { useToast } from '../../context/ToastContext';
 import { useShopData } from '../../context/ShopDataContext';
 import productApi from '../../services/productApi';
-import { products as fallbackProducts } from '../../data/products';
 
 const QuickViewModal = lazy(() =>
   import('../../components/common/QuickViewModal').then(m => ({ default: m.QuickViewModal || m.default }))
@@ -25,7 +24,7 @@ const QuickViewModal = lazy(() =>
 
 export const Shop = () => {
   const { showToast } = useToast();
-  const { products: cachedProducts, loading: initialLoading } = useShopData();
+  const { products: cachedProducts, categories: contextCategories, loading: initialLoading } = useShopData();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get('category') || 'all';
 
@@ -36,14 +35,34 @@ export const Shop = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [quickViewProduct, setQuickViewProduct] = useState(null);
 
-  const categories = [
-    { id: 'all', name: 'All Collections' },
-    { id: 'outerwear', name: 'Outerwear & Coats' },
-    { id: 'tailoring', name: 'Bespoke Tailoring' },
-    { id: 'knitwear', name: 'Cashmere & Knits' },
-    { id: 'shirts', name: 'Artisan Shirts' },
-    { id: 'accessories', name: 'Fine Accessories' }
-  ];
+  // Sync state if URL query param changes
+  useEffect(() => {
+    const cat = searchParams.get('category');
+    if (cat) {
+      setSelectedCategory(cat);
+    } else {
+      setSelectedCategory('all');
+    }
+  }, [searchParams]);
+
+  const categories = useMemo(() => {
+    const list = [{ id: 'all', name: 'All Collections' }];
+    if (contextCategories && contextCategories.length > 0) {
+      contextCategories.forEach((c) => {
+        list.push({ id: c.slug || c._id, name: c.name });
+      });
+    } else {
+      list.push(
+        { id: 'electronics', name: 'Electronics' },
+        { id: 'fashion', name: 'Fashion' },
+        { id: 'outerwear', name: 'Outerwear' },
+        { id: 'accessories', name: 'Accessories' },
+        { id: 'footwear', name: 'Footwear' },
+        { id: 'watches', name: 'Watches' }
+      );
+    }
+    return list;
+  }, [contextCategories]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -64,13 +83,13 @@ export const Shop = () => {
           search: searchQuery || undefined
         });
         if (!isCancelled) {
-          const items = res?.data || res?.products || fallbackProducts;
+          const items = res?.data || res?.products || [];
           setProducts(items);
         }
       } catch (err) {
         console.warn('Error loading products for shop:', err);
         if (!isCancelled) {
-          setProducts(fallbackProducts);
+          setProducts([]);
         }
       } finally {
         if (!isCancelled) {

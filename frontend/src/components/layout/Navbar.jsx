@@ -25,11 +25,12 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
   }, []);
 
   const navLinks = [
+    { label: 'All Products', href: '/shop', isRouter: true },
     { label: 'All Departments', href: '#category-section' },
-    { label: 'Electronics', href: '#category-section' },
-    { label: 'Fashion', href: '#category-section' },
-    { label: 'Footwear', href: '#category-section' },
-    { label: 'Watches', href: '#category-section' },
+    { label: 'Electronics', href: '/shop?category=electronics', isRouter: true },
+    { label: 'Fashion', href: '/shop?category=fashion', isRouter: true },
+    { label: 'Footwear', href: '/shop?category=footwear', isRouter: true },
+    { label: 'Watches', href: '/shop?category=watches', isRouter: true },
     { label: 'Stores', href: '#featured-stores' },
     { label: 'Deals', href: '#sale' }
   ];
@@ -65,18 +66,26 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
         </div>
 
         {/* Center: Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-8 text-[11px] uppercase tracking-[0.22em] font-medium text-[#111111]">
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className={`hover:text-[#666666] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-[#111111] hover:after:w-full after:transition-all after:duration-300 ${
-                link.label === 'Sale' ? 'text-[#8E877F] font-semibold' : ''
-              }`}
-            >
-              {link.label}
-            </a>
-          ))}
+        <nav className="hidden lg:flex items-center gap-7 text-[11px] uppercase tracking-[0.22em] font-medium text-[#111111]">
+          {navLinks.map((link) =>
+            link.isRouter ? (
+              <Link
+                key={link.label}
+                to={link.href}
+                className="hover:text-[#666666] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-[#111111] hover:after:w-full after:transition-all after:duration-300 font-semibold"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <a
+                key={link.label}
+                href={link.href}
+                className="hover:text-[#666666] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-[#111111] hover:after:w-full after:transition-all after:duration-300"
+              >
+                {link.label}
+              </a>
+            )
+          )}
         </nav>
 
         {/* Right: Actions (Search, Wishlist ♡, Account, Bag) */}
@@ -193,17 +202,29 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
             </div>
 
             <nav className="flex flex-col space-y-4">
-              {navLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-xs uppercase font-mono tracking-[0.2em] py-2 border-b border-[#E5E3DF]/50 flex items-center justify-between text-[#111111] hover:text-[#666666]"
-                >
-                  <span>{link.label}</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-[#8E877F]" />
-                </a>
-              ))}
+              {navLinks.map((link) =>
+                link.isRouter ? (
+                  <Link
+                    key={link.label}
+                    to={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-xs uppercase font-mono tracking-[0.2em] py-2 border-b border-[#E5E3DF]/50 flex items-center justify-between text-[#111111] hover:text-[#666666] font-semibold"
+                  >
+                    <span>{link.label}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-[#8E877F]" />
+                  </Link>
+                ) : (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-xs uppercase font-mono tracking-[0.2em] py-2 border-b border-[#E5E3DF]/50 flex items-center justify-between text-[#111111] hover:text-[#666666]"
+                  >
+                    <span>{link.label}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-[#8E877F]" />
+                  </a>
+                )
+              )}
             </nav>
           </div>
 

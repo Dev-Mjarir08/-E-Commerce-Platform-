@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { toggleWishlist, clearWishlist } from '../../redux/slices/wishlistSlice';
 import { addToCart } from '../../redux/slices/cartSlice';
-import { products as catalogProducts } from '../../data/products';
+import { useShopData } from '../../context/ShopDataContext';
 
 import { useToast } from '../../context/ToastContext';
 import { useConfirm } from '../../context/ModalContext';
@@ -34,6 +34,7 @@ export const Wishlist = () => {
   const dispatch = useDispatch();
   const { showToast: triggerToast } = useToast();
   const { confirm } = useConfirm();
+  const { products: shopProducts } = useShopData();
 
   // Redux store state
   const wishlistIds = useSelector((state) => state.wishlist.items || []);
@@ -54,12 +55,11 @@ export const Wishlist = () => {
 
   // Resolve full product objects for the IDs saved in wishlist
   const resolvedWishlistProducts = useMemo(() => {
-    // Combine catalog products with custom admin products
-    const allAvailableProducts = [...catalogProducts];
+    const allAvailableProducts = [...(shopProducts || [])];
     
     // Add admin products that are not duplicates
     adminProducts.forEach((ap) => {
-      if (!allAvailableProducts.some((p) => p.id === ap.id || p._id === ap._id)) {
+      if (!allAvailableProducts.some((p) => (p._id || p.id) === (ap._id || ap.id))) {
         allAvailableProducts.push(ap);
       }
     });
@@ -68,7 +68,7 @@ export const Wishlist = () => {
     return wishlistIds
       .map((id) => allAvailableProducts.find((p) => p.id === id || p._id === id))
       .filter(Boolean);
-  }, [wishlistIds, adminProducts]);
+  }, [wishlistIds, adminProducts, shopProducts]);
 
   // Extract unique categories for filtering
   const availableCategories = useMemo(() => {

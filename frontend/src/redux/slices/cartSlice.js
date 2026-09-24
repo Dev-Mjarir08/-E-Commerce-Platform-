@@ -31,26 +31,32 @@ const cartSlice = createSlice({
   reducers: {
     addToCart: (state, action) => {
       const { product, size, color, quantity = 1 } = action.payload;
+      const prodId = product.id || product._id || product.slug;
+      const prodName = product.name || product.title || 'Curated Atelier Piece';
+      const prodPrice = Number(product.price ?? product.basePrice ?? product.discountPrice ?? 0);
       const selectedSize = size || (product.sizes && product.sizes[0]) || 'Standard';
       const selectedColor =
         (typeof color === 'string' ? color : color?.name) ||
         (product.colors && product.colors[0]?.name) ||
         'Classic';
       const selectedImage =
-        (color && color.image) || (product.images && product.images[0]) || product.image;
+        (color && color.image) ||
+        (product.images && (typeof product.images[0] === 'string' ? product.images[0] : product.images[0]?.url)) ||
+        product.image ||
+        '';
 
       const existingIndex = state.items.findIndex(
-        (item) => item.id === product.id && item.size === selectedSize && item.color === selectedColor
+        (item) => item.id === prodId && item.size === selectedSize && item.color === selectedColor
       );
 
       if (existingIndex > -1) {
         state.items[existingIndex].quantity += quantity;
       } else {
         state.items.push({
-          id: product.id,
-          name: product.name,
+          id: prodId,
+          name: prodName,
           subtitle: `${selectedColor} / ${selectedSize}`,
-          price: product.price,
+          price: prodPrice,
           image: selectedImage,
           size: selectedSize,
           color: selectedColor,

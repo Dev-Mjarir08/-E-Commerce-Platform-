@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import productApi from '../services/productApi';
 import { categoryService } from '../services/categoryService';
-import { products as fallbackProducts } from '../data/products';
 import { categories as fallbackCategories } from '../data/categories';
 
 const ShopDataContext = createContext(null);
@@ -22,20 +21,32 @@ export const ShopDataProvider = ({ children }) => {
         categoryService.getCategories()
       ]);
 
-      if (productRes.status === 'fulfilled' && (productRes.value?.data || productRes.value?.products)) {
-        setProducts(productRes.value.data || productRes.value.products);
+      if (productRes.status === 'fulfilled') {
+        const prodList = productRes.value?.data || productRes.value?.products;
+        if (Array.isArray(prodList)) {
+          setProducts(prodList);
+        } else {
+          setProducts([]);
+        }
       } else {
-        setProducts(fallbackProducts);
+        setProducts([]);
       }
 
-      if (categoryRes.status === 'fulfilled' && Array.isArray(categoryRes.value)) {
-        setCategories(categoryRes.value);
+      if (categoryRes.status === 'fulfilled') {
+        const catList = Array.isArray(categoryRes.value)
+          ? categoryRes.value
+          : (categoryRes.value?.data || categoryRes.value?.categories || []);
+        if (Array.isArray(catList) && catList.length > 0) {
+          setCategories(catList);
+        } else {
+          setCategories(fallbackCategories);
+        }
       } else {
         setCategories(fallbackCategories);
       }
     } catch (err) {
-      console.warn('Initial shop data loading fallback:', err);
-      setProducts(fallbackProducts);
+      console.warn('Initial shop data loading error:', err);
+      setProducts([]);
       setCategories(fallbackCategories);
       setError(err);
     } finally {

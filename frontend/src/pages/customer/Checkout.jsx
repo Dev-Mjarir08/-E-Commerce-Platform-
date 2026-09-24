@@ -36,13 +36,13 @@ export const Checkout = () => {
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [useNewAddress, setUseNewAddress] = useState(false);
   const [newAddress, setNewAddress] = useState({
-    recipientName: user?.name || '',
-    phone: user?.phone || '',
-    street: '',
-    apartment: '',
-    city: '',
-    state: '',
-    postalCode: '',
+    recipientName: user?.name || 'Valued Client',
+    phone: user?.phone || '+1 (555) 234-5678',
+    street: '742 Park Avenue, Suite 10',
+    apartment: 'Floor 4',
+    city: 'New York',
+    state: 'NY',
+    postalCode: '10001',
     country: 'US',
     addressType: 'home'
   });

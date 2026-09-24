@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search as SearchIcon, X, ArrowRight, Store } from 'lucide-react';
-import { products, stores } from '../../data/marketplaceData';
+import { stores } from '../../data/marketplaceData';
+import { useShopData } from '../../context/ShopDataContext';
 import { Link } from 'react-router-dom';
 
 export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const inputRef = useRef(null);
+  const { products: shopProducts } = useShopData();
 
   const handleClose = () => {
     setSearchTerm('');
@@ -20,25 +22,29 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
   }, [isOpen]);
 
   const trendingSearches = [
-    'Oversized T-Shirt',
-    'Wool Blazer',
-    'Cargo Pants',
-    'Nova Studio',
+    'Wireless Headphones',
+    'Mechanical Keyboard',
+    'Water Bottle',
     'Cashmere',
-    'Belgian Loafers',
-    'Urban Threads'
+    'Tailored Suit',
+    'Oversized T-Shirt',
+    'Accessories'
   ];
 
-  const recentSearches = ['Heavyweight Tee', 'Linen Shirt', 'Mono Label'];
-
   const filteredProducts = searchTerm.trim()
-    ? products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.storeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.categoryName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.fabric.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+    ? (shopProducts || []).filter((p) => {
+        const title = p.title || p.name || '';
+        const desc = p.description || '';
+        const storeName = p.store?.name || p.storeName || '';
+        const catName = p.category?.name || p.categoryName || '';
+        const term = searchTerm.toLowerCase();
+        return (
+          title.toLowerCase().includes(term) ||
+          desc.toLowerCase().includes(term) ||
+          storeName.toLowerCase().includes(term) ||
+          catName.toLowerCase().includes(term)
+        );
+      })
     : [];
 
   const filteredStores = searchTerm.trim()
@@ -50,6 +56,13 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
       )
     : [];
 
+  const getImgUrl = (p) => {
+    const raw = p.images?.[0];
+    if (typeof raw === 'string') return raw;
+    if (raw?.url) return raw.url;
+    return p.image || 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=500&q=80';
+  };
+
   return (
     <div
       className={`fixed inset-0 z-50 transition-opacity duration-300 ${
@@ -58,75 +71,53 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
       role="dialog"
       aria-modal="true"
     >
+      {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-[#111111]/80 backdrop-blur-md transition-opacity"
+        className="fixed inset-0 bg-[#111111]/75 backdrop-blur-sm transition-opacity"
         onClick={handleClose}
       />
 
-      <div
-        className={`relative z-10 max-w-4xl mx-auto px-4 pt-16 pb-12 transition-transform duration-400 ease-out ${
-          isOpen ? 'translate-y-0' : '-translate-y-6'
-        }`}
-      >
-        <div className="bg-m4m-card p-6 sm:p-10 shadow-2xl border border-m4m-border">
-          {/* Header with Close */}
-          <div className="flex items-center justify-between border-b border-m4m-border pb-4 mb-6">
-            <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-m4m-secondary">
-              UNIFIED MARKETPLACE SEARCH
-            </span>
-            <button
-              onClick={handleClose}
-              className="text-m4m-secondary hover:text-[#111111] p-1 transition-colors"
-              aria-label="Close search"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+      {/* Modal Dialog */}
+      <div className="fixed inset-0 z-10 flex items-start justify-center pt-16 sm:pt-24 px-4 pb-4">
+        <div className="w-full max-w-2xl bg-m4m-card border border-m4m-border p-6 sm:p-8 shadow-2xl relative transition-all">
+          {/* Close button */}
+          <button
+            type="button"
+            onClick={handleClose}
+            className="absolute top-6 right-6 text-m4m-secondary hover:text-[#111111] p-1"
+            aria-label="Close search"
+          >
+            <X className="w-5 h-5" />
+          </button>
 
-          {/* Search Input */}
-          <div className="relative mb-6">
-            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-m4m-accent" />
+          {/* Search Header */}
+          <div className="flex items-center gap-3 border-b-2 border-[#111111] pb-3 mb-6 pr-8">
+            <SearchIcon className="w-5 h-5 text-[#111111] shrink-0" />
             <input
               ref={inputRef}
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search products, brands or stores..."
-              className="w-full bg-m4m-bg border border-m4m-border py-4 pl-12 pr-12 text-sm sm:text-base font-sans placeholder-m4m-accent text-[#111111] focus:outline-none focus:border-[#111111] transition-colors"
+              placeholder="Search garments, electronics, materials or stores..."
+              className="w-full text-base sm:text-lg font-serif text-[#111111] placeholder:text-m4m-secondary/60 bg-transparent focus:outline-none"
             />
             {searchTerm && (
               <button
+                type="button"
                 onClick={() => setSearchTerm('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#111111]"
+                className="text-xs font-mono uppercase text-m4m-secondary hover:text-[#111111]"
               >
-                <X className="w-4 h-4" />
+                CLEAR
               </button>
             )}
           </div>
 
-          {/* Recent & Trending Searches (Default state) */}
+          {/* Initial State: Trending searches */}
           {!searchTerm && (
             <div className="space-y-6">
               <div>
                 <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-m4m-accent mb-3">
-                  RECENT SEARCHES
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {recentSearches.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => setSearchTerm(tag)}
-                      className="text-xs font-sans px-3.5 py-1.5 bg-[#FAF9F6] border border-m4m-border hover:border-[#111111] text-[#111111] transition-all"
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-m4m-accent mb-3">
-                  TRENDING SEARCHES
+                  POPULAR SEARCH TERMS
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {trendingSearches.map((tag) => (
@@ -209,41 +200,48 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
                       No results found for "{searchTerm}"
                     </p>
                     <p className="text-xs text-m4m-secondary mt-1 font-sans">
-                      Try another search or explore our latest collections.
+                      Try another search or explore our complete catalog.
                     </p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {filteredProducts.map((p) => (
-                      <div
-                        key={p.id}
-                        onClick={() => {
-                          onClose();
-                          if (onSelectProduct) onSelectProduct(p);
-                        }}
-                        className="group flex gap-4 p-3 border border-m4m-border hover:border-[#111111] hover:bg-m4m-bg transition-all cursor-pointer"
-                      >
-                        <img
-                          src={p.images[0]}
-                          alt={p.name}
-                          className="w-16 h-20 object-cover bg-m4m-stone shrink-0"
-                        />
-                        <div className="flex-1 flex flex-col justify-center">
-                          <span className="text-[10px] font-mono uppercase tracking-wider text-m4m-accent">
-                            {p.storeName}
-                          </span>
-                          <h4 className="text-xs font-medium uppercase tracking-wide text-[#111111] group-hover:underline line-clamp-1">
-                            {p.name}
-                          </h4>
-                          <p className="text-xs font-mono font-medium text-[#111111] mt-1">
-                            ₹{p.price.toLocaleString('en-IN')}
-                          </p>
+                    {filteredProducts.map((p) => {
+                      const prodId = p._id || p.id || p.slug;
+                      const prodName = p.title || p.name || 'Atelier Product';
+                      const prodPrice = Number(p.basePrice ?? p.price ?? 0);
+                      const prodStore = p.store?.name || p.storeName || 'Atelier Boutique';
+
+                      return (
+                        <div
+                          key={prodId}
+                          onClick={() => {
+                            onClose();
+                            if (onSelectProduct) onSelectProduct(p);
+                          }}
+                          className="group flex gap-4 p-3 border border-m4m-border hover:border-[#111111] hover:bg-m4m-bg transition-all cursor-pointer"
+                        >
+                          <img
+                            src={getImgUrl(p)}
+                            alt={prodName}
+                            className="w-16 h-20 object-cover bg-m4m-stone shrink-0"
+                          />
+                          <div className="flex-1 flex flex-col justify-center">
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-m4m-accent">
+                              {prodStore}
+                            </span>
+                            <h4 className="text-xs font-medium uppercase tracking-wide text-[#111111] group-hover:underline line-clamp-1">
+                              {prodName}
+                            </h4>
+                            <p className="text-xs font-mono font-medium text-[#111111] mt-1">
+                              ₹{prodPrice.toLocaleString('en-IN')}
+                            </p>
+                          </div>
+                          <div className="flex items-center text-[#888888] group-hover:text-[#111111] transition-colors pr-2">
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                          </div>
                         </div>
-                        <div className="flex items-center text-[#888888] group-hover:text-[#111111] transition-colors pr-2">
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -254,3 +252,5 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
     </div>
   );
 };
+
+export default SearchModal;

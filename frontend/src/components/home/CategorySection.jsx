@@ -24,14 +24,8 @@ export const CategorySection = ({ onSelectCategory }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
         {categories.map((cat) => (
           <Link
-            key={cat.id}
-            to={`/category/${cat.slug}`}
-            onClick={(e) => {
-              if (onSelectCategory) {
-                e.preventDefault();
-                onSelectCategory(cat.id);
-              }
-            }}
+            key={cat.id || cat.slug}
+            to={`/shop?category=${cat.slug || cat.id}`}
             className="group relative block aspect-[3/4] sm:aspect-[4/5] lg:aspect-[3/4] overflow-hidden bg-[#F2EFE9] border border-m4m-border"
           >
             {/* Image with 1.05 zoom on hover */}
