@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Store from '../models/Store.js';
 import Product from '../models/Product.js';
@@ -136,14 +137,23 @@ export const getVendorById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if ID is user ID or store ID
-    let user = await User.findById(id).select('-password -refreshToken').lean();
+    let user = null;
     let store = null;
 
-    if (user) {
-      store = await Store.findOne({ owner: user._id }).lean();
+    // Check if ID is a valid MongoDB ObjectId or a Storefront Slug
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      user = await User.findById(id).select('-password -refreshToken -verificationToken -resetPasswordToken').lean();
+      if (user) {
+        store = await Store.findOne({ owner: user._id }).lean();
+      } else {
+        store = await Store.findById(id).populate('owner', '-password -refreshToken -verificationToken -resetPasswordToken').lean();
+        if (store?.owner) {
+          user = store.owner;
+        }
+      }
     } else {
-      store = await Store.findById(id).populate('owner', '-password -refreshToken').lean();
+      // Lookup by store slug
+      store = await Store.findOne({ slug: id }).populate('owner', '-password -refreshToken -verificationToken -resetPasswordToken').lean();
       if (store?.owner) {
         user = store.owner;
       }
@@ -157,8 +167,32 @@ export const getVendorById = async (req, res) => {
     }
 
     let products = [];
+    let productsCount = 0;
+    let ordersCount = 0;
+    let salesVolume = 0;
+
     if (store) {
-      products = await Product.find({ store: store._id }).limit(20).lean();
+      [products, productsCount] = await Promise.all([
+        Product.find({ store: store._id }).limit(20).lean(),
+        Product.countDocuments({ store: store._id })
+      ]);
+
+      const orderItems = await OrderItem.find({ store: store._id }).lean();
+      ordersCount = orderItems.length;
+      salesVolume = orderItems.reduce(
+        (acc, item) => acc + (item.price || 0) * (item.quantity || 1),
+        0
+      );
+    }
+
+    // Safely mask sensitive banking information in settings before sending to frontend
+    if (store?.settings) {
+      if (store.settings.accountNumber) {
+        store.settings.accountNumber = `••••••••${String(store.settings.accountNumber).slice(-4)}`;
+      }
+      if (store.settings.routingNumber) {
+        store.settings.routingNumber = `••••••••${String(store.settings.routingNumber).slice(-4)}`;
+      }
     }
 
     return res.status(200).json({
@@ -166,7 +200,11 @@ export const getVendorById = async (req, res) => {
       data: {
         user,
         store,
-        products
+        products,
+        productsCount,
+        ordersCount,
+        salesVolume: `₹${salesVolume.toLocaleString('en-IN')}`,
+        salesVolumeRaw: salesVolume
       }
     });
   } catch (error) {

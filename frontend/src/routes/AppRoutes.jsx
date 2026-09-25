@@ -244,7 +244,9 @@ export const AppRoutes = () => {
 
             {/* Vendors */}
             <Route path="vendors" element={<Vendors />} />
+            <Route path="vendors/:id" element={<VendorDetails />} />
             <Route path="vendor-details" element={<VendorDetails />} />
+            <Route path="vendor-details/:id" element={<VendorDetails />} />
 
             {/* Coupons */}
             <Route path="coupons" element={<Coupons />} />

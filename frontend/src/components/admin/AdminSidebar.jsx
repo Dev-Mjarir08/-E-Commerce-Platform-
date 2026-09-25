@@ -339,20 +339,6 @@ const AdminSidebar = ({
               >
                 All Vendors
               </NavLink>
-
-              <NavLink
-                to="/admin/vendor-details"
-                onClick={() => setIsMobileOpen && setIsMobileOpen(false)}
-                className={({ isActive }) =>
-                  `block px-3 py-2 rounded-lg text-xs transition-colors ${
-                    isActive
-                      ? "bg-indigo-600/20 text-indigo-400 font-semibold"
-                      : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                  }`
-                }
-              >
-                Vendor Details
-              </NavLink>
             </div>
           )}
         </div>

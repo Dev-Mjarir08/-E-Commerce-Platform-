@@ -666,22 +666,32 @@ export const deleteCategory = async (req, res) => {
  */
 export const bulkCreateCategories = async (req, res) => {
   try {
-    const { categories } = req.body;
+    let categories = req.body?.categories;
+    if (!categories && Array.isArray(req.body)) {
+      categories = req.body;
+    }
+    if (typeof categories === 'string') {
+      try { categories = JSON.parse(categories); } catch { }
+    }
+    if (categories && !Array.isArray(categories) && Array.isArray(categories?.categories)) {
+      categories = categories.categories;
+    }
 
     if (!Array.isArray(categories) || categories.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Expected a non-empty array of categories under the "categories" key.'
+        message: 'Expected a non-empty array of categories under the "categories" key or as a direct array.'
       });
     }
 
     const created = [];
     const errors = [];
 
-    for (const item of categories) {
+    for (let i = 0; i < categories.length; i++) {
+      const item = categories[i];
       try {
-        if (!item.name || !item.name.trim()) {
-          errors.push({ item, error: 'Name is required' });
+        if (!item?.name || !item.name.trim()) {
+          errors.push({ index: i, item, error: 'Name is required' });
           continue;
         }
 
@@ -689,19 +699,23 @@ export const bulkCreateCategories = async (req, res) => {
           ? await getUniqueCategorySlug(item.slug)
           : await getUniqueCategorySlug(item.name);
 
+        const img = typeof item.image === 'string'
+          ? { url: item.image, public_id: null }
+          : (item.image || { url: null, public_id: null });
+
         const newCat = await Category.create({
           name: item.name.trim(),
           slug,
           description: item.description || '',
-          image: item.image || { url: null, public_id: null },
+          image: img,
           parentCategory: item.parentCategory || null,
           isActive: item.isActive !== undefined ? item.isActive : true,
-          displayOrder: item.displayOrder !== undefined ? item.displayOrder : 0
+          displayOrder: item.displayOrder !== undefined ? Number(item.displayOrder) : 0
         });
 
         created.push(newCat);
       } catch (err) {
-        errors.push({ item, error: err.message });
+        errors.push({ index: i, item, error: err.message });
       }
     }
 
@@ -711,7 +725,7 @@ export const bulkCreateCategories = async (req, res) => {
       createdCount: created.length,
       errorCount: errors.length,
       data: created,
-      errors
+      errors: errors.length > 0 ? errors : undefined
     });
   } catch (error) {
     console.error('Error bulk creating categories:', error);

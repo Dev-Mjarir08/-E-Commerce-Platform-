@@ -90,6 +90,27 @@ export const addCategory = createAsyncThunk(
 );
 
 // ============================================
+// BULK CREATE CATEGORIES
+// ============================================
+
+export const bulkCreateCategories = createAsyncThunk(
+  'categories/bulkCreateCategories',
+  async (categories, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await categoryService.bulkCreateCategories(categories);
+      dispatch(fetchCategories());
+      return response?.data || response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to bulk create categories'
+      );
+    }
+  }
+);
+
+// ============================================
 // UPDATE CATEGORY
 // ============================================
 

@@ -113,6 +113,15 @@ export const adminApi = {
   },
 
   /**
+   * Bulk create multiple categories at once
+   * @param {Array|Object} categories - Array of category objects or { categories: [...] }
+   */
+  async createBulkCategories(categories) {
+    const payload = Array.isArray(categories) ? { categories } : categories;
+    return api.post('/categories/bulk', payload);
+  },
+
+  /**
    * One-click seed 50+ high-end luxury products into MongoDB
    */
   async seedFiftyProducts() {
