@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import {
   Boxes,
   AlertTriangle,
@@ -9,24 +9,32 @@ import {
   ArrowUpDown,
   Edit,
   Save,
-  X
-} from 'lucide-react';
-import { updateProduct } from '../../../redux/slices/productSlice';
+  X,
+} from "lucide-react";
+import { updateProduct } from "../../../redux/slices/productSlice";
+import adminApi from "../../../services/adminApi";
 
 const Inventory = () => {
   const dispatch = useDispatch();
   const products = useSelector((state) => state.products.items);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [editingId, setEditingId] = useState(null);
   const [editStockValue, setEditStockValue] = useState(0);
 
   // Stock stats
   const totalProducts = products.length;
-  const inStockCount = products.filter((p) => (p.stockCount ?? p.stock ?? 0) > 8).length;
-  const lowStockCount = products.filter((p) => (p.stockCount ?? p.stock ?? 0) > 0 && (p.stockCount ?? p.stock ?? 0) <= 8).length;
-  const outOfStockCount = products.filter((p) => (p.stockCount ?? p.stock ?? 0) === 0).length;
+  const inStockCount = products.filter(
+    (p) => (p.stockCount ?? p.stock ?? 0) > 8,
+  ).length;
+  const lowStockCount = products.filter(
+    (p) =>
+      (p.stockCount ?? p.stock ?? 0) > 0 && (p.stockCount ?? p.stock ?? 0) <= 8,
+  ).length;
+  const outOfStockCount = products.filter(
+    (p) => (p.stockCount ?? p.stock ?? 0) === 0,
+  ).length;
 
   // Filtered products
   const filteredProducts = products.filter((product) => {
@@ -38,9 +46,9 @@ const Inventory = () => {
 
     if (!matchesSearch) return false;
 
-    if (filterStatus === 'low') return stock > 0 && stock <= 8;
-    if (filterStatus === 'out') return stock === 0;
-    if (filterStatus === 'in') return stock > 8;
+    if (filterStatus === "low") return stock > 0 && stock <= 8;
+    if (filterStatus === "out") return stock === 0;
+    if (filterStatus === "in") return stock > 8;
     return true;
   });
 
@@ -49,15 +57,34 @@ const Inventory = () => {
     setEditStockValue(product.stockCount ?? product.stock ?? 0);
   };
 
-  const handleSaveStock = (product) => {
-    dispatch(
-      updateProduct({
-        ...product,
-        stockCount: parseInt(editStockValue, 10) || 0,
-        stock: parseInt(editStockValue, 10) || 0
-      })
-    );
-    setEditingId(null);
+  const handleSaveStock = async (product) => {
+    const newStock = parseInt(editStockValue, 10) || 0;
+    const productId = product.id || product._id;
+
+    try {
+      const response = await adminApi.updateProduct(productId, {
+        stockCount: newStock,
+        stock: newStock,
+      });
+
+      const updatedProduct = response?.product || response?.data || response;
+
+      dispatch(
+        updateProduct({
+          ...product,
+          ...updatedProduct,
+          id: product.id || productId,
+          _id: product._id || productId,
+          stockCount: newStock,
+          stock: newStock,
+        }),
+      );
+
+      setEditingId(null);
+    } catch (error) {
+      console.error("Failed to update stock:", error);
+      alert(error?.response?.data?.message || "Failed to update stock");
+    }
   };
 
   const handleCancelEdit = () => {
@@ -68,9 +95,12 @@ const Inventory = () => {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Inventory Management</h1>
+        <h1 className="text-2xl font-bold text-slate-900">
+          Inventory Management
+        </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Monitor product stock levels, replenish shortages, and manage inventory valuation.
+          Monitor product stock levels, replenish shortages, and manage
+          inventory valuation.
         </p>
       </div>
 
@@ -83,7 +113,9 @@ const Inventory = () => {
             </div>
             <div>
               <p className="text-sm text-slate-500">Total Products</p>
-              <p className="text-2xl font-bold text-slate-900">{totalProducts}</p>
+              <p className="text-2xl font-bold text-slate-900">
+                {totalProducts}
+              </p>
             </div>
           </div>
         </div>
@@ -95,7 +127,9 @@ const Inventory = () => {
             </div>
             <div>
               <p className="text-sm text-slate-500">In Stock</p>
-              <p className="text-2xl font-bold text-slate-900">{inStockCount}</p>
+              <p className="text-2xl font-bold text-slate-900">
+                {inStockCount}
+              </p>
             </div>
           </div>
         </div>
@@ -107,7 +141,9 @@ const Inventory = () => {
             </div>
             <div>
               <p className="text-sm text-slate-500">Low Stock (≤ 8)</p>
-              <p className="text-2xl font-bold text-slate-900">{lowStockCount}</p>
+              <p className="text-2xl font-bold text-slate-900">
+                {lowStockCount}
+              </p>
             </div>
           </div>
         </div>
@@ -119,7 +155,9 @@ const Inventory = () => {
             </div>
             <div>
               <p className="text-sm text-slate-500">Out of Stock</p>
-              <p className="text-2xl font-bold text-slate-900">{outOfStockCount}</p>
+              <p className="text-2xl font-bold text-slate-900">
+                {outOfStockCount}
+              </p>
             </div>
           </div>
         </div>
@@ -128,7 +166,10 @@ const Inventory = () => {
       {/* Filter and Search Bar */}
       <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
         <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-2.5 text-slate-400" size={18} />
+          <Search
+            className="absolute left-3 top-2.5 text-slate-400"
+            size={18}
+          />
           <input
             type="text"
             placeholder="Search products or SKU..."
@@ -140,18 +181,19 @@ const Inventory = () => {
 
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
           {[
-            { id: 'all', label: 'All Items' },
-            { id: 'low', label: 'Low Stock' },
-            { id: 'out', label: 'Out of Stock' },
-            { id: 'in', label: 'Adequate' }
+            { id: "all", label: "All Items" },
+            { id: "low", label: "Low Stock" },
+            { id: "out", label: "Out of Stock" },
+            { id: "in", label: "Adequate" },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setFilterStatus(tab.id)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${filterStatus === tab.id
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
+                filterStatus === tab.id
+                  ? "bg-indigo-600 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
             >
               {tab.label}
             </button>
@@ -162,7 +204,9 @@ const Inventory = () => {
       {/* Inventory Table */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="px-5 py-4 border-b border-slate-200 flex justify-between items-center">
-          <h2 className="text-base font-semibold text-slate-900">Inventory Stock Levels</h2>
+          <h2 className="text-base font-semibold text-slate-900">
+            Inventory Stock Levels
+          </h2>
           <span className="text-xs text-slate-500 font-medium">
             Showing {filteredProducts.length} of {products.length} items
           </span>
@@ -171,11 +215,13 @@ const Inventory = () => {
         {filteredProducts.length === 0 ? (
           <div className="p-12 text-center">
             <Boxes size={44} className="mx-auto text-slate-300" />
-            <h3 className="mt-3 text-sm font-semibold text-slate-700">No inventory records found</h3>
+            <h3 className="mt-3 text-sm font-semibold text-slate-700">
+              No inventory records found
+            </h3>
             <p className="mt-1 text-sm text-slate-500">
               {products.length === 0
-                ? 'Add products to your catalog to track inventory here.'
-                : 'No products matched your search/filter criteria.'}
+                ? "Add products to your catalog to track inventory here."
+                : "No products matched your search/filter criteria."}
             </p>
           </div>
         ) : (
@@ -183,12 +229,24 @@ const Inventory = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="text-left px-5 py-3 font-semibold text-slate-600">Product</th>
-                  <th className="text-left px-5 py-3 font-semibold text-slate-600">Category</th>
-                  <th className="text-left px-5 py-3 font-semibold text-slate-600">Price</th>
-                  <th className="text-left px-5 py-3 font-semibold text-slate-600">Quantity In Stock</th>
-                  <th className="text-left px-5 py-3 font-semibold text-slate-600">Status</th>
-                  <th className="text-right px-5 py-3 font-semibold text-slate-600">Quick Edit</th>
+                  <th className="text-left px-5 py-3 font-semibold text-slate-600">
+                    Product
+                  </th>
+                  <th className="text-left px-5 py-3 font-semibold text-slate-600">
+                    Category
+                  </th>
+                  <th className="text-left px-5 py-3 font-semibold text-slate-600">
+                    Price
+                  </th>
+                  <th className="text-left px-5 py-3 font-semibold text-slate-600">
+                    Quantity In Stock
+                  </th>
+                  <th className="text-left px-5 py-3 font-semibold text-slate-600">
+                    Status
+                  </th>
+                  <th className="text-right px-5 py-3 font-semibold text-slate-600">
+                    Quick Edit
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -226,19 +284,27 @@ const Inventory = () => {
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <img
-                            src={product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=120&q=80'}
+                            src={
+                              product.image ||
+                              product.images?.[0] ||
+                              "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=120&q=80"
+                            }
                             alt={product.name}
                             className="w-10 h-10 rounded-lg object-cover border border-slate-200"
                           />
                           <div>
-                            <p className="font-semibold text-slate-800 line-clamp-1">{product.name}</p>
-                            <p className="text-xs text-slate-400">SKU: {product.sku || product.id}</p>
+                            <p className="font-semibold text-slate-800 line-clamp-1">
+                              {product.name}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              SKU: {product.sku || product.id}
+                            </p>
                           </div>
                         </div>
                       </td>
 
                       <td className="px-5 py-4 text-slate-600 capitalize">
-                        {product.categoryName || product.category || 'General'}
+                        {product.categoryName || product.category || "General"}
                       </td>
 
                       <td className="px-5 py-4 text-slate-800 font-semibold">
@@ -252,7 +318,9 @@ const Inventory = () => {
                               type="number"
                               min="0"
                               value={editStockValue}
-                              onChange={(e) => setEditStockValue(e.target.value)}
+                              onChange={(e) =>
+                                setEditStockValue(e.target.value)
+                              }
                               className="w-20 px-2 py-1 border border-indigo-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                               autoFocus
                             />
@@ -272,7 +340,9 @@ const Inventory = () => {
                             </button>
                           </div>
                         ) : (
-                          <span className="font-bold text-slate-900">{stock} units</span>
+                          <span className="font-bold text-slate-900">
+                            {stock} units
+                          </span>
                         )}
                       </td>
 

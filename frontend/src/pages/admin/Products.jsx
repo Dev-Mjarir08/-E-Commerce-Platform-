@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { Link } from "react-router-dom";
 import {
   Package,
   Plus,
@@ -27,30 +27,30 @@ import {
   RefreshCw,
   Database,
   FileJson,
-  Download
-} from 'lucide-react';
+  Download,
+} from "lucide-react";
 import {
   addProduct,
   updateProduct as updateProductRedux,
-  deleteProduct as deleteProductRedux
-} from '../../redux/slices/productSlice';
-import { categories } from '../../data/categories';
-import adminApi from '../../services/adminApi';
-import { useConfirm } from '../../context/ModalContext';
+  deleteProduct as deleteProductRedux,
+} from "../../redux/slices/productSlice";
+import { categories } from "../../data/categories";
+import adminApi from "../../services/adminApi";
+import { useConfirm } from "../../context/ModalContext";
 
 /**
  * Generate clean URL-friendly slug
  */
 const slugify = (text) => {
-  return (text || '')
+  return (text || "")
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]+/g, '')
-    .replace(/--+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]+/g, "")
+    .replace(/--+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
 };
 
 const Products = () => {
@@ -66,18 +66,18 @@ const Products = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiNotice, setApiNotice] = useState(null); // { type: 'success' | 'error', text: '' }
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [activeFormTab, setActiveFormTab] = useState('general');
+  const [activeFormTab, setActiveFormTab] = useState("general");
 
   // Bulk 50+ Products Import & Seed States
   const [isSeeding, setIsSeeding] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
-  const [bulkJsonInput, setBulkJsonInput] = useState('');
+  const [bulkJsonInput, setBulkJsonInput] = useState("");
   const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
   const [bulkStatus, setBulkStatus] = useState(null);
   const bulkFileRef = useRef(null);
@@ -89,31 +89,31 @@ const Products = () => {
 
   // Form State strictly mirroring Mongoose Product schema
   const initialFormState = {
-    title: '',
-    slug: '',
-    description: '',
-    brand: '',
-    sku: '',
-    category: categories[0]?.id || 'clothing',
-    categoryName: categories[0]?.name || 'Clothing',
-    store: storeList[0]?.name || 'Atelier Flagship Store',
-    basePrice: '',
-    discountPrice: '',
+    title: "",
+    slug: "",
+    description: "",
+    brand: "",
+    sku: "",
+    category: categories[0]?.id || "clothing",
+    categoryName: categories[0]?.name || "Clothing",
+    store: storeList[0]?.name || "Atelier Flagship Store",
+    basePrice: "",
+    discountPrice: "",
     stock: 25,
     hasVariants: false,
     images: [],
     attributes: [
-      { name: 'Material', value: '100% Cashmere' },
-      { name: 'Fit', value: 'Tailored' }
+      { name: "Material", value: "100% Cashmere" },
+      { name: "Fit", value: "Tailored" },
     ],
-    tags: ['luxury', 'editorial'],
+    tags: ["luxury", "editorial"],
     isFeatured: false,
-    isActive: true
+    isActive: true,
   };
 
   const [formData, setFormData] = useState(initialFormState);
-  const [newTagInput, setNewTagInput] = useState('');
-  const [newImageUrl, setNewImageUrl] = useState('');
+  const [newTagInput, setNewTagInput] = useState("");
+  const [newImageUrl, setNewImageUrl] = useState("");
   const [selectedImageFiles, setSelectedImageFiles] = useState([]); // Raw files for multer
   const [formErrors, setFormErrors] = useState({});
 
@@ -125,8 +125,8 @@ const Products = () => {
       const items = Array.isArray(res?.data)
         ? res.data
         : Array.isArray(res?.data?.data)
-        ? res.data.data
-        : [];
+          ? res.data.data
+          : [];
 
       if (items.length > 0) {
         setProductList(items);
@@ -138,7 +138,7 @@ const Products = () => {
         setProductList(reduxProducts);
       }
     } catch (err) {
-      console.warn('Backend products fetch notice:', err.message);
+      console.warn("Backend products fetch notice:", err.message);
       // Fallback to local Redux items if server is offline
       if (reduxProducts.length > 0 && productList.length === 0) {
         setProductList(reduxProducts);
@@ -156,24 +156,24 @@ const Products = () => {
   const filteredProducts = useMemo(() => {
     const list = productList.length > 0 ? productList : reduxProducts;
     return list.filter((p) => {
-      const title = p.title || p.name || '';
-      const sku = p.sku || p.id || '';
-      const brand = p.brand || '';
+      const title = p.title || p.name || "";
+      const sku = p.sku || p.id || "";
+      const brand = p.brand || "";
       const matchesSearch =
         title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
         brand.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const prodCat = p.category?.slug || p.category?.name || p.category || '';
+      const prodCat = p.category?.slug || p.category?.name || p.category || "";
       const matchesCategory =
-        categoryFilter === 'all' ||
+        categoryFilter === "all" ||
         prodCat.toLowerCase() === categoryFilter.toLowerCase() ||
         p.categoryName?.toLowerCase() === categoryFilter.toLowerCase();
 
       let matchesStatus = true;
-      if (statusFilter === 'active') matchesStatus = p.isActive !== false;
-      if (statusFilter === 'inactive') matchesStatus = p.isActive === false;
-      if (statusFilter === 'featured') matchesStatus = p.isFeatured === true;
+      if (statusFilter === "active") matchesStatus = p.isActive !== false;
+      if (statusFilter === "inactive") matchesStatus = p.isActive === false;
+      if (statusFilter === "featured") matchesStatus = p.isFeatured === true;
 
       return matchesSearch && matchesCategory && matchesStatus;
     });
@@ -182,12 +182,16 @@ const Products = () => {
   // KPI Counters
   const currentItems = productList.length > 0 ? productList : reduxProducts;
   const totalProducts = currentItems.length;
-  const inStockCount = currentItems.filter((p) => (p.stock ?? p.stockCount ?? 0) > 8).length;
+  const inStockCount = currentItems.filter(
+    (p) => (p.stock ?? p.stockCount ?? 0) > 8,
+  ).length;
   const lowStockCount = currentItems.filter((p) => {
     const s = p.stock ?? p.stockCount ?? 0;
     return s > 0 && s <= 8;
   }).length;
-  const outOfStockCount = currentItems.filter((p) => (p.stock ?? p.stockCount ?? 0) === 0).length;
+  const outOfStockCount = currentItems.filter(
+    (p) => (p.stock ?? p.stockCount ?? 0) === 0,
+  ).length;
   const featuredCount = currentItems.filter((p) => p.isFeatured).length;
 
   // Open Add Modal
@@ -198,19 +202,19 @@ const Products = () => {
     setFormData({
       ...initialFormState,
       sku: randomSku,
-      category: categories[0]?.id || 'outerwear',
-      categoryName: categories[0]?.name || 'Outerwear',
-      store: storeList[0]?.name || 'Atelier Flagship Store',
+      category: categories[0]?.id || "outerwear",
+      categoryName: categories[0]?.name || "Outerwear",
+      store: storeList[0]?.name || "Atelier Flagship Store",
       images: [
         {
-          url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
+          url: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80",
           public_id: null,
-          isPrimary: true
-        }
-      ]
+          isPrimary: true,
+        },
+      ],
     });
     setFormErrors({});
-    setActiveFormTab('general');
+    setActiveFormTab("general");
     setIsModalOpen(true);
   };
 
@@ -222,14 +226,14 @@ const Products = () => {
     let normalizedImages = [];
     if (Array.isArray(p.images) && p.images.length > 0) {
       normalizedImages = p.images.map((img, idx) => {
-        if (typeof img === 'string') {
+        if (typeof img === "string") {
           return { url: img, public_id: null, isPrimary: idx === 0 };
         }
         return {
           _id: img._id,
           url: img.url,
           public_id: img.public_id || null,
-          isPrimary: Boolean(img.isPrimary) || idx === 0
+          isPrimary: Boolean(img.isPrimary) || idx === 0,
         };
       });
     } else if (p.image) {
@@ -237,27 +241,35 @@ const Products = () => {
     }
 
     setFormData({
-      title: p.title || p.name || '',
-      slug: p.slug || slugify(p.title || p.name || ''),
-      description: p.description || '',
-      brand: p.brand || '',
-      sku: p.sku || p.id || '',
-      category: p.category?._id || p.category?.slug || p.category || categories[0]?.id,
-      categoryName: p.category?.name || p.categoryName || 'Category',
-      store: p.store?.name || p.store || storeList[0]?.name || 'Atelier Flagship Store',
-      basePrice: p.basePrice ?? p.price ?? '',
-      discountPrice: p.discountPrice ?? p.compareAtPrice ?? '',
+      title: p.title || p.name || "",
+      slug: p.slug || slugify(p.title || p.name || ""),
+      description: p.description || "",
+      brand: p.brand || "",
+      sku: p.sku || p.id || "",
+      category:
+        p.category?._id || p.category?.slug || p.category || categories[0]?.id,
+      categoryName: p.category?.name || p.categoryName || "Category",
+      store:
+        p.store?.name ||
+        p.store ||
+        storeList[0]?.name ||
+        "Atelier Flagship Store",
+      basePrice: p.basePrice ?? p.price ?? "",
+      discountPrice: p.discountPrice ?? p.compareAtPrice ?? "",
       stock: p.stock ?? p.stockCount ?? 0,
       hasVariants: Boolean(p.hasVariants),
       images: normalizedImages,
-      attributes: Array.isArray(p.attributes) && p.attributes.length > 0 ? p.attributes : [{ name: 'Material', value: 'Cashmere' }],
-      tags: Array.isArray(p.tags) ? p.tags : ['luxury'],
+      attributes:
+        Array.isArray(p.attributes) && p.attributes.length > 0
+          ? p.attributes
+          : [{ name: "Material", value: "Cashmere" }],
+      tags: Array.isArray(p.tags) ? p.tags : ["luxury"],
       isFeatured: Boolean(p.isFeatured),
-      isActive: p.isActive !== false
+      isActive: p.isActive !== false,
     });
 
     setFormErrors({});
-    setActiveFormTab('general');
+    setActiveFormTab("general");
     setIsModalOpen(true);
   };
 
@@ -266,10 +278,10 @@ const Products = () => {
     setFormData((prev) => ({
       ...prev,
       title: val,
-      ...(!editingProduct && { slug: slugify(val) })
+      ...(!editingProduct && { slug: slugify(val) }),
     }));
     if (formErrors.title) {
-      setFormErrors((prev) => ({ ...prev, title: '' }));
+      setFormErrors((prev) => ({ ...prev, title: "" }));
     }
   };
 
@@ -285,12 +297,12 @@ const Products = () => {
       url: URL.createObjectURL(file),
       file,
       public_id: null,
-      isPrimary: formData.images.length === 0 && idx === 0
+      isPrimary: formData.images.length === 0 && idx === 0,
     }));
 
     setFormData((prev) => ({
       ...prev,
-      images: [...prev.images, ...newPreviewImages]
+      images: [...prev.images, ...newPreviewImages],
     }));
   };
 
@@ -302,10 +314,10 @@ const Products = () => {
       ...prev,
       images: [
         ...prev.images,
-        { url: newImageUrl.trim(), public_id: null, isPrimary: isFirst }
-      ]
+        { url: newImageUrl.trim(), public_id: null, isPrimary: isFirst },
+      ],
     }));
-    setNewImageUrl('');
+    setNewImageUrl("");
   };
 
   const handleSetPrimaryImage = (index) => {
@@ -313,8 +325,8 @@ const Products = () => {
       ...prev,
       images: prev.images.map((img, i) => ({
         ...img,
-        isPrimary: i === index
-      }))
+        isPrimary: i === index,
+      })),
     }));
   };
 
@@ -323,17 +335,25 @@ const Products = () => {
     const targetImg = formData.images[index];
 
     // If editing existing product and image has a DB reference or server URL
-    if (editingProduct && (editingProduct._id || editingProduct.id) && targetImg?.url && !targetImg?.file) {
+    if (
+      editingProduct &&
+      (editingProduct._id || editingProduct.id) &&
+      targetImg?.url &&
+      !targetImg?.file
+    ) {
       try {
         const prodId = editingProduct._id || editingProduct.id;
         await adminApi.deleteProductImage(prodId, {
           imageUrl: targetImg.url,
-          imageId: targetImg._id
+          imageId: targetImg._id,
         });
-        setApiNotice({ type: 'success', text: 'Image successfully deleted from server and database.' });
+        setApiNotice({
+          type: "success",
+          text: "Image successfully deleted from server and database.",
+        });
         setTimeout(() => setApiNotice(null), 3000);
       } catch (err) {
-        console.warn('Direct image deletion warning:', err.message);
+        console.warn("Direct image deletion warning:", err.message);
       }
     }
 
@@ -350,7 +370,7 @@ const Products = () => {
   const handleAddAttribute = () => {
     setFormData((prev) => ({
       ...prev,
-      attributes: [...prev.attributes, { name: '', value: '' }]
+      attributes: [...prev.attributes, { name: "", value: "" }],
     }));
   };
 
@@ -365,26 +385,26 @@ const Products = () => {
   const handleRemoveAttribute = (idx) => {
     setFormData((prev) => ({
       ...prev,
-      attributes: prev.attributes.filter((_, i) => i !== idx)
+      attributes: prev.attributes.filter((_, i) => i !== idx),
     }));
   };
 
   // Tag Handlers
   const handleAddTag = (e) => {
-    if (e.key === 'Enter' || e.key === ',') {
+    if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
-      const tag = newTagInput.trim().toLowerCase().replace(/,/g, '');
+      const tag = newTagInput.trim().toLowerCase().replace(/,/g, "");
       if (tag && !formData.tags.includes(tag)) {
         setFormData((prev) => ({ ...prev, tags: [...prev.tags, tag] }));
       }
-      setNewTagInput('');
+      setNewTagInput("");
     }
   };
 
   const handleRemoveTag = (tagToRemove) => {
     setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.filter((t) => t !== tagToRemove)
+      tags: prev.tags.filter((t) => t !== tagToRemove),
     }));
   };
 
@@ -395,11 +415,15 @@ const Products = () => {
     try {
       await adminApi.updateProduct(targetId, { isActive: updatedStatus });
       setProductList((prev) =>
-        prev.map((item) => ((item._id || item.id) === targetId ? { ...item, isActive: updatedStatus } : item))
+        prev.map((item) =>
+          (item._id || item.id) === targetId
+            ? { ...item, isActive: updatedStatus }
+            : item,
+        ),
       );
       dispatch(updateProductRedux({ ...p, isActive: updatedStatus }));
     } catch (err) {
-      console.warn('Status toggle fallback:', err.message);
+      console.warn("Status toggle fallback:", err.message);
       dispatch(updateProductRedux({ ...p, isActive: updatedStatus }));
     }
   };
@@ -407,25 +431,32 @@ const Products = () => {
   // Delete Product Permanently (Live in DB + Disk Cleanup)
   const handleDeleteProduct = async (id) => {
     const ok = await confirm({
-      title: 'Permanent Product Deletion',
-      message: 'Are you sure you want to permanently delete this product and all associated media from the database? This action cannot be undone.',
-      confirmText: 'Delete Product',
-      cancelText: 'Cancel',
-      type: 'danger'
+      title: "Permanent Product Deletion",
+      message:
+        "Are you sure you want to permanently delete this product and all associated media from the database? This action cannot be undone.",
+      confirmText: "Delete Product",
+      cancelText: "Cancel",
+      type: "danger",
     });
     if (!ok) return;
 
     try {
       await adminApi.deleteProduct(id);
-      setApiNotice({ type: 'success', text: 'Product and media files deleted from database.' });
+      setApiNotice({
+        type: "success",
+        text: "Product and media files deleted from database.",
+      });
       setProductList((prev) => prev.filter((p) => (p._id || p.id) !== id));
       dispatch(deleteProductRedux(id));
-      if (viewingProduct && (viewingProduct._id === id || viewingProduct.id === id)) {
+      if (
+        viewingProduct &&
+        (viewingProduct._id === id || viewingProduct.id === id)
+      ) {
         setViewingProduct(null);
       }
       setTimeout(() => setApiNotice(null), 3500);
     } catch (err) {
-      console.warn('API delete error, executing local removal:', err.message);
+      console.warn("API delete error, executing local removal:", err.message);
       dispatch(deleteProductRedux(id));
       setProductList((prev) => prev.filter((p) => (p._id || p.id) !== id));
     }
@@ -433,7 +464,14 @@ const Products = () => {
 
   // Generate 50 realistic luxury products template for bulk upload testing
   const generateSampleFiftyProducts = () => {
-    const cats = ['Clothing', 'Shoes', 'Accessories', 'Bags', 'Watches', 'Jewelry'];
+    const cats = [
+      "Clothing",
+      "Shoes",
+      "Accessories",
+      "Bags",
+      "Watches",
+      "Jewelry",
+    ];
     return Array.from({ length: 50 }, (_, idx) => {
       const i = idx + 1;
       const cat = cats[(i - 1) % cats.length];
@@ -442,19 +480,30 @@ const Products = () => {
         title: `Atelier Signature ${cat} Piece ${i}`,
         slug: `atelier-signature-${cat.toLowerCase()}-piece-${i}`,
         description: `Ultra-luxurious ${cat.toLowerCase()} handcrafted with premium sustainable raw textiles.`,
-        brand: i % 2 === 0 ? 'Maison Margaux' : 'Atelier Sartorial',
+        brand: i % 2 === 0 ? "Maison Margaux" : "Atelier Sartorial",
         sku: `SKU-${cat.slice(0, 3).toUpperCase()}-${2000 + i}`,
         category: cat,
-        store: 'Atelier Flagship Store',
+        store: "Atelier Flagship Store",
         basePrice,
         discountPrice: i % 3 === 0 ? basePrice - 45 : null,
         stock: 12 + (i % 20),
         hasVariants: i % 2 === 0,
         isFeatured: i % 4 === 0,
         isActive: true,
-        images: [{ url: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=800&q=80', isPrimary: true }],
-        attributes: [{ name: 'Material', value: i % 2 === 0 ? 'Pure Italian Cashmere' : 'Super 160s Virgin Wool' }],
-        tags: ['luxury', cat.toLowerCase(), 'editorial']
+        images: [
+          {
+            url: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=800&q=80",
+            isPrimary: true,
+          },
+        ],
+        attributes: [
+          {
+            name: "Material",
+            value:
+              i % 2 === 0 ? "Pure Italian Cashmere" : "Super 160s Virgin Wool",
+          },
+        ],
+        tags: ["luxury", cat.toLowerCase(), "editorial"],
       };
     });
   };
@@ -462,29 +511,37 @@ const Products = () => {
   // 1-Click Seed 50+ Products into MongoDB
   const handleSeedFiftyProducts = async () => {
     const ok = await confirm({
-      title: 'Seed Curated Database Catalog',
-      message: 'This will seed/upsert 50+ curated luxury products with high-resolution imagery into your MongoDB database. Continue?',
-      confirmText: 'Seed Catalog',
-      cancelText: 'Cancel',
-      type: 'database'
+      title: "Seed Curated Database Catalog",
+      message:
+        "This will seed/upsert 50+ curated luxury products with high-resolution imagery into your MongoDB database. Continue?",
+      confirmText: "Seed Catalog",
+      cancelText: "Cancel",
+      type: "database",
     });
     if (!ok) return;
     setIsSeeding(true);
     setApiNotice(null);
     try {
       const res = await adminApi.seedFiftyProducts();
-      const count = res?.count || (Array.isArray(res?.data) ? res.data.length : null) || 54;
-      const msg = res?.message || res?.data?.message || `Successfully seeded ${count} products into MongoDB database!`;
+      const count =
+        res?.count || (Array.isArray(res?.data) ? res.data.length : null) || 54;
+      const msg =
+        res?.message ||
+        res?.data?.message ||
+        `Successfully seeded ${count} products into MongoDB database!`;
       setApiNotice({
-        type: 'success',
-        text: msg
+        type: "success",
+        text: msg,
       });
       await fetchProducts();
     } catch (err) {
-      console.error('Seed 50 error:', err);
+      console.error("Seed 50 error:", err);
       setApiNotice({
-        type: 'error',
-        text: err?.response?.data?.message || err?.message || 'Failed to seed 50+ products.'
+        type: "error",
+        text:
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to seed 50+ products.",
       });
     } finally {
       setIsSeeding(false);
@@ -496,9 +553,9 @@ const Products = () => {
   const handleBulkSubmit = async () => {
     if (!bulkJsonInput.trim()) {
       modalAlert({
-        title: 'Input Required',
-        message: 'Please enter or paste JSON product data.',
-        type: 'warning'
+        title: "Input Required",
+        message: "Please enter or paste JSON product data.",
+        type: "warning",
       });
       return;
     }
@@ -507,19 +564,20 @@ const Products = () => {
       parsed = JSON.parse(bulkJsonInput);
     } catch (e) {
       modalAlert({
-        title: 'Invalid JSON Format',
-        message: 'Please verify valid JSON syntax before proceeding.',
-        type: 'error'
+        title: "Invalid JSON Format",
+        message: "Please verify valid JSON syntax before proceeding.",
+        type: "error",
       });
       return;
     }
 
-    const items = Array.isArray(parsed) ? parsed : (parsed.products || [parsed]);
+    const items = Array.isArray(parsed) ? parsed : parsed.products || [parsed];
     if (!Array.isArray(items) || items.length === 0) {
       modalAlert({
-        title: 'Invalid Product Array',
-        message: 'JSON must be an array of products or an object containing a "products" array.',
-        type: 'warning'
+        title: "Invalid Product Array",
+        message:
+          'JSON must be an array of products or an object containing a "products" array.',
+        type: "warning",
       });
       return;
     }
@@ -528,20 +586,29 @@ const Products = () => {
     setBulkStatus(null);
     try {
       const res = await adminApi.createBulkProducts(items);
-      const createdCount = res?.count || (Array.isArray(res?.data) ? res.data.length : null) || items.length;
-      const msg = res?.message || res?.data?.message || `Successfully created ${createdCount} products in bulk!`;
+      const createdCount =
+        res?.count ||
+        (Array.isArray(res?.data) ? res.data.length : null) ||
+        items.length;
+      const msg =
+        res?.message ||
+        res?.data?.message ||
+        `Successfully created ${createdCount} products in bulk!`;
       setApiNotice({
-        type: 'success',
-        text: msg
+        type: "success",
+        text: msg,
       });
       setIsBulkModalOpen(false);
-      setBulkJsonInput('');
+      setBulkJsonInput("");
       await fetchProducts();
     } catch (err) {
-      console.error('Bulk upload error:', err);
+      console.error("Bulk upload error:", err);
       setBulkStatus({
-        type: 'error',
-        text: err?.response?.data?.message || err?.message || 'Failed to bulk import products.'
+        type: "error",
+        text:
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to bulk import products.",
       });
     } finally {
       setIsBulkSubmitting(false);
@@ -554,8 +621,8 @@ const Products = () => {
     const samples = generateSampleFiftyProducts();
     setBulkJsonInput(JSON.stringify(samples, null, 2));
     setBulkStatus({
-      type: 'info',
-      text: `Loaded ${samples.length} sample products template. Review or click 'Import Products Now' below.`
+      type: "info",
+      text: `Loaded ${samples.length} sample products template. Review or click 'Import Products Now' below.`,
     });
   };
 
@@ -568,17 +635,19 @@ const Products = () => {
       try {
         const text = event.target.result;
         const parsed = JSON.parse(text);
-        const count = Array.isArray(parsed) ? parsed.length : (parsed.products?.length || 0);
+        const count = Array.isArray(parsed)
+          ? parsed.length
+          : parsed.products?.length || 0;
         setBulkJsonInput(text);
         setBulkStatus({
-          type: 'info',
-          text: `Loaded file "${file.name}" with ${count} product(s).`
+          type: "info",
+          text: `Loaded file "${file.name}" with ${count} product(s).`,
         });
       } catch (err) {
         modalAlert({
-          title: 'File Upload Error',
-          message: 'Uploaded file is not valid JSON syntax.',
-          type: 'error'
+          title: "File Upload Error",
+          message: "Uploaded file is not valid JSON syntax.",
+          type: "error",
         });
       }
     };
@@ -600,11 +669,17 @@ const Products = () => {
 
   // Check if all or some filtered items are selected
   const isAllSelected = useMemo(() => {
-    return filteredProducts.length > 0 && filteredProducts.every((p) => selectedIds.has(p._id || p.id));
+    return (
+      filteredProducts.length > 0 &&
+      filteredProducts.every((p) => selectedIds.has(p._id || p.id))
+    );
   }, [filteredProducts, selectedIds]);
 
   const isSomeSelected = useMemo(() => {
-    return filteredProducts.some((p) => selectedIds.has(p._id || p.id)) && !isAllSelected;
+    return (
+      filteredProducts.some((p) => selectedIds.has(p._id || p.id)) &&
+      !isAllSelected
+    );
   }, [filteredProducts, selectedIds, isAllSelected]);
 
   // Toggle select all on current filtered view
@@ -627,11 +702,11 @@ const Products = () => {
     if (count === 0) return;
 
     const ok = await confirm({
-      title: 'Bulk Deletion',
+      title: "Bulk Deletion",
       message: `Are you sure you want to permanently delete ${count} selected products from the database? This action cannot be undone.`,
       confirmText: `Delete ${count} Products`,
-      cancelText: 'Cancel',
-      type: 'danger'
+      cancelText: "Cancel",
+      type: "danger",
     });
     if (!ok) return;
 
@@ -642,20 +717,27 @@ const Products = () => {
       const res = await adminApi.deleteMultipleProducts(idsArray);
       const deletedCount = res?.deletedCount || count;
       setApiNotice({
-        type: 'success',
-        text: res?.message || `Successfully removed ${deletedCount} products from database!`
+        type: "success",
+        text:
+          res?.message ||
+          `Successfully removed ${deletedCount} products from database!`,
       });
 
       // Update local and Redux states
-      setProductList((prev) => prev.filter((p) => !selectedIds.has(p._id || p.id)));
+      setProductList((prev) =>
+        prev.filter((p) => !selectedIds.has(p._id || p.id)),
+      );
       idsArray.forEach((id) => dispatch(deleteProductRedux(id)));
       setSelectedIds(new Set());
       await fetchProducts();
     } catch (err) {
-      console.error('Delete selected error:', err);
+      console.error("Delete selected error:", err);
       setApiNotice({
-        type: 'error',
-        text: err?.response?.data?.message || err.message || 'Failed to delete selected products.'
+        type: "error",
+        text:
+          err?.response?.data?.message ||
+          err.message ||
+          "Failed to delete selected products.",
       });
     } finally {
       setIsBulkDeleting(false);
@@ -667,18 +749,18 @@ const Products = () => {
   const handleClearAllProducts = async () => {
     if (productList.length === 0) {
       modalAlert({
-        title: 'Catalog Empty',
-        message: 'The product catalog is already empty.',
-        type: 'info'
+        title: "Catalog Empty",
+        message: "The product catalog is already empty.",
+        type: "info",
       });
       return;
     }
 
     const confirmPrompt = window.prompt(
-      `DANGER: This will permanently delete ALL ${productList.length} products in the database and clean up images.\n\nTo confirm, type "DELETE" below:`
+      `DANGER: This will permanently delete ALL ${productList.length} products in the database and clean up images.\n\nTo confirm, type "DELETE" below:`,
     );
 
-    if (confirmPrompt !== 'DELETE') {
+    if (confirmPrompt !== "DELETE") {
       return;
     }
 
@@ -687,17 +769,20 @@ const Products = () => {
     try {
       const res = await adminApi.clearAllProducts();
       setApiNotice({
-        type: 'success',
-        text: res?.message || 'All products have been cleared from database.'
+        type: "success",
+        text: res?.message || "All products have been cleared from database.",
       });
       setProductList([]);
       setSelectedIds(new Set());
       productList.forEach((p) => dispatch(deleteProductRedux(p._id || p.id)));
     } catch (err) {
-      console.error('Clear all error:', err);
+      console.error("Clear all error:", err);
       setApiNotice({
-        type: 'error',
-        text: err?.response?.data?.message || err.message || 'Failed to clear catalog.'
+        type: "error",
+        text:
+          err?.response?.data?.message ||
+          err.message ||
+          "Failed to clear catalog.",
       });
     } finally {
       setIsClearingAll(false);
@@ -710,27 +795,30 @@ const Products = () => {
     e.preventDefault();
     const errors = {};
 
-    if (!formData.title.trim()) errors.title = 'Product title is required.';
-    if (!formData.slug.trim()) errors.slug = 'Product slug is required.';
-    if (!formData.description.trim()) errors.description = 'Description is required.';
-    if (formData.basePrice === '' || Number(formData.basePrice) < 0) {
-      errors.basePrice = 'Valid base price is required.';
+    if (!formData.title.trim()) errors.title = "Product title is required.";
+    if (!formData.slug.trim()) errors.slug = "Product slug is required.";
+    if (!formData.description.trim())
+      errors.description = "Description is required.";
+    if (formData.basePrice === "" || Number(formData.basePrice) < 0) {
+      errors.basePrice = "Valid base price is required.";
     }
     if (
-      formData.discountPrice !== '' &&
+      formData.discountPrice !== "" &&
       Number(formData.discountPrice) > Number(formData.basePrice)
     ) {
-      errors.discountPrice = 'Discount price cannot exceed base price.';
+      errors.discountPrice = "Discount price cannot exceed base price.";
     }
     if (formData.images.length === 0) {
-      errors.images = 'At least one product image or file is required.';
+      errors.images = "At least one product image or file is required.";
     }
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
-      if (errors.title || errors.slug || errors.description) setActiveFormTab('general');
-      else if (errors.basePrice || errors.discountPrice) setActiveFormTab('pricing');
-      else if (errors.images) setActiveFormTab('media');
+      if (errors.title || errors.slug || errors.description)
+        setActiveFormTab("general");
+      else if (errors.basePrice || errors.discountPrice)
+        setActiveFormTab("pricing");
+      else if (errors.images) setActiveFormTab("media");
       return;
     }
 
@@ -740,70 +828,91 @@ const Products = () => {
     try {
       // Build FormData for Multer file uploads & structured JSON
       const data = new FormData();
-      data.append('title', formData.title.trim());
-      data.append('slug', slugify(formData.slug));
-      data.append('description', formData.description.trim());
-      data.append('brand', formData.brand.trim() || 'Atelier Signature');
-      data.append('sku', formData.sku.trim() || `SKU-${Date.now().toString().slice(-6)}`);
-      data.append('category', formData.category);
-      data.append('store', formData.store);
-      data.append('basePrice', Number(formData.basePrice));
-      if (formData.discountPrice !== '') {
-        data.append('discountPrice', Number(formData.discountPrice));
+      data.append("title", formData.title.trim());
+      data.append("slug", slugify(formData.slug));
+      data.append("description", formData.description.trim());
+      data.append("brand", formData.brand.trim() || "Atelier Signature");
+      data.append(
+        "sku",
+        formData.sku.trim() || `SKU-${Date.now().toString().slice(-6)}`,
+      );
+      data.append("category", formData.category);
+      data.append("store", formData.store);
+      data.append("basePrice", Number(formData.basePrice));
+      if (formData.discountPrice !== "") {
+        data.append("discountPrice", Number(formData.discountPrice));
       }
-      data.append('stock', Number(formData.stock));
-      data.append('hasVariants', Boolean(formData.hasVariants));
-      data.append('isFeatured', Boolean(formData.isFeatured));
-      data.append('isActive', Boolean(formData.isActive));
+      data.append("stock", Number(formData.stock));
+      data.append("hasVariants", Boolean(formData.hasVariants));
+      data.append("isFeatured", Boolean(formData.isFeatured));
+      data.append("isActive", Boolean(formData.isActive));
 
-      data.append('attributes', JSON.stringify(formData.attributes.filter((a) => a.name && a.value)));
-      data.append('tags', JSON.stringify(formData.tags));
+      data.append(
+        "attributes",
+        JSON.stringify(formData.attributes.filter((a) => a.name && a.value)),
+      );
+      data.append("tags", JSON.stringify(formData.tags));
 
       // Append existing retained URLs
-      const existingUrls = formData.images.filter((img) => !img.file).map((img) => ({
-        url: img.url,
-        public_id: img.public_id || null,
-        isPrimary: Boolean(img.isPrimary)
-      }));
-      data.append('images', JSON.stringify(existingUrls));
+      const existingUrls = formData.images
+        .filter((img) => !img.file)
+        .map((img) => ({
+          url: img.url,
+          public_id: img.public_id || null,
+          isPrimary: Boolean(img.isPrimary),
+        }));
+      data.append("images", JSON.stringify(existingUrls));
 
       // Append new multer files
       selectedImageFiles.forEach((file) => {
-        data.append('images', file);
+        data.append("images", file);
       });
 
       let res;
       // Only call update if editingProduct has a valid MongoDB _id
-      const hasMongoId = editingProduct && editingProduct._id && String(editingProduct._id).length === 24;
+      const hasMongoId =
+        editingProduct &&
+        editingProduct._id &&
+        String(editingProduct._id).length === 24;
       if (hasMongoId) {
         res = await adminApi.updateProduct(editingProduct._id, data);
-        setApiNotice({ type: 'success', text: 'Product updated successfully in MongoDB!' });
+        setApiNotice({
+          type: "success",
+          text: "Product updated successfully in MongoDB!",
+        });
       } else {
         res = await adminApi.createProduct(data);
-        setApiNotice({ type: 'success', text: 'Product created and media uploaded successfully!' });
+        setApiNotice({
+          type: "success",
+          text: "Product created and media uploaded successfully!",
+        });
       }
 
       setIsModalOpen(false);
       fetchProducts();
       setTimeout(() => setApiNotice(null), 4000);
     } catch (err) {
-      console.error('Product save error:', err);
+      console.error("Product save error:", err);
       // If server error, fallback to Redux state save
-      const primaryImg = formData.images.find((i) => i.isPrimary) || formData.images[0];
+      const primaryImg =
+        formData.images.find((i) => i.isPrimary) || formData.images[0];
       const localProd = {
-        id: editingProduct ? (editingProduct.id || editingProduct._id) : `PROD-${Date.now().toString().slice(-6)}`,
+        id: editingProduct
+          ? editingProduct.id || editingProduct._id
+          : `PROD-${Date.now().toString().slice(-6)}`,
         title: formData.title.trim(),
         name: formData.title.trim(),
         slug: slugify(formData.slug),
         description: formData.description.trim(),
-        brand: formData.brand.trim() || 'Atelier Signature',
+        brand: formData.brand.trim() || "Atelier Signature",
         sku: formData.sku.trim(),
         category: formData.category,
         categoryName: formData.categoryName,
         store: formData.store,
         basePrice: Number(formData.basePrice),
         price: Number(formData.basePrice),
-        discountPrice: formData.discountPrice !== '' ? Number(formData.discountPrice) : null,
+        discountPrice:
+          formData.discountPrice !== "" ? Number(formData.discountPrice) : null,
         stock: Number(formData.stock),
         stockCount: Number(formData.stock),
         inStock: Number(formData.stock) > 0,
@@ -813,7 +922,7 @@ const Products = () => {
         attributes: formData.attributes,
         tags: formData.tags,
         isFeatured: Boolean(formData.isFeatured),
-        isActive: Boolean(formData.isActive)
+        isActive: Boolean(formData.isActive),
       };
 
       if (editingProduct) {
@@ -823,7 +932,10 @@ const Products = () => {
       }
 
       setIsModalOpen(false);
-      setApiNotice({ type: 'error', text: err.message || 'Saved locally (Backend API unavailable).' });
+      setApiNotice({
+        type: "error",
+        text: err.message || "Saved locally (Backend API unavailable).",
+      });
       setTimeout(() => setApiNotice(null), 4000);
     } finally {
       setIsSubmitting(false);
@@ -836,13 +948,16 @@ const Products = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Product Catalog</h2>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+              Product Catalog
+            </h2>
             <span className="text-[10px] font-mono bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full font-bold">
               Multer & MongoDB Active
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Complete management for catalog items, multi-image upload, specifications, and SKU inventories.
+            Complete management for catalog items, multi-image upload,
+            specifications, and SKU inventories.
           </p>
         </div>
 
@@ -854,7 +969,7 @@ const Products = () => {
             title="Refresh Catalog from Database"
             className="p-2.5 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
           >
-            <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} />
+            <RefreshCw size={15} className={isLoading ? "animate-spin" : ""} />
           </button>
 
           {/* Purge / Clear All Products from Database */}
@@ -866,8 +981,13 @@ const Products = () => {
               title="Delete all products from MongoDB"
               className="flex items-center gap-1.5 px-3 py-2.5 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
             >
-              <Trash2 size={14} className={isClearingAll ? 'animate-spin' : ''} />
-              <span className="hidden md:inline">{isClearingAll ? 'Purging...' : 'Clear All'}</span>
+              <Trash2
+                size={14}
+                className={isClearingAll ? "animate-spin" : ""}
+              />
+              <span className="hidden md:inline">
+                {isClearingAll ? "Purging..." : "Clear All"}
+              </span>
             </button>
           )}
 
@@ -887,8 +1007,8 @@ const Products = () => {
             title="Populate/Sync 50+ curated luxury products directly into MongoDB"
             className="flex items-center gap-1.5 px-3.5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg text-xs font-bold shadow-sm transition-all duration-150 disabled:opacity-60"
           >
-            <Sparkles size={14} className={isSeeding ? 'animate-spin' : ''} />
-            <span>{isSeeding ? 'Seeding 50+...' : 'Seed 50+ Products'}</span>
+            <Sparkles size={14} className={isSeeding ? "animate-spin" : ""} />
+            <span>{isSeeding ? "Seeding 50+..." : "Seed 50+ Products"}</span>
           </button>
 
           {/* Bulk Import JSON (50+ products) */}
@@ -920,12 +1040,12 @@ const Products = () => {
       {apiNotice && (
         <div
           className={`p-4 rounded-xl text-xs flex items-center gap-2.5 border ${
-            apiNotice.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-              : 'bg-rose-50 text-rose-800 border-rose-200'
+            apiNotice.type === "success"
+              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+              : "bg-rose-50 text-rose-800 border-rose-200"
           }`}
         >
-          {apiNotice.type === 'success' ? (
+          {apiNotice.type === "success" ? (
             <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
           ) : (
             <AlertCircle size={16} className="text-rose-600 shrink-0" />
@@ -937,9 +1057,13 @@ const Products = () => {
       {/* Real Metric KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Catalog</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            Total Catalog
+          </span>
           <div className="mt-1.5 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-slate-900">{totalProducts}</span>
+            <span className="text-2xl font-black text-slate-900">
+              {totalProducts}
+            </span>
             <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">
               Items
             </span>
@@ -947,9 +1071,13 @@ const Products = () => {
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">In Stock</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            In Stock
+          </span>
           <div className="mt-1.5 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-emerald-700">{inStockCount}</span>
+            <span className="text-2xl font-black text-emerald-700">
+              {inStockCount}
+            </span>
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
               Healthy
             </span>
@@ -957,9 +1085,13 @@ const Products = () => {
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Low Stock (&le;8)</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            Low Stock (&le;8)
+          </span>
           <div className="mt-1.5 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-amber-600">{lowStockCount}</span>
+            <span className="text-2xl font-black text-amber-600">
+              {lowStockCount}
+            </span>
             <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">
               Restock
             </span>
@@ -967,9 +1099,13 @@ const Products = () => {
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Out of Stock</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            Out of Stock
+          </span>
           <div className="mt-1.5 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-rose-600">{outOfStockCount}</span>
+            <span className="text-2xl font-black text-rose-600">
+              {outOfStockCount}
+            </span>
             <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
               0 Units
             </span>
@@ -977,7 +1113,9 @@ const Products = () => {
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Featured Spotlight</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            Featured Spotlight
+          </span>
           <div className="mt-1.5 flex items-baseline justify-between">
             <span className="text-2xl font-black text-amber-500 flex items-center gap-1">
               <Star size={18} fill="currentColor" />
@@ -993,7 +1131,10 @@ const Products = () => {
       {/* Filter and Search Bar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
         <div className="relative w-full md:w-80">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          />
           <input
             type="text"
             placeholder="Search by Title, SKU, or Brand..."
@@ -1040,7 +1181,8 @@ const Products = () => {
               {selectedIds.size}
             </span>
             <span className="text-xs font-semibold tracking-wide">
-              {selectedIds.size} product{selectedIds.size > 1 ? 's' : ''} selected (out of {filteredProducts.length})
+              {selectedIds.size} product{selectedIds.size > 1 ? "s" : ""}{" "}
+              selected (out of {filteredProducts.length})
             </span>
           </div>
 
@@ -1069,8 +1211,15 @@ const Products = () => {
               disabled={isBulkDeleting}
               className="flex items-center gap-1.5 px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow transition-colors disabled:opacity-50"
             >
-              <Trash2 size={13} className={isBulkDeleting ? 'animate-spin' : ''} />
-              <span>{isBulkDeleting ? 'Deleting...' : `Delete Selected (${selectedIds.size})`}</span>
+              <Trash2
+                size={13}
+                className={isBulkDeleting ? "animate-spin" : ""}
+              />
+              <span>
+                {isBulkDeleting
+                  ? "Deleting..."
+                  : `Delete Selected (${selectedIds.size})`}
+              </span>
             </button>
           </div>
         </div>
@@ -1107,46 +1256,68 @@ const Products = () => {
               {filteredProducts.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-slate-400">
-                    <Package size={36} className="mx-auto text-slate-300 mb-2" />
+                    <Package
+                      size={36}
+                      className="mx-auto text-slate-300 mb-2"
+                    />
                     <p className="font-semibold text-slate-600 text-sm">
-                      {isLoading ? 'Loading catalog from database...' : 'No products found'}
+                      {isLoading
+                        ? "Loading catalog from database..."
+                        : "No products found"}
                     </p>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      {isLoading ? 'Please wait...' : 'Click "Add New Product" to create your first item.'}
+                      {isLoading
+                        ? "Please wait..."
+                        : 'Click "Add New Product" to create your first item.'}
                     </p>
                   </td>
                 </tr>
               ) : (
                 filteredProducts.map((p) => {
                   const id = p._id || p.id;
-                  let primaryImgUrl = 'https://placehold.co/100';
+                  let primaryImgUrl = "https://placehold.co/100";
 
                   if (Array.isArray(p.images) && p.images.length > 0) {
-                    const found = p.images.find((img) => img.isPrimary) || p.images[0];
-                    primaryImgUrl = typeof found === 'string' ? found : (found?.url || 'https://placehold.co/100');
+                    const found =
+                      p.images.find((img) => img.isPrimary) || p.images[0];
+                    primaryImgUrl =
+                      typeof found === "string"
+                        ? found
+                        : found?.url || "https://placehold.co/100";
                   } else if (p.image) {
                     primaryImgUrl = p.image;
                   }
 
                   // If relative uploaded path, prepend backend base URL if needed
-                  if (primaryImgUrl.startsWith('/uploads/')) {
+                  if (primaryImgUrl.startsWith("/uploads/")) {
                     primaryImgUrl = `http://localhost:8081${primaryImgUrl}`;
                   }
 
                   const base = Number(p.basePrice ?? p.price ?? 0);
-                  const discount = p.discountPrice != null ? Number(p.discountPrice) : (p.compareAtPrice != null ? Number(p.compareAtPrice) : null);
+                  const discount =
+                    p.discountPrice != null
+                      ? Number(p.discountPrice)
+                      : p.compareAtPrice != null
+                        ? Number(p.compareAtPrice)
+                        : null;
                   const stock = Number(p.stock ?? p.stockCount ?? 0);
                   const isActive = p.isActive !== false;
                   const isFeatured = Boolean(p.isFeatured);
                   const sku = p.sku || p.id;
-                  const storeName = p.store?.name || p.store || 'Atelier Flagship';
-                  const catName = p.category?.name || p.categoryName || 'Category';
+                  const storeName =
+                    p.store?.name || p.store || "Atelier Flagship";
+                  const catName =
+                    p.category?.name || p.categoryName || "Category";
                   const isSelected = selectedIds.has(id);
 
                   return (
                     <tr
                       key={id}
-                      className={isSelected ? 'bg-indigo-50/70 transition-colors' : 'hover:bg-slate-50/80 transition-colors'}
+                      className={
+                        isSelected
+                          ? "bg-indigo-50/70 transition-colors"
+                          : "hover:bg-slate-50/80 transition-colors"
+                      }
                     >
                       {/* Row Selection Checkbox */}
                       <td className="p-4 w-10 text-center">
@@ -1168,7 +1339,7 @@ const Products = () => {
                               alt={p.title || p.name}
                               className="w-full h-full object-cover"
                               onError={(e) => {
-                                e.target.src = 'https://placehold.co/100';
+                                e.target.src = "https://placehold.co/100";
                               }}
                             />
                             {Array.isArray(p.images) && p.images.length > 1 && (
@@ -1179,16 +1350,31 @@ const Products = () => {
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-slate-900 text-xs truncate max-w-[200px]" title={p.title || p.name}>
+                              <span
+                                className="font-bold text-slate-900 text-xs truncate max-w-[200px]"
+                                title={p.title || p.name}
+                              >
                                 {p.title || p.name}
                               </span>
                               {isFeatured && (
-                                <Star size={13} className="text-amber-500 fill-amber-500 shrink-0" title="Featured Product" />
+                                <Star
+                                  size={13}
+                                  className="text-amber-500 fill-amber-500 shrink-0"
+                                  title="Featured Product"
+                                />
                               )}
                             </div>
                             <div className="text-[11px] text-slate-500 truncate">
-                              {p.brand ? <span className="font-semibold text-slate-700">{p.brand} • </span> : ''}
-                              <span className="font-mono text-[10px] text-slate-400">{sku}</span>
+                              {p.brand ? (
+                                <span className="font-semibold text-slate-700">
+                                  {p.brand} •{" "}
+                                </span>
+                              ) : (
+                                ""
+                              )}
+                              <span className="font-mono text-[10px] text-slate-400">
+                                {sku}
+                              </span>
                             </div>
                             <div className="text-[10px] font-mono text-indigo-600 truncate mt-0.5">
                               /{p.slug || slugify(p.title || p.name)}
@@ -1204,7 +1390,10 @@ const Products = () => {
                             {catName}
                           </span>
                           <div className="text-[11px] text-slate-500 flex items-center gap-1 truncate">
-                            <Store size={12} className="text-slate-400 shrink-0" />
+                            <Store
+                              size={12}
+                              className="text-slate-400 shrink-0"
+                            />
                             <span className="truncate">{storeName}</span>
                           </div>
                         </div>
@@ -1218,7 +1407,8 @@ const Products = () => {
                               <div className="font-black text-emerald-700 text-xs flex items-center gap-1">
                                 <span>₹{discount.toLocaleString()}</span>
                                 <span className="text-[9px] bg-emerald-50 text-emerald-700 font-bold px-1 rounded border border-emerald-200">
-                                  {Math.round(((base - discount) / base) * 100)}% OFF
+                                  {Math.round(((base - discount) / base) * 100)}
+                                  % OFF
                                 </span>
                               </div>
                               <span className="text-[10px] text-slate-400 line-through">
@@ -1239,18 +1429,22 @@ const Products = () => {
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                               stock > 8
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                 : stock > 0
-                                ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                : 'bg-rose-50 text-rose-700 border-rose-200'
+                                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                                  : "bg-rose-50 text-rose-700 border-rose-200"
                             }`}
                           >
                             <span
                               className={`w-1.5 h-1.5 rounded-full ${
-                                stock > 8 ? 'bg-emerald-500' : stock > 0 ? 'bg-amber-500' : 'bg-rose-500'
+                                stock > 8
+                                  ? "bg-emerald-500"
+                                  : stock > 0
+                                    ? "bg-amber-500"
+                                    : "bg-rose-500"
                               }`}
                             />
-                            {stock > 0 ? `${stock} units` : 'Out of Stock'}
+                            {stock > 0 ? `${stock} units` : "Out of Stock"}
                           </span>
                         </div>
                       </td>
@@ -1263,11 +1457,12 @@ const Products = () => {
                               VARIANTS
                             </span>
                           )}
-                          {Array.isArray(p.attributes) && p.attributes.length > 0 && (
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-slate-100 text-slate-600 border border-slate-200">
-                              {p.attributes.length} attrs
-                            </span>
-                          )}
+                          {Array.isArray(p.attributes) &&
+                            p.attributes.length > 0 && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-slate-100 text-slate-600 border border-slate-200">
+                                {p.attributes.length} attrs
+                              </span>
+                            )}
                           {Array.isArray(p.tags) && p.tags.length > 0 && (
                             <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-slate-100 text-slate-600 border border-slate-200">
                               #{p.tags[0]}
@@ -1283,11 +1478,11 @@ const Products = () => {
                           onClick={() => handleToggleActive(p)}
                           className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-colors ${
                             isActive
-                              ? 'bg-emerald-100/70 text-emerald-800 hover:bg-emerald-200/70'
-                              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                              ? "bg-emerald-100/70 text-emerald-800 hover:bg-emerald-200/70"
+                              : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                           }`}
                         >
-                          {isActive ? 'Published' : 'Draft'}
+                          {isActive ? "Published" : "Draft"}
                         </button>
                       </td>
 
@@ -1339,8 +1534,12 @@ const Products = () => {
                   <Package size={16} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-sm">{viewingProduct.title || viewingProduct.name}</h3>
-                  <p className="text-[11px] font-mono text-slate-400">{viewingProduct.sku || viewingProduct.id}</p>
+                  <h3 className="font-bold text-slate-900 text-sm">
+                    {viewingProduct.title || viewingProduct.name}
+                  </h3>
+                  <p className="text-[11px] font-mono text-slate-400">
+                    {viewingProduct.sku || viewingProduct.id}
+                  </p>
                 </div>
               </div>
               <button
@@ -1356,17 +1555,31 @@ const Products = () => {
               {/* Image Preview Carousel */}
               <div>
                 <label className="block text-[10px] font-mono uppercase tracking-wider text-slate-400 mb-2">
-                  Product Imagery ({Array.isArray(viewingProduct.images) ? viewingProduct.images.length : 1})
+                  Product Imagery (
+                  {Array.isArray(viewingProduct.images)
+                    ? viewingProduct.images.length
+                    : 1}
+                  )
                 </label>
                 <div className="grid grid-cols-4 gap-2">
-                  {Array.isArray(viewingProduct.images) && viewingProduct.images.length > 0 ? (
+                  {Array.isArray(viewingProduct.images) &&
+                  viewingProduct.images.length > 0 ? (
                     viewingProduct.images.map((img, idx) => {
-                      let url = typeof img === 'string' ? img : img.url;
-                      if (url && url.startsWith('/uploads/')) url = `http://localhost:8081${url}`;
-                      const isPrimary = typeof img === 'object' && img.isPrimary;
+                      let url = typeof img === "string" ? img : img.url;
+                      if (url && url.startsWith("/uploads/"))
+                        url = `http://localhost:8081${url}`;
+                      const isPrimary =
+                        typeof img === "object" && img.isPrimary;
                       return (
-                        <div key={idx} className="relative aspect-3/4 rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
-                          <img src={url} alt="img" className="w-full h-full object-cover" />
+                        <div
+                          key={idx}
+                          className="relative aspect-3/4 rounded-lg overflow-hidden border border-slate-200 bg-slate-50"
+                        >
+                          <img
+                            src={url}
+                            alt="img"
+                            className="w-full h-full object-cover"
+                          />
                           {isPrimary && (
                             <span className="absolute top-1 left-1 bg-indigo-600 text-white text-[8px] font-mono px-1 py-0.5 rounded font-bold">
                               PRIMARY
@@ -1377,7 +1590,11 @@ const Products = () => {
                     })
                   ) : (
                     <div className="aspect-3/4 rounded-lg overflow-hidden border border-slate-200">
-                      <img src={viewingProduct.image || 'https://placehold.co/200'} alt="preview" className="w-full h-full object-cover" />
+                      <img
+                        src={viewingProduct.image || "https://placehold.co/200"}
+                        alt="preview"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   )}
                 </div>
@@ -1386,37 +1603,59 @@ const Products = () => {
               {/* Grid of Key Properties */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Base Price</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                    Base Price
+                  </span>
                   <span className="text-sm font-black text-slate-900">
-                    ₹{Number(viewingProduct.basePrice ?? viewingProduct.price ?? 0).toLocaleString()}
+                    ₹
+                    {Number(
+                      viewingProduct.basePrice ?? viewingProduct.price ?? 0,
+                    ).toLocaleString()}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Discount Price</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                    Discount Price
+                  </span>
                   <span className="text-sm font-black text-emerald-700">
-                    {viewingProduct.discountPrice ? `₹${Number(viewingProduct.discountPrice).toLocaleString()}` : 'None'}
+                    {viewingProduct.discountPrice
+                      ? `₹${Number(viewingProduct.discountPrice).toLocaleString()}`
+                      : "None"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Stock Available</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                    Stock Available
+                  </span>
                   <span className="text-sm font-black text-slate-900">
-                    {viewingProduct.stock ?? viewingProduct.stockCount ?? 0} Units
+                    {viewingProduct.stock ?? viewingProduct.stockCount ?? 0}{" "}
+                    Units
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Category</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                    Category
+                  </span>
                   <span className="text-xs font-semibold text-slate-800">
-                    {viewingProduct.category?.name || viewingProduct.categoryName || viewingProduct.category}
+                    {viewingProduct.category?.name ||
+                      viewingProduct.categoryName ||
+                      viewingProduct.category}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Store / Boutique</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                    Store / Boutique
+                  </span>
                   <span className="text-xs font-semibold text-slate-800">
-                    {viewingProduct.store?.name || viewingProduct.store || 'Atelier Flagship'}
+                    {viewingProduct.store?.name ||
+                      viewingProduct.store ||
+                      "Atelier Flagship"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Slug</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                    Slug
+                  </span>
                   <span className="text-[11px] font-mono text-indigo-600 truncate block">
                     /{viewingProduct.slug}
                   </span>
@@ -1425,40 +1664,59 @@ const Products = () => {
 
               {/* Description */}
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Description</span>
+                <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
+                  Description
+                </span>
                 <p className="text-slate-600 leading-relaxed bg-slate-50/70 p-3 rounded-lg border border-slate-200">
-                  {viewingProduct.description || 'No product description provided.'}
+                  {viewingProduct.description ||
+                    "No product description provided."}
                 </p>
               </div>
 
               {/* Attributes */}
-              {Array.isArray(viewingProduct.attributes) && viewingProduct.attributes.length > 0 && (
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block mb-2">Specifications & Attributes</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {viewingProduct.attributes.map((attr, idx) => (
-                      <div key={idx} className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
-                        <span className="text-slate-500 font-semibold">{attr.name}:</span>
-                        <span className="font-bold text-slate-800">{attr.value}</span>
-                      </div>
-                    ))}
+              {Array.isArray(viewingProduct.attributes) &&
+                viewingProduct.attributes.length > 0 && (
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block mb-2">
+                      Specifications & Attributes
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      {viewingProduct.attributes.map((attr, idx) => (
+                        <div
+                          key={idx}
+                          className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between"
+                        >
+                          <span className="text-slate-500 font-semibold">
+                            {attr.name}:
+                          </span>
+                          <span className="font-bold text-slate-800">
+                            {attr.value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Tags */}
-              {Array.isArray(viewingProduct.tags) && viewingProduct.tags.length > 0 && (
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1.5">Discovery Tags</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {viewingProduct.tags.map((t, idx) => (
-                      <span key={idx} className="px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-full text-[10px] font-mono font-semibold">
-                        #{t}
-                      </span>
-                    ))}
+              {Array.isArray(viewingProduct.tags) &&
+                viewingProduct.tags.length > 0 && (
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1.5">
+                      Discovery Tags
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {viewingProduct.tags.map((t, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-full text-[10px] font-mono font-semibold"
+                        >
+                          #{t}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
 
             <div className="p-4 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50">
@@ -1497,7 +1755,9 @@ const Products = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-                    {editingProduct ? 'Edit Product & Media' : 'Create New Product'}
+                    {editingProduct
+                      ? "Edit Product & Media"
+                      : "Create New Product"}
                   </h3>
                   <p className="text-[11px] text-slate-400 font-mono">
                     MongoDB Product Schema & Multer Upload
@@ -1516,11 +1776,11 @@ const Products = () => {
             {/* Form Navigation Tabs */}
             <div className="grid grid-cols-5 border-b border-slate-200 bg-slate-50 text-xs font-semibold">
               {[
-                { id: 'general', label: '1. General' },
-                { id: 'pricing', label: '2. Pricing & Stock' },
-                { id: 'media', label: '3. Images (Multer)' },
-                { id: 'attributes', label: '4. Specs & Tags' },
-                { id: 'status', label: '5. Visibility' }
+                { id: "general", label: "1. General" },
+                { id: "pricing", label: "2. Pricing & Stock" },
+                { id: "media", label: "3. Images (Multer)" },
+                { id: "attributes", label: "4. Specs & Tags" },
+                { id: "status", label: "5. Visibility" },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1528,8 +1788,8 @@ const Products = () => {
                   onClick={() => setActiveFormTab(tab.id)}
                   className={`py-3 px-1 text-center border-b-2 text-[10px] sm:text-xs uppercase tracking-wider transition-colors ${
                     activeFormTab === tab.id
-                      ? 'border-indigo-600 text-indigo-600 bg-white font-bold'
-                      : 'border-transparent text-slate-500 hover:text-slate-900'
+                      ? "border-indigo-600 text-indigo-600 bg-white font-bold"
+                      : "border-transparent text-slate-500 hover:text-slate-900"
                   }`}
                 >
                   {tab.label}
@@ -1538,9 +1798,12 @@ const Products = () => {
             </div>
 
             {/* Form Body */}
-            <form onSubmit={handleSubmitForm} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 text-xs">
+            <form
+              onSubmit={handleSubmitForm}
+              className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 text-xs"
+            >
               {/* TAB 1: GENERAL INFORMATION */}
-              {activeFormTab === 'general' && (
+              {activeFormTab === "general" && (
                 <div className="space-y-4 animate-in fade-in duration-150">
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">
@@ -1553,11 +1816,15 @@ const Products = () => {
                       onChange={(e) => handleTitleChange(e.target.value)}
                       placeholder="e.g. Double-Breasted Cashmere Overcoat"
                       className={`w-full px-3.5 py-2.5 border rounded-lg text-xs focus:outline-none focus:border-indigo-600 ${
-                        formErrors.title ? 'border-rose-500' : 'border-slate-300'
+                        formErrors.title
+                          ? "border-rose-500"
+                          : "border-slate-300"
                       }`}
                     />
                     {formErrors.title && (
-                      <p className="text-[11px] text-rose-600 mt-1">{formErrors.title}</p>
+                      <p className="text-[11px] text-rose-600 mt-1">
+                        {formErrors.title}
+                      </p>
                     )}
                   </div>
 
@@ -1567,12 +1834,19 @@ const Products = () => {
                         Product Slug * (URL identifier)
                       </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-slate-400 text-xs">/</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-slate-400 text-xs">
+                          /
+                        </span>
                         <input
                           type="text"
                           required
                           value={formData.slug}
-                          onChange={(e) => setFormData({ ...formData, slug: slugify(e.target.value) })}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              slug: slugify(e.target.value),
+                            })
+                          }
                           placeholder="cashmere-overcoat"
                           className="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:outline-none focus:border-indigo-600"
                         />
@@ -1586,7 +1860,9 @@ const Products = () => {
                       <input
                         type="text"
                         value={formData.sku}
-                        onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, sku: e.target.value })
+                        }
                         placeholder="SKU-849204"
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:outline-none focus:border-indigo-600"
                       />
@@ -1606,7 +1882,7 @@ const Products = () => {
                           setFormData({
                             ...formData,
                             category: catId,
-                            categoryName: catObj?.name || catId
+                            categoryName: catObj?.name || catId,
                           });
                         }}
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:border-indigo-600"
@@ -1626,7 +1902,9 @@ const Products = () => {
                       <input
                         type="text"
                         value={formData.store}
-                        onChange={(e) => setFormData({ ...formData, store: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, store: e.target.value })
+                        }
                         placeholder="Atelier Flagship Store"
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:border-indigo-600"
                       />
@@ -1640,7 +1918,9 @@ const Products = () => {
                     <input
                       type="text"
                       value={formData.brand}
-                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, brand: e.target.value })
+                      }
                       placeholder="e.g. Maison Margiela, Loro Piana"
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:border-indigo-600"
                     />
@@ -1654,7 +1934,12 @@ const Products = () => {
                       rows={4}
                       required
                       value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
                       placeholder="Detailed sartorial narrative, fabrication origin, lining, and finishings..."
                       className="w-full p-3 border border-slate-300 rounded-lg text-xs leading-relaxed focus:outline-none focus:border-indigo-600"
                     />
@@ -1663,7 +1948,7 @@ const Products = () => {
               )}
 
               {/* TAB 2: PRICING & INVENTORY */}
-              {activeFormTab === 'pricing' && (
+              {activeFormTab === "pricing" && (
                 <div className="space-y-4 animate-in fade-in duration-150">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -1671,21 +1956,32 @@ const Products = () => {
                         Base Price (₹ INR) *
                       </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">₹</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">
+                          ₹
+                        </span>
                         <input
                           type="number"
                           required
                           min="0"
                           value={formData.basePrice}
-                          onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              basePrice: e.target.value,
+                            })
+                          }
                           placeholder="24500"
                           className={`w-full pl-8 pr-3 py-2.5 border rounded-lg text-xs font-semibold focus:outline-none focus:border-indigo-600 ${
-                            formErrors.basePrice ? 'border-rose-500' : 'border-slate-300'
+                            formErrors.basePrice
+                              ? "border-rose-500"
+                              : "border-slate-300"
                           }`}
                         />
                       </div>
                       {formErrors.basePrice && (
-                        <p className="text-[11px] text-rose-600 mt-1">{formErrors.basePrice}</p>
+                        <p className="text-[11px] text-rose-600 mt-1">
+                          {formErrors.basePrice}
+                        </p>
                       )}
                     </div>
 
@@ -1694,29 +1990,48 @@ const Products = () => {
                         Discount Price (₹ INR) - Optional
                       </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">₹</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">
+                          ₹
+                        </span>
                         <input
                           type="number"
                           min="0"
                           value={formData.discountPrice}
-                          onChange={(e) => setFormData({ ...formData, discountPrice: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              discountPrice: e.target.value,
+                            })
+                          }
                           placeholder="18500"
                           className={`w-full pl-8 pr-3 py-2.5 border rounded-lg text-xs font-semibold focus:outline-none focus:border-indigo-600 ${
-                            formErrors.discountPrice ? 'border-rose-500' : 'border-slate-300'
+                            formErrors.discountPrice
+                              ? "border-rose-500"
+                              : "border-slate-300"
                           }`}
                         />
                       </div>
                       {formErrors.discountPrice && (
-                        <p className="text-[11px] text-rose-600 mt-1">{formErrors.discountPrice}</p>
-                      )}
-                      {formData.basePrice && formData.discountPrice && Number(formData.discountPrice) <= Number(formData.basePrice) && (
-                        <p className="text-[11px] text-emerald-600 mt-1 font-semibold flex items-center gap-1">
-                          <Percent size={12} />
-                          <span>
-                            {Math.round(((formData.basePrice - formData.discountPrice) / formData.basePrice) * 100)}% markdown applied
-                          </span>
+                        <p className="text-[11px] text-rose-600 mt-1">
+                          {formErrors.discountPrice}
                         </p>
                       )}
+                      {formData.basePrice &&
+                        formData.discountPrice &&
+                        Number(formData.discountPrice) <=
+                          Number(formData.basePrice) && (
+                          <p className="text-[11px] text-emerald-600 mt-1 font-semibold flex items-center gap-1">
+                            <Percent size={12} />
+                            <span>
+                              {Math.round(
+                                ((formData.basePrice - formData.discountPrice) /
+                                  formData.basePrice) *
+                                  100,
+                              )}
+                              % markdown applied
+                            </span>
+                          </p>
+                        )}
                     </div>
                   </div>
 
@@ -1729,26 +2044,37 @@ const Products = () => {
                       min="0"
                       required
                       value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, stock: e.target.value })
+                      }
                       className="w-full sm:w-1/2 px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:border-indigo-600"
                     />
                     <p className="text-[10px] text-slate-400 mt-1">
-                      Items with stock &le; 8 trigger the restock attention alert.
+                      Items with stock &le; 8 trigger the restock attention
+                      alert.
                     </p>
                   </div>
 
                   <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
                     <div>
-                      <span className="font-bold text-slate-900 block text-xs">Multi-Variant Configuration</span>
+                      <span className="font-bold text-slate-900 block text-xs">
+                        Multi-Variant Configuration
+                      </span>
                       <p className="text-[11px] text-slate-500 mt-0.5">
-                        Enable if this SKU contains size, color, or fabric sub-variants.
+                        Enable if this SKU contains size, color, or fabric
+                        sub-variants.
                       </p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
                         checked={formData.hasVariants}
-                        onChange={(e) => setFormData({ ...formData, hasVariants: e.target.checked })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            hasVariants: e.target.checked,
+                          })
+                        }
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600" />
@@ -1758,18 +2084,23 @@ const Products = () => {
               )}
 
               {/* TAB 3: MEDIA & MULTER IMAGES */}
-              {activeFormTab === 'media' && (
+              {activeFormTab === "media" && (
                 <div className="space-y-4 animate-in fade-in duration-150">
                   {/* Multer Local File Upload Zone */}
-                  <div className="p-4 border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/40 rounded-xl text-center cursor-pointer transition-colors"
+                  <div
+                    className="p-4 border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/40 rounded-xl text-center cursor-pointer transition-colors"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    <UploadCloud size={28} className="mx-auto text-indigo-600 mb-1.5" />
+                    <UploadCloud
+                      size={28}
+                      className="mx-auto text-indigo-600 mb-1.5"
+                    />
                     <span className="font-bold text-slate-800 text-xs block">
                       Click to Browse Images (Multer Upload)
                     </span>
                     <span className="text-[10px] text-slate-500 block mt-0.5">
-                      Upload JPEG, PNG, WEBP files directly to backend /uploads storage (Max 10MB)
+                      Upload JPEG, PNG, WEBP files directly to backend /uploads
+                      storage (Max 10MB)
                     </span>
                     <input
                       type="file"
@@ -1803,7 +2134,9 @@ const Products = () => {
                       </button>
                     </div>
                     {formErrors.images && (
-                      <p className="text-[11px] text-rose-600 mt-1">{formErrors.images}</p>
+                      <p className="text-[11px] text-rose-600 mt-1">
+                        {formErrors.images}
+                      </p>
                     )}
                   </div>
 
@@ -1815,12 +2148,15 @@ const Products = () => {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {formData.images.map((img, idx) => {
                         let displayUrl = img.url;
-                        if (displayUrl.startsWith('/uploads/')) displayUrl = `http://localhost:8081${displayUrl}`;
+                        if (displayUrl.startsWith("/uploads/"))
+                          displayUrl = `http://localhost:8081${displayUrl}`;
                         return (
                           <div
                             key={idx}
                             className={`group relative aspect-3/4 rounded-xl overflow-hidden border-2 bg-slate-50 transition-all ${
-                              img.isPrimary ? 'border-indigo-600 ring-2 ring-indigo-100' : 'border-slate-200'
+                              img.isPrimary
+                                ? "border-indigo-600 ring-2 ring-indigo-100"
+                                : "border-slate-200"
                             }`}
                           >
                             <img
@@ -1828,7 +2164,7 @@ const Products = () => {
                               alt="product"
                               className="w-full h-full object-cover"
                               onError={(e) => {
-                                e.target.src = 'https://placehold.co/200';
+                                e.target.src = "https://placehold.co/200";
                               }}
                             />
 
@@ -1871,7 +2207,7 @@ const Products = () => {
               )}
 
               {/* TAB 4: SPECIFICATIONS & DISCOVERY TAGS */}
-              {activeFormTab === 'attributes' && (
+              {activeFormTab === "attributes" && (
                 <div className="space-y-5 animate-in fade-in duration-150">
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -1880,7 +2216,8 @@ const Products = () => {
                           Product Attributes & Specifications
                         </label>
                         <p className="text-[11px] text-slate-400">
-                          Custom properties (e.g. Fabric, Origin, Cut, Collar, Care, etc.)
+                          Custom properties (e.g. Fabric, Origin, Cut, Collar,
+                          Care, etc.)
                         </p>
                       </div>
                       <button
@@ -1899,14 +2236,22 @@ const Products = () => {
                           <input
                             type="text"
                             value={attr.name}
-                            onChange={(e) => handleUpdateAttribute(idx, 'name', e.target.value)}
+                            onChange={(e) =>
+                              handleUpdateAttribute(idx, "name", e.target.value)
+                            }
                             placeholder="e.g. Fabric / Material"
                             className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:border-indigo-600"
                           />
                           <input
                             type="text"
                             value={attr.value}
-                            onChange={(e) => handleUpdateAttribute(idx, 'value', e.target.value)}
+                            onChange={(e) =>
+                              handleUpdateAttribute(
+                                idx,
+                                "value",
+                                e.target.value,
+                              )
+                            }
                             placeholder="e.g. 100% Super 150s Wool"
                             className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:border-indigo-600"
                           />
@@ -1959,20 +2304,28 @@ const Products = () => {
               )}
 
               {/* TAB 5: VISIBILITY & STATUS FLAGS */}
-              {activeFormTab === 'status' && (
+              {activeFormTab === "status" && (
                 <div className="space-y-4 animate-in fade-in duration-150">
                   <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
                     <div>
-                      <span className="font-bold text-slate-900 block text-xs">Catalog Status (isActive)</span>
+                      <span className="font-bold text-slate-900 block text-xs">
+                        Catalog Status (isActive)
+                      </span>
                       <p className="text-[11px] text-slate-500 mt-0.5">
-                        When active, customers can discover and purchase this item in the boutique storefront.
+                        When active, customers can discover and purchase this
+                        item in the boutique storefront.
                       </p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
                         checked={formData.isActive}
-                        onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            isActive: e.target.checked,
+                          })
+                        }
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600" />
@@ -1982,18 +2335,27 @@ const Products = () => {
                   <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
                     <div>
                       <span className="font-bold text-slate-900 block text-xs flex items-center gap-1.5">
-                        <Star size={14} className="text-amber-500 fill-amber-500" />
+                        <Star
+                          size={14}
+                          className="text-amber-500 fill-amber-500"
+                        />
                         <span>Featured Hero Showcase (isFeatured)</span>
                       </span>
                       <p className="text-[11px] text-slate-500 mt-0.5">
-                        Highlight in the home page editorial spotlight and top luxury banner carousels.
+                        Highlight in the home page editorial spotlight and top
+                        luxury banner carousels.
                       </p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
                         checked={formData.isFeatured}
-                        onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            isFeatured: e.target.checked,
+                          })
+                        }
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
@@ -2005,7 +2367,19 @@ const Products = () => {
               {/* Modal Footer Controls */}
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-1 text-[11px] text-slate-400">
-                  <span>Step {activeFormTab === 'general' ? 1 : activeFormTab === 'pricing' ? 2 : activeFormTab === 'media' ? 3 : activeFormTab === 'attributes' ? 4 : 5} of 5</span>
+                  <span>
+                    Step{" "}
+                    {activeFormTab === "general"
+                      ? 1
+                      : activeFormTab === "pricing"
+                        ? 2
+                        : activeFormTab === "media"
+                          ? 3
+                          : activeFormTab === "attributes"
+                            ? 4
+                            : 5}{" "}
+                    of 5
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -2028,7 +2402,9 @@ const Products = () => {
                         <span>Saving to Database...</span>
                       </>
                     ) : (
-                      <span>{editingProduct ? 'Update Product' : 'Save Product'}</span>
+                      <span>
+                        {editingProduct ? "Update Product" : "Save Product"}
+                      </span>
                     )}
                   </button>
                 </div>
@@ -2056,7 +2432,8 @@ const Products = () => {
                     </span>
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Insert 50, 100, or more products at once into MongoDB via JSON array or seed template.
+                    Insert 50, 100, or more products at once into MongoDB via
+                    JSON array or seed template.
                   </p>
                 </div>
               </div>
@@ -2104,7 +2481,7 @@ const Products = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      setBulkJsonInput('');
+                      setBulkJsonInput("");
                       setBulkStatus(null);
                     }}
                     className="text-xs text-slate-500 hover:text-rose-600 transition-colors"
@@ -2118,15 +2495,18 @@ const Products = () => {
               {bulkStatus && (
                 <div
                   className={`p-3 rounded-xl text-xs flex items-center gap-2 border ${
-                    bulkStatus.type === 'error'
-                      ? 'bg-rose-50 text-rose-800 border-rose-200'
-                      : 'bg-indigo-50 text-indigo-800 border-indigo-200'
+                    bulkStatus.type === "error"
+                      ? "bg-rose-50 text-rose-800 border-rose-200"
+                      : "bg-indigo-50 text-indigo-800 border-indigo-200"
                   }`}
                 >
-                  {bulkStatus.type === 'error' ? (
+                  {bulkStatus.type === "error" ? (
                     <AlertCircle size={15} className="text-rose-600 shrink-0" />
                   ) : (
-                    <CheckCircle2 size={15} className="text-indigo-600 shrink-0" />
+                    <CheckCircle2
+                      size={15}
+                      className="text-indigo-600 shrink-0"
+                    />
                   )}
                   <span>{bulkStatus.text}</span>
                 </div>
@@ -2135,9 +2515,13 @@ const Products = () => {
               {/* JSON Textarea */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <label className="font-semibold text-slate-700">JSON Payload [ products array ]</label>
+                  <label className="font-semibold text-slate-700">
+                    JSON Payload [ products array ]
+                  </label>
                   <span className="text-slate-400 font-mono text-[11px]">
-                    {bulkJsonInput ? `${bulkJsonInput.length.toLocaleString()} chars` : 'Empty'}
+                    {bulkJsonInput
+                      ? `${bulkJsonInput.length.toLocaleString()} chars`
+                      : "Empty"}
                   </span>
                 </div>
                 <textarea
@@ -2151,10 +2535,15 @@ const Products = () => {
 
               {/* Helper guide */}
               <div className="text-[11px] text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1">
-                <p className="font-semibold text-slate-700">Schema Requirements:</p>
+                <p className="font-semibold text-slate-700">
+                  Schema Requirements:
+                </p>
                 <p>
-                  Each product requires <code className="text-indigo-600">title</code> and{' '}
-                  <code className="text-indigo-600">basePrice</code>. Categories and Stores are resolved automatically by name or ID. Unique slugs and SKUs are automatically handled if not provided.
+                  Each product requires{" "}
+                  <code className="text-indigo-600">title</code> and{" "}
+                  <code className="text-indigo-600">basePrice</code>. Categories
+                  and Stores are resolved automatically by name or ID. Unique
+                  slugs and SKUs are automatically handled if not provided.
                 </p>
               </div>
             </div>
