@@ -4,6 +4,7 @@ import {
   createOrder,
   getMyOrders,
   getAdminOrders,
+  updateAdminOrderStatus,
   getOrderById,
   cancelOrder
 } from '../controllers/order.controller.js';
@@ -18,6 +19,7 @@ router.post('/', createOrder);
 
 // Admin marketplace orders
 router.get('/admin', getAdminOrders);
+router.patch('/admin/:id/status', updateAdminOrderStatus);
 
 // Customer orders
 router.get('/', getMyOrders);
