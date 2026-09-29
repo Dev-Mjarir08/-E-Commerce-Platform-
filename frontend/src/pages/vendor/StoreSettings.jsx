@@ -1,29 +1,39 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
+  FaArrowLeft,
+  FaStore,
   FaUniversity,
   FaReceipt,
   FaTruck,
   FaBell,
   FaLock,
   FaCheckCircle,
-  FaInfoCircle,
   FaSave,
   FaCreditCard,
-  FaSlidersH,
-  FaSpinner,
+  FaMapMarkerAlt,
 } from "react-icons/fa";
-import storeApi from "../../services/storeApi";
 
 export default function StoreSettings() {
   // Active Settings Tab
-  const [activeTab, setActiveTab] = useState("payouts");
+  const [activeTab, setActiveTab] = useState("general");
   const [isSaved, setIsSaved] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
 
-  // Vendor Operational Settings State
+  // Vendor Operational & Store Settings State
   const [settings, setSettings] = useState({
+    // General Store Details
+    storeName: "Aura Tech Store",
+    storeEmail: "support@auratech.com",
+    storePhone: "+1 (555) 234-5678",
+    storeDescription: "Premium tech accessories and minimalist workspace essentials.",
+    currency: "USD",
+    timeZone: "UTC-5 (EST)",
+    addressLine1: "123 Tech Boulevard",
+    addressLine2: "Suite 400",
+    city: "Austin",
+    state: "TX",
+    zipCode: "78701",
+    country: "United States",
+
     // Banking & Payouts
     payoutMethod: "bank", // 'bank' or 'paypal'
     bankName: "JPMorgan Chase",
@@ -52,47 +62,22 @@ export default function StoreSettings() {
     customerSmsAlerts: false,
   });
 
-  // Fetch real settings from backend on component mount
-  useEffect(() => {
-    const fetchSettings = async () => {
-      setIsLoading(true);
-      try {
-        const res = await storeApi.getStoreSettings();
-        const data = res?.data || res;
-        if (data?.settings && Object.keys(data.settings).length > 0) {
-          setSettings((prev) => ({
-            ...prev,
-            ...data.settings,
-          }));
-        }
-      } catch (err) {
-        console.warn("Notice loading operational settings:", err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSettings();
-  }, []);
-
   const handleChange = (field, value) => {
     setSettings((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = async (e) => {
-    if (e) e.preventDefault();
-    setIsSaving(true);
-    setErrorMessage(null);
-    try {
-      await storeApi.updateStoreSettings(settings);
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3500);
-    } catch (err) {
-      const msg = err.response?.data?.message || err.message || "Failed to update settings.";
-      setErrorMessage(msg);
-      setTimeout(() => setErrorMessage(null), 4000);
-    } finally {
-      setIsSaving(false);
+  const handleSave = (e) => {
+    e.preventDefault();
+    console.log("Saving Store Settings:", settings);
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 3000);
+  };
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back("/dashboard");
+    } else {
+      console.log("Navigate back to dashboard");
     }
   };
 
@@ -100,56 +85,49 @@ export default function StoreSettings() {
     <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
 
-        {/* HEADER SECTION */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Store Operational Settings
-            </h1>
-            <p className="text-sm text-slate-500 mt-0.5">
-              Configure payout destinations, tax configurations, fulfillment options, and notification triggers.
-            </p>
-          </div>
-
+        {/* TOP BACK BUTTON & HEADER SECTION */}
+        <div className="space-y-3 border-b border-slate-200 pb-5">
           <button
-            onClick={handleSave}
-            disabled={isSaving || isLoading}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            type="button"
+            onClick={handleBack}
+            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors cursor-pointer group"
           >
-            {isSaving ? (
-              <FaSpinner className="text-xs animate-spin" />
-            ) : (
-              <FaSave className="text-xs" />
-            )}
-            {isSaving ? "Saving..." : "Save Settings"}
+            <FaArrowLeft className="text-slate-400 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Back to Dashboard</span>
           </button>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                Store & Operational Settings
+              </h1>
+              <p className="text-sm text-slate-500 mt-0.5">
+                Configure store profile details, payout destinations, tax configurations, fulfillment options, and notification triggers.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSave}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all cursor-pointer"
+            >
+              <FaSave className="text-xs" /> Save Settings
+            </button>
+          </div>
         </div>
 
         {/* NOTIFICATION FEEDBACK */}
         {isSaved && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl text-xs font-semibold flex items-center gap-2 animate-fade-in">
             <FaCheckCircle className="text-emerald-600 text-sm" />
-            <span>Operational settings updated successfully!</span>
-          </div>
-        )}
-
-        {errorMessage && (
-          <div className="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3 rounded-2xl text-xs font-semibold flex items-center gap-2 animate-fade-in">
-            <FaInfoCircle className="text-rose-600 text-sm" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
-
-        {isLoading && (
-          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium py-1">
-            <FaSpinner className="animate-spin text-teal-700" />
-            <span>Loading store settings from server...</span>
+            <span>Store settings updated successfully!</span>
           </div>
         )}
 
         {/* TAB NAVIGATION */}
         <div className="flex border-b border-slate-200 gap-2 sm:gap-6 overflow-x-auto">
           {[
+            { id: "general", label: "General Store Info", icon: FaStore },
             { id: "payouts", label: "Payouts & Banking", icon: FaUniversity },
             { id: "tax", label: "Tax & Compliance", icon: FaReceipt },
             { id: "fulfillment", label: "Fulfillment Defaults", icon: FaTruck },
@@ -160,6 +138,7 @@ export default function StoreSettings() {
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={`pb-3.5 pt-1 text-xs sm:text-sm font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                   isActive
@@ -175,6 +154,151 @@ export default function StoreSettings() {
         </div>
 
         <form onSubmit={handleSave} className="space-y-6">
+
+          {/* TAB 0: GENERAL STORE DETAILS */}
+          {activeTab === "general" && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-6">
+                <div className="border-b border-slate-100 pb-4">
+                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <FaStore className="text-teal-700" /> Store Profile
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Basic information that represents your store to customers.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      Store Name
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.storeName}
+                      onChange={(e) => handleChange("storeName", e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      Support Email
+                    </label>
+                    <input
+                      type="email"
+                      value={settings.storeEmail}
+                      onChange={(e) => handleChange("storeEmail", e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      Contact Phone
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.storePhone}
+                      onChange={(e) => handleChange("storePhone", e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      Default Store Currency
+                    </label>
+                    <select
+                      value={settings.currency}
+                      onChange={(e) => handleChange("currency", e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                    >
+                      <option value="USD">USD ($) - US Dollar</option>
+                      <option value="EUR">EUR (€) - Euro</option>
+                      <option value="GBP">GBP (£) - British Pound</option>
+                      <option value="CAD">CAD ($) - Canadian Dollar</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                    Store Description
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={settings.storeDescription}
+                    onChange={(e) => handleChange("storeDescription", e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700 resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Address Section */}
+              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-6">
+                <div className="border-b border-slate-100 pb-4">
+                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <FaMapMarkerAlt className="text-teal-700" /> Business Location
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Physical address used for invoices and origin shipping rates.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      Address Line 1
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.addressLine1}
+                      onChange={(e) => handleChange("addressLine1", e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.city}
+                      onChange={(e) => handleChange("city", e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                        State
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.state}
+                        onChange={(e) => handleChange("state", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                        ZIP Code
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.zipCode}
+                        onChange={(e) => handleChange("zipCode", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* TAB 1: PAYOUTS & BANKING */}
           {activeTab === "payouts" && (

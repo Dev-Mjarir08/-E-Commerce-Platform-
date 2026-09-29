@@ -1,400 +1,674 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
 import {
   Package,
   Truck,
   CheckCircle2,
-  Clock,
   MapPin,
-  CreditCard,
   ArrowLeft,
   Calendar,
   ExternalLink,
   ShieldCheck,
+  RotateCcw,
+  MessageSquare,
   Copy,
   Check,
-  User,
-  Phone,
-  Mail,
-  Printer
-} from 'lucide-react';
-import vendorApi from '../../services/vendorApi';
+  Menu,
+  X,
+} from "lucide-react";
 
-export default function VendorOrderDetails() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+import VendorSidebar from "./VendorSlideBar";
 
+export default function OrderDetails({ orderId, onBack }) {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [updating, setUpdating] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
       setLoading(true);
-      try {
-        if (id) {
-          const res = await vendorApi.getOrderById(id);
-          const data = res?.data?.order || res?.order || res?.data;
-          if (data && data._id) {
-            setOrder(data);
-            setLoading(false);
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn('Backend order fetch fallback:', err);
-      }
 
-      // Initial realistic preview record
-      setOrder({
-        _id: id || 'ORD-89234',
-        orderNumber: id?.slice(-6) || '89234',
-        createdAt: '2026-03-22T14:30:00.000Z',
-        orderStatus: 'Processing',
-        paymentStatus: 'Paid',
-        paymentMethod: 'Credit Card (Stripe)',
-        trackingNumber: 'TRK-9918234712',
-        carrier: 'FedEx Express Courier',
-        items: [
-          {
-            _id: 'ITEM-1',
-            product: {
-              name: 'Wireless Noise-Canceling Headphones',
-              image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=200'
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        setOrder({
+          id: orderId || "ORD-89234-X2",
+          date: "September 18, 2026",
+          status: "In Transit",
+          estimatedDelivery: "Sep 21, 2026",
+          trackingNumber: "TRK-9918234712",
+          carrier: "FedEx Express",
+
+          items: [
+            {
+              id: 1,
+              name: "Wireless Noise-Canceling Headphones",
+              variant: "Matte Black",
+              price: 199.99,
+              quantity: 1,
+              image:
+                "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=200",
             },
-            name: 'Wireless Noise-Canceling Headphones',
-            price: 199.99,
-            quantity: 1,
-            sku: 'SKU-8821'
+            {
+              id: 2,
+              name: "Ergonomic Desktop Stand",
+              variant: "Aluminum",
+              price: 49.5,
+              quantity: 2,
+              image:
+                "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&q=80&w=200",
+            },
+          ],
+
+          shippingAddress: {
+            name: "Alex Johnson",
+            street: "123 Tech Lane, Suite 400",
+            city: "San Francisco",
+            state: "CA",
+            zip: "94107",
+            country: "United States",
           },
-          {
-            _id: 'ITEM-2',
-            product: {
-              name: 'Ergonomic Desktop Stand',
-              image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&q=80&w=200'
-            },
-            name: 'Ergonomic Desktop Stand',
-            price: 49.50,
-            quantity: 1,
-            sku: 'SKU-3102'
-          }
-        ],
-        shippingAddress: {
-          recipientName: 'Alex Johnson',
-          street: '123 Tech Lane, Suite 400',
-          city: 'San Francisco',
-          state: 'CA',
-          postalCode: '94107',
-          country: 'United States',
-          phone: '+1 (415) 555-0199'
-        },
-        user: {
-          name: 'Alex Johnson',
-          email: 'alex.j@example.com'
-        },
-        subtotal: 249.49,
-        shippingFee: 0.00,
-        tax: 18.71,
-        totalAmount: 268.20
-      });
-      setLoading(false);
+
+          paymentMethod: {
+            type: "Visa",
+            last4: "4242",
+          },
+
+          summary: {
+            subtotal: 298.99,
+            shipping: 15.0,
+            tax: 24.66,
+            total: 338.65,
+          },
+        });
+      } catch (error) {
+        console.error("Error fetching order:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchOrderDetails();
-  }, [id]);
+  }, [orderId]);
 
-  const handleCopy = (text) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const copyTracking = () => {
+    if (order?.trackingNumber) {
+      navigator.clipboard.writeText(order.trackingNumber);
+      setCopied(true);
 
-  const handleStatusChange = async (newStatus) => {
-    setUpdating(true);
-    try {
-      await vendorApi.updateOrderStatus(order._id || id, newStatus);
-      setOrder((prev) => ({ ...prev, orderStatus: newStatus }));
-    } catch (err) {
-      setOrder((prev) => ({ ...prev, orderStatus: newStatus }));
-    } finally {
-      setUpdating(false);
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
     }
   };
 
-  const getStatusBadge = (status = '') => {
-    const s = status.toLowerCase();
-    switch (s) {
-      case 'delivered':
-      case 'completed':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300';
-      case 'shipped':
-      case 'in transit':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
-      case 'processing':
-        return 'bg-purple-100 text-purple-800 border-purple-300';
-      case 'placed':
-      case 'pending':
-        return 'bg-amber-100 text-amber-800 border-amber-300';
-      case 'cancelled':
-      case 'failed':
-        return 'bg-rose-100 text-rose-800 border-rose-300';
-      default:
-        return 'bg-slate-100 text-slate-800 border-slate-300';
-    }
+  const steps = ["Placed", "Processing", "In Transit", "Delivered"];
+
+  const getCurrentStepIndex = (status) => {
+    return steps.indexOf(status);
   };
+
+  // --------------------------------------------------
+  // LOADING
+  // --------------------------------------------------
 
   if (loading) {
     return (
-      <div className="py-24 text-center">
-        <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-xs font-mono uppercase text-slate-500">Loading Order Manifest...</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 text-slate-800">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
+
+        <p className="mt-3 text-sm font-medium text-slate-500">
+          Fetching order details...
+        </p>
       </div>
     );
   }
+
+  // --------------------------------------------------
+  // ORDER NOT FOUND
+  // --------------------------------------------------
 
   if (!order) {
     return (
-      <div className="bg-white p-12 text-center rounded-xl border border-slate-200">
-        <Package size={36} className="mx-auto text-slate-300 mb-2" />
-        <h3 className="text-sm font-semibold text-slate-800">Order Record Not Found</h3>
-        <button
-          onClick={() => navigate('/vendor/orders')}
-          className="mt-4 px-4 py-2 bg-slate-900 text-white text-xs font-medium rounded-lg"
-        >
-          Return to Orders
-        </button>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+            <Package className="h-6 w-6" />
+          </div>
+
+          <h3 className="text-lg font-semibold text-slate-900">
+            Order Not Found
+          </h3>
+
+          <p className="mt-1 mb-6 text-sm text-slate-500">
+            We couldn't locate details for this order ID.
+          </p>
+
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700"
+            >
+              Go Back
+            </button>
+          )}
+        </div>
       </div>
     );
   }
 
+  const currentStep = getCurrentStepIndex(order.status);
+
   return (
-    <div className="space-y-6">
-      {/* Top Breadcrumb & Action bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
-        <div className="flex items-center gap-3">
+    <div className="relative flex min-h-screen bg-slate-50/50 text-slate-800">
+
+      {/* ==================================================
+          MOBILE OVERLAY
+      ================================================== */}
+
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* ==================================================
+          MOBILE SIDEBAR
+      ================================================== */}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform border-r border-slate-200 bg-white transition-transform duration-300 ease-in-out md:hidden ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Mobile Sidebar Header */}
+        <div className="flex h-14 items-center justify-between border-b border-slate-200 px-4">
+          <span className="text-sm font-semibold text-slate-900">
+            Vendor Menu
+          </span>
+
           <button
-            onClick={() => navigate('/vendor/orders')}
-            className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
-            title="Back to Orders"
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
           >
-            <ArrowLeft size={16} />
+            <X className="h-5 w-5" />
           </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900 font-mono">
-                Order #{order.orderNumber || order._id?.slice(-8) || id}
-              </h1>
-              <span
-                className={`text-[10px] font-mono uppercase font-bold px-2.5 py-0.5 rounded-full border ${getStatusBadge(
-                  order.orderStatus
-                )}`}
+        </div>
+
+        {/* Mobile Sidebar Content */}
+        <div className="h-[calc(100vh-56px)] overflow-y-auto">
+          <VendorSidebar />
+        </div>
+      </aside>
+
+      {/* ==================================================
+          DESKTOP SIDEBAR
+      ================================================== */}
+
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-slate-200 bg-white md:block">
+        <div className="h-full ">
+          <VendorSidebar />
+        </div>
+      </aside>
+
+      {/* ==================================================
+          MAIN CONTENT
+      ================================================== */}
+
+      <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+
+        {/* ==================================================
+            TOP NAVIGATION
+        ================================================== */}
+
+        <div className="mb-6 flex items-center justify-between gap-3">
+
+          {/* Left Side */}
+          <div className="flex items-center gap-2">
+
+            {/* MOBILE MENU BUTTON */}
+
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-600 shadow-sm transition hover:bg-slate-50 md:hidden"
+              aria-label="Open vendor menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            {/* BACK BUTTON */}
+
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
               >
-                {order.orderStatus}
+                <ArrowLeft className="h-4 w-4 sm:mr-2" />
+
+                <span className="hidden sm:inline">
+                  Back to Orders
+                </span>
+              </button>
+            )}
+          </div>
+
+          {/* Right Side */}
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="hidden items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 sm:inline-flex"
+            >
+              <MessageSquare className="mr-1.5 h-3.5 w-3.5 text-slate-500" />
+
+              Need Help?
+            </button>
+          </div>
+        </div>
+
+        {/* ==================================================
+            ORDER HEADER
+        ================================================== */}
+
+        <div className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6">
+
+          <div className="flex flex-col justify-between gap-4 border-b border-slate-100 pb-6 md:flex-row md:items-center">
+
+            {/* Order Information */}
+
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-3">
+
+                <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                  Order #{order.id}
+                </h1>
+
+                <span className="inline-flex items-center rounded-full border border-emerald-200/60 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  <span className="mr-2 h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
+
+                  {order.status}
+                </span>
+              </div>
+
+              <p className="mt-1.5 flex items-center gap-1.5 text-sm text-slate-500">
+                <Calendar className="h-4 w-4 text-slate-400" />
+
+                Placed on {order.date}
+              </p>
+            </div>
+
+            {/* Tracking */}
+
+            {order.trackingNumber && (
+              <div className="flex min-w-0 items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50 p-3.5 sm:min-w-[260px]">
+
+                <div className="min-w-0">
+                  <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                    {order.carrier}
+                  </span>
+
+                  <span className="block truncate font-mono text-sm font-semibold text-slate-800">
+                    {order.trackingNumber}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={copyTracking}
+                  className="shrink-0 rounded-lg p-2 text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-600"
+                  title="Copy tracking number"
+                >
+                  {copied ? (
+                    <Check className="h-4 w-4 text-emerald-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* ==================================================
+              SHIPMENT PROGRESS
+          ================================================== */}
+
+          <div className="pt-6">
+
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Shipment Progress
+              </span>
+
+              <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600">
+                Est. Delivery: {order.estimatedDelivery}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5 font-mono">
-              <Calendar size={12} />
-              Placed on {new Date(order.createdAt).toLocaleString()}
-            </p>
-          </div>
-        </div>
 
-        {/* Status update & Print buttons */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <button
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg shadow-xs transition-colors"
-          >
-            <Printer size={14} />
-            <span>Print Invoice</span>
-          </button>
+            <div className="relative mx-auto flex w-full max-w-3xl items-center justify-between px-2 sm:px-4">
 
-          <select
-            value={order.orderStatus || 'Placed'}
-            onChange={(e) => handleStatusChange(e.target.value)}
-            disabled={updating}
-            className="px-3 py-2 bg-slate-900 text-white text-xs font-medium rounded-lg shadow-xs cursor-pointer focus:outline-none"
-          >
-            <option value="Placed">Set to Placed</option>
-            <option value="Processing">Set to Processing</option>
-            <option value="Shipped">Set to Shipped</option>
-            <option value="Delivered">Set to Delivered</option>
-            <option value="Cancelled">Set to Cancelled</option>
-          </select>
-        </div>
-      </div>
+              {/* Background Line */}
 
-      {/* Main Grid: Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Items & Timeline (2 cols) */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Order Items Table */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-slate-500">
-                Purchased Items ({order.items?.length || 0})
-              </h3>
-              <span className="text-xs text-slate-400">Atelier verified catalog</span>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {order.items?.map((item, idx) => (
-                <div key={idx} className="p-4 flex items-center gap-4 hover:bg-slate-50/50 transition-colors">
-                  <img
-                    src={
-                      item.product?.image ||
-                      item.image ||
-                      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100'
-                    }
-                    alt={item.name}
-                    className="w-14 h-14 rounded-lg object-cover border border-slate-200 shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-semibold text-slate-900 truncate">
-                      {item.product?.name || item.name}
-                    </h4>
-                    <p className="text-[11px] font-mono text-slate-400 mt-0.5">
-                      SKU: {item.sku || 'SKU-001'}
-                    </p>
-                    <p className="text-xs text-slate-600 font-mono mt-1">
-                      ${item.price?.toFixed(2)} × {item.quantity}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-bold font-mono text-slate-900">
-                      ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+              <div className="absolute left-5 right-5 top-[18px] z-0 h-1 bg-slate-100 sm:left-7 sm:right-7"></div>
+
+              {/* Progress Line */}
+
+              <div
+                className="absolute left-5 top-[18px] z-0 h-1 bg-emerald-500 transition-all duration-500 sm:left-7"
+                style={{
+                  width: `${(currentStep / (steps.length - 1)) * 85}%`,
+                }}
+              ></div>
+
+              {steps.map((step, idx) => {
+                const isCompleted = idx <= currentStep;
+                const isCurrent = idx === currentStep;
+
+                return (
+                  <div
+                    key={step}
+                    className="relative z-10 flex flex-col items-center"
+                  >
+                    <div
+                      className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
+                        isCompleted
+                          ? "bg-emerald-600 text-white ring-4 ring-emerald-50"
+                          : "border-2 border-slate-200 bg-white text-slate-400"
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle2 className="h-5 w-5" />
+                      ) : (
+                        idx + 1
+                      )}
+                    </div>
+
+                    <span
+                      className={`mt-2 text-[10px] font-medium sm:text-xs ${
+                        isCurrent
+                          ? "font-semibold text-emerald-600"
+                          : isCompleted
+                          ? "text-slate-800"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      {step}
                     </span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
+        </div>
 
-          {/* Logistics & Tracking Card */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-slate-500">
-              Logistics & Courier Dispatch
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-3 bg-slate-50 rounded-lg space-y-1">
-                <span className="text-[10px] font-mono uppercase text-slate-400">Courier Partner</span>
-                <p className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                  <Truck size={14} className="text-emerald-600" />
-                  {order.carrier || 'Standard Courier Express'}
-                </p>
-              </div>
+        {/* ==================================================
+            CONTENT GRID
+        ================================================== */}
 
-              <div className="p-3 bg-slate-50 rounded-lg space-y-1">
-                <span className="text-[10px] font-mono uppercase text-slate-400">Tracking Code</span>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-slate-800">
-                    {order.trackingNumber || 'TRK-PENDING'}
-                  </span>
-                  {order.trackingNumber && (
-                    <button
-                      onClick={() => handleCopy(order.trackingNumber)}
-                      className="text-slate-400 hover:text-slate-600"
-                      title="Copy Tracking #"
-                    >
-                      {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
-                    </button>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+
+          {/* ==================================================
+              MAIN ITEMS COLUMN
+          ================================================== */}
+
+          <div className="space-y-6 lg:col-span-2">
+
+            {/* ITEMS ORDERED */}
+
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6">
+
+              <h2 className="mb-4 flex flex-col gap-1 text-base font-semibold text-slate-900 sm:flex-row sm:items-center sm:justify-between">
+                <span>
+                  Items Ordered (
+                  {order.items.reduce(
+                    (acc, item) => acc + item.quantity,
+                    0
                   )}
-                </div>
+                  )
+                </span>
+
+                <span className="text-xs font-normal text-slate-500">
+                  Includes taxes & discounts
+                </span>
+              </h2>
+
+              <div className="divide-y divide-slate-100">
+
+                {order.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex flex-col gap-4 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+                  >
+
+                    {/* Product */}
+
+                    <div className="flex min-w-0 items-center gap-4">
+
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-20 w-20 shrink-0 rounded-xl border border-slate-100 bg-slate-50 object-cover"
+                      />
+
+                      <div className="min-w-0">
+
+                        <h3 className="text-sm font-semibold text-slate-900 transition-colors hover:text-emerald-600">
+                          {item.name}
+                        </h3>
+
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {item.variant}
+                        </p>
+
+                        <p className="mt-2 inline-block rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                          Qty: {item.quantity}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Price */}
+
+                    <div className="flex items-center justify-between border-t border-slate-50 pt-2 sm:flex-col sm:items-end sm:border-t-0 sm:pt-0">
+
+                      <div>
+                        <p className="text-base font-bold text-slate-900">
+                          $
+                          {(
+                            item.price * item.quantity
+                          ).toFixed(2)}
+                        </p>
+
+                        <p className="text-xs text-slate-400">
+                          ${item.price.toFixed(2)} each
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-emerald-600 transition-colors hover:text-emerald-700"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+
+                        Buy again
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Right Column: Customer Info & Cost Breakdown */}
-        <div className="space-y-6">
-          {/* Customer Summary */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-slate-500">
-              Customer Details
-            </h3>
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold shrink-0">
-                  <User size={15} />
+            {/* ==================================================
+                GUARANTEES
+            ================================================== */}
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+              {/* Delivery */}
+
+              <div className="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+
+                <div className="rounded-xl bg-emerald-100 p-2 text-emerald-700">
+                  <Truck className="h-5 w-5" />
                 </div>
+
                 <div>
-                  <p className="font-semibold text-slate-800">
-                    {order.shippingAddress?.recipientName || order.user?.name || 'Customer'}
+                  <h4 className="text-sm font-semibold text-emerald-900">
+                    Standard Delivery
+                  </h4>
+
+                  <p className="mt-0.5 text-xs text-emerald-700/80">
+                    Carrier: {order.carrier}
                   </p>
-                  <p className="text-[11px] text-slate-400">Verified Atelier Buyer</p>
+
+                  <p className="mt-2 text-xs font-medium text-emerald-800">
+                    Est: {order.estimatedDelivery}
+                  </p>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 space-y-2">
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Mail size={13} className="text-slate-400" />
-                  <span className="truncate">{order.user?.email || 'customer@example.com'}</span>
+              {/* Protection */}
+
+              <div className="flex items-start gap-3 rounded-2xl border border-slate-200/60 bg-slate-100/60 p-4">
+
+                <div className="rounded-xl bg-white p-2 text-slate-600 shadow-sm">
+                  <ShieldCheck className="h-5 w-5 text-emerald-600" />
                 </div>
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Phone size={13} className="text-slate-400" />
-                  <span>{order.shippingAddress?.phone || '+1 (555) 019-2834'}</span>
+
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-900">
+                    Buyer Protection
+                  </h4>
+
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Full refund if items are damaged or lost during delivery.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Shipping Address */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-slate-500 flex items-center gap-1.5">
-              <MapPin size={14} className="text-emerald-600" />
-              <span>Delivery Address</span>
-            </h3>
-            <div className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg font-mono">
-              <p className="font-semibold text-slate-800">
-                {order.shippingAddress?.recipientName || order.user?.name}
-              </p>
-              <p>{order.shippingAddress?.street || '742 Evergreen Terrace'}</p>
-              <p>
-                {order.shippingAddress?.city || 'San Francisco'},{' '}
-                {order.shippingAddress?.state || 'CA'}{' '}
-                {order.shippingAddress?.postalCode || '94107'}
-              </p>
-              <p className="text-slate-400">{order.shippingAddress?.country || 'USA'}</p>
-            </div>
-          </div>
+          {/* ==================================================
+              SUMMARY SIDEBAR
+          ================================================== */}
 
-          {/* Payment & Totals */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-slate-500 flex items-center gap-1.5">
-              <CreditCard size={14} className="text-emerald-600" />
-              <span>Payment Breakdown</span>
-            </h3>
+          <div className="space-y-6">
 
-            <div className="space-y-2 text-xs divide-y divide-slate-100">
-              <div className="flex justify-between py-1 text-slate-600">
-                <span>Subtotal</span>
-                <span className="font-mono">${(order.subtotal || order.totalAmount || 0).toFixed(2)}</span>
+            {/* PAYMENT SUMMARY */}
+
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
+
+              <h2 className="mb-4 text-base font-semibold text-slate-900">
+                Payment Summary
+              </h2>
+
+              <div className="space-y-3 text-sm">
+
+                <div className="flex justify-between text-slate-600">
+                  <span>Subtotal</span>
+
+                  <span className="font-medium text-slate-900">
+                    ${order.summary.subtotal.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-slate-600">
+                  <span>Shipping</span>
+
+                  <span className="font-medium text-slate-900">
+                    ${order.summary.shipping.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-slate-600">
+                  <span>Estimated Tax</span>
+
+                  <span className="font-medium text-slate-900">
+                    ${order.summary.tax.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+
+                  <span className="font-bold text-slate-900">
+                    Total Paid
+                  </span>
+
+                  <span className="text-xl font-extrabold text-emerald-600">
+                    ${order.summary.total.toFixed(2)}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between py-1 text-slate-600">
-                <span>Shipping</span>
-                <span className="font-mono text-emerald-600">
-                  {order.shippingFee ? `$${order.shippingFee.toFixed(2)}` : 'FREE'}
+
+              {/* Payment Method */}
+
+              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+
+                <div className="flex items-center gap-3">
+
+                  <div className="flex h-6 w-8 items-center justify-center rounded border border-slate-200 bg-slate-100 text-[10px] font-bold text-slate-700">
+                    {order.paymentMethod.type.toUpperCase()}
+                  </div>
+
+                  <span className="text-xs font-medium text-slate-600">
+                    Ending in •••• {order.paymentMethod.last4}
+                  </span>
+                </div>
+
+                <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                  PAID
                 </span>
               </div>
-              <div className="flex justify-between py-1 text-slate-600">
-                <span>Estimated Tax</span>
-                <span className="font-mono">${(order.tax || 0).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between pt-2 text-sm font-bold text-slate-900">
-                <span>Total Payout</span>
-                <span className="font-mono text-base text-emerald-700">
-                  ${(order.totalAmount || order.totalPrice || 0).toFixed(2)}
-                </span>
+            </div>
+
+            {/* ==================================================
+                SHIPPING ADDRESS
+            ================================================== */}
+
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
+
+              <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900">
+                <MapPin className="h-4 w-4 text-emerald-600" />
+
+                Shipping Address
+              </h2>
+
+              <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 text-sm leading-relaxed text-slate-600">
+
+                <p className="font-semibold text-slate-900">
+                  {order.shippingAddress.name}
+                </p>
+
+                <p className="mt-1">
+                  {order.shippingAddress.street}
+                </p>
+
+                <p>
+                  {order.shippingAddress.city},{" "}
+                  {order.shippingAddress.state}{" "}
+                  {order.shippingAddress.zip}
+                </p>
+
+                <p>{order.shippingAddress.country}</p>
               </div>
             </div>
 
-            <div className="pt-2 text-[11px] font-mono text-slate-400 flex items-center justify-between">
-              <span>Status: {order.paymentStatus || 'Paid'}</span>
-              <span className="text-emerald-600 font-semibold">Settled</span>
-            </div>
+            {/* INVOICE */}
+
+            <button
+              type="button"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-white py-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50"
+            >
+              <ExternalLink className="h-4 w-4 text-slate-400" />
+
+              Download Invoice (PDF)
+            </button>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
-}
+} 
