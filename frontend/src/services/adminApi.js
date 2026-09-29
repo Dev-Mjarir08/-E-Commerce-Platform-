@@ -207,6 +207,30 @@ export const adminApi = {
   async deleteNotification(id) {
     return api.delete(`/admin/notifications/${id}`);
   },
+
+  /**
+   * Get all reviews for admin moderation
+   * @param {Object} params - { search, status, rating, page, limit }
+   */
+  async getAdminReviews(params = {}) {
+    return api.get("/reviews/admin", { params });
+  },
+
+  /**
+   * Get single review details for admin
+   */
+  async getAdminReviewById(id) {
+    return api.get(`/reviews/admin/${id}`);
+  },
+
+  /**
+   * Update review moderation status
+   * @param {string} id
+   * @param {Object} statusData - { status }
+   */
+  async updateReviewStatus(id, statusData) {
+    return api.patch(`/reviews/admin/${id}/status`, statusData);
+  },
 };
 
 export default adminApi;
