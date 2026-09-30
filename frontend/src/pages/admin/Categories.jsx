@@ -1,11 +1,17 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useToast } from '../../context/ToastContext';
 import {
   Plus,
   Search,
   Edit2,
   Trash2,
-  X
+  X,
+  UploadCloud,
+  Database,
+  Sparkles,
+  FileJson,
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -13,7 +19,8 @@ import {
   addCategory,
   updateCategory,
   deleteCategory,
-  toggleCategoryStatus
+  toggleCategoryStatus,
+  bulkCreateCategories
 } from '../../redux/slices/categorySlice';
 import { useConfirm } from '../../context/ModalContext';
 
@@ -41,6 +48,13 @@ const Categories = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+
+  // Bulk Categories Import States
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [bulkJsonInput, setBulkJsonInput] = useState('');
+  const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState(null);
+  const bulkFileRef = useRef(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -232,6 +246,149 @@ const Categories = () => {
     }
   };
 
+  // Sample Categories Template for Bulk Upload
+  const sampleCategoriesTemplate = [
+    {
+      name: "Haute Couture & Tailoring",
+      slug: "haute-couture-tailoring",
+      description: "Bespoke handcrafted formalwear and sartorial suiting.",
+      image: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=80",
+      displayOrder: 1,
+      isActive: true
+    },
+    {
+      name: "Artisanal Leather Goods",
+      slug: "artisanal-leather-goods",
+      description: "Vegetable-tanned full-grain luxury leather accessories and luggage.",
+      image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=800&q=80",
+      displayOrder: 2,
+      isActive: true
+    },
+    {
+      name: "Fine Jewelry & Gems",
+      slug: "fine-jewelry-gems",
+      description: "Ethically sourced diamonds, 18k solid gold, and gemstone creations.",
+      image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=80",
+      displayOrder: 3,
+      isActive: true
+    },
+    {
+      name: "Swiss Horology",
+      slug: "swiss-horology",
+      description: "Masterpiece automatic and tourbillon luxury timepieces.",
+      image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80",
+      displayOrder: 4,
+      isActive: true
+    },
+    {
+      name: "Designer Footwear",
+      slug: "designer-footwear",
+      description: "Hand-welted Italian leather shoes, loafers, and editorial sneakers.",
+      image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
+      displayOrder: 5,
+      isActive: true
+    }
+  ];
+
+  // Submit Bulk JSON Import
+  const handleBulkSubmit = async () => {
+    if (!bulkJsonInput.trim()) {
+      setBulkStatus({
+        type: 'error',
+        text: 'Please paste JSON data or upload a .json file.'
+      });
+      return;
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(bulkJsonInput);
+    } catch (err) {
+      setBulkStatus({
+        type: 'error',
+        text: `Invalid JSON syntax: ${err.message}`
+      });
+      return;
+    }
+
+    let items = parsed;
+    if (parsed && !Array.isArray(parsed) && Array.isArray(parsed.categories)) {
+      items = parsed.categories;
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      setBulkStatus({
+        type: 'error',
+        text: 'JSON must be an array of categories or an object with a "categories" array.'
+      });
+      return;
+    }
+
+    setIsBulkSubmitting(true);
+    setBulkStatus(null);
+
+    try {
+      const res = await dispatch(bulkCreateCategories(items)).unwrap();
+      const createdCount = res?.createdCount || (Array.isArray(res?.data) ? res.data.length : items.length);
+
+      showToast(`Successfully created ${createdCount} categories in bulk!`, 'success');
+      setIsBulkModalOpen(false);
+      setBulkJsonInput('');
+      setBulkStatus(null);
+    } catch (err) {
+      console.error('Bulk category upload error:', err);
+      setBulkStatus({
+        type: 'error',
+        text: typeof err === 'string' ? err : (err?.message || 'Failed to bulk import categories.')
+      });
+    } finally {
+      setIsBulkSubmitting(false);
+    }
+  };
+
+  // Load JSON template into bulk modal
+  const handleLoadSampleTemplate = () => {
+    setBulkJsonInput(JSON.stringify(sampleCategoriesTemplate, null, 2));
+    setBulkStatus({
+      type: 'success',
+      text: 'Loaded 5 sample luxury category taxonomies template. Ready to import.'
+    });
+  };
+
+  // Upload .json file
+  const handleBulkFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.json')) {
+      setBulkStatus({
+        type: 'error',
+        text: 'Please select a valid .json file.'
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target.result;
+        JSON.parse(text); // validate
+        setBulkJsonInput(text);
+        setBulkStatus({
+          type: 'success',
+          text: `Loaded "${file.name}" successfully.`
+        });
+      } catch (err) {
+        setBulkStatus({
+          type: 'error',
+          text: `Invalid JSON syntax in file: ${err.message}`
+        });
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   return (
     <div className="space-y-6">
 
@@ -250,14 +407,30 @@ const Categories = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleOpenAddModal}
-          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
-        >
-          <Plus size={16} />
-          <span>Add New Category</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Bulk Import Categories */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsBulkModalOpen(true);
+              setBulkStatus(null);
+            }}
+            title="Import multiple categories at once via JSON payload or template"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition-colors shadow-sm"
+          >
+            <UploadCloud size={14} />
+            <span>Bulk Categories</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleOpenAddModal}
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+          >
+            <Plus size={16} />
+            <span>Add New Category</span>
+          </button>
+        </div>
       </div>
 
       {/* ================================
@@ -744,6 +917,164 @@ const Categories = () => {
 
         </div>
 
+      )}
+
+      {/* Bulk Categories Import Modal */}
+      {isBulkModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-2xl w-full border border-slate-200 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            {/* Modal Top Header */}
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
+                  <Database size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                    <span>Bulk Add Categories</span>
+                    <span className="text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
+                      Batch API
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Insert multiple taxonomy categories at once into MongoDB via JSON array or seed template.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBulkModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-4 overflow-y-auto flex-1">
+              {/* Quick Actions Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-indigo-50/60 rounded-xl border border-indigo-100">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleLoadSampleTemplate}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+                  >
+                    <Sparkles size={13} />
+                    <span>Load Categories Template</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => bulkFileRef.current?.click()}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold shadow-sm transition-colors"
+                  >
+                    <FileJson size={13} />
+                    <span>Upload .json File</span>
+                  </button>
+                  <input
+                    ref={bulkFileRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleBulkFileChange}
+                    className="hidden"
+                  />
+                </div>
+
+                {bulkJsonInput && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBulkJsonInput('');
+                      setBulkStatus(null);
+                    }}
+                    className="text-xs text-slate-500 hover:text-rose-600 transition-colors"
+                  >
+                    Clear Editor
+                  </button>
+                )}
+              </div>
+
+              {/* Status Alert */}
+              {bulkStatus && (
+                <div
+                  className={`p-3 rounded-xl text-xs flex items-center gap-2 border ${
+                    bulkStatus.type === 'error'
+                      ? 'bg-rose-50 text-rose-800 border-rose-200'
+                      : 'bg-indigo-50 text-indigo-800 border-indigo-200'
+                  }`}
+                >
+                  {bulkStatus.type === 'error' ? (
+                    <AlertCircle size={15} className="text-rose-600 shrink-0" />
+                  ) : (
+                    <CheckCircle2 size={15} className="text-indigo-600 shrink-0" />
+                  )}
+                  <span>{bulkStatus.text}</span>
+                </div>
+              )}
+
+              {/* JSON Textarea */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <label className="font-semibold text-slate-700">
+                    JSON Payload [ categories array ]
+                  </label>
+                  <span className="text-slate-400 font-mono text-[11px]">
+                    {bulkJsonInput
+                      ? `${bulkJsonInput.length.toLocaleString()} chars`
+                      : 'Empty'}
+                  </span>
+                </div>
+                <textarea
+                  value={bulkJsonInput}
+                  onChange={(e) => setBulkJsonInput(e.target.value)}
+                  rows={12}
+                  placeholder={`[\n  {\n    "name": "Haute Couture & Tailoring",\n    "slug": "haute-couture-tailoring",\n    "description": "Bespoke formalwear and sartorial suiting.",\n    "image": "https://...",\n    "displayOrder": 1,\n    "isActive": true\n  },\n  ...\n]`}
+                  className="w-full font-mono text-xs p-3.5 bg-slate-900 text-emerald-400 rounded-xl border border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 selection:bg-indigo-600 selection:text-white"
+                />
+              </div>
+
+              {/* Helper guide */}
+              <div className="text-[11px] text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1">
+                <p className="font-semibold text-slate-700">Schema Requirements:</p>
+                <p>
+                  Each category requires a <code className="text-indigo-600">name</code>.
+                  Optional fields include <code className="text-indigo-600">slug</code>, <code className="text-indigo-600">description</code>, <code className="text-indigo-600">image</code> (URL string or object), <code className="text-indigo-600">displayOrder</code>, and <code className="text-indigo-600">isActive</code>.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer Controls */}
+            <div className="p-4 border-t border-slate-100 flex items-center justify-end gap-2.5 bg-slate-50/50">
+              <button
+                type="button"
+                onClick={() => setIsBulkModalOpen(false)}
+                className="px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleBulkSubmit}
+                disabled={isBulkSubmitting || !bulkJsonInput.trim()}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-60"
+              >
+                {isBulkSubmitting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Inserting Categories into Database...</span>
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud size={14} />
+                    <span>Import Categories Now</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

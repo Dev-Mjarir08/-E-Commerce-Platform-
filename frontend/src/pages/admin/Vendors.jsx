@@ -209,15 +209,6 @@ const Vendors = () => {
             Manage multi-tenant boutique storefronts, verification badges, seller credentials, and approvals.
           </p>
         </div>
-
-        <button
-          type="button"
-          onClick={handleOpenAddModal}
-          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
-        >
-          <Plus size={16} />
-          <span>Onboard New Vendor</span>
-        </button>
       </div>
 
       {/* KPI Counters (Direct Solid Colors) */}
@@ -417,17 +408,13 @@ const Vendors = () => {
                       {/* Actions */}
                       <td className="py-4 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {vendor.slug && (
-                            <Link
-                              to={`/store/${vendor.slug}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors"
-                              title="View Live Storefront"
-                            >
-                              <ExternalLink size={15} />
-                            </Link>
-                          )}
+                          <Link
+                            to={`/admin/vendors/${id || vendor.slug}`}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors"
+                            title="View Vendor Details"
+                          >
+                            <ExternalLink size={15} />
+                          </Link>
                           <button
                             type="button"
                             onClick={() => handleOpenEditModal(vendor)}

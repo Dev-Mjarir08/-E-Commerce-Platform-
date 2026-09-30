@@ -4,6 +4,7 @@ import {
   createOrder,
   getMyOrders,
   getAdminOrders,
+  updateAdminOrderStatus,
   getOrderById,
   cancelOrder
 } from '../controllers/order.controller.js';
@@ -14,8 +15,8 @@ const router = Router();
 // Create order (supports both guest and authenticated customers)
 router.post('/', optionalAuth, createOrder);
 
-// Admin marketplace orders
 router.get('/admin', protect, authorize('admin'), getAdminOrders);
+router.patch('/admin/:id/status', protect, authorize('admin'), updateAdminOrderStatus);
 
 // Customer orders
 router.get('/', protect, getMyOrders);

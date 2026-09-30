@@ -273,7 +273,7 @@ export const createOrder = async (req, res) => {
     const totalPrice = Math.max(
       0,
       Math.round((subtotal - discountAmount + shippingPrice + taxPrice) * 100) /
-        100,
+      100,
     );
 
     // 5. Create unique order number
@@ -462,7 +462,14 @@ export const getAdminOrders = async (req, res) => {
     const query = {};
 
     if (status && status !== "all") {
-      query.orderStatus = status.toLowerCase();
+      const s = status.toLowerCase().trim();
+      if (s === "processing") {
+        query.orderStatus = { $in: ["placed", "confirmed", "processing"] };
+      } else if (s === "in transit" || s === "shipped") {
+        query.orderStatus = "shipped";
+      } else {
+        query.orderStatus = s;
+      }
     }
 
     const [orders, totalOrders] = await Promise.all([
@@ -505,7 +512,7 @@ export const getAdminOrders = async (req, res) => {
       };
     });
 
-    // Search by order number, customer name or email
+    // Search by order number, customer name, email, tracking, destination
     if (search.trim()) {
       const searchText = search.trim().toLowerCase();
 
@@ -521,10 +528,17 @@ export const getAdminOrders = async (req, res) => {
 
         const orderNumber = String(order.orderNumber || "").toLowerCase();
 
+        const tracking = String(order.trackingNumber || "").toLowerCase();
+        const recipient = String(order.shippingAddress?.recipientName || "").toLowerCase();
+        const city = String(order.shippingAddress?.city || "").toLowerCase();
+
         return (
           orderNumber.includes(searchText) ||
           customerName.includes(searchText) ||
-          email.includes(searchText)
+          email.includes(searchText) ||
+          tracking.includes(searchText) ||
+          recipient.includes(searchText) ||
+          city.includes(searchText)
         );
       });
     }
@@ -567,7 +581,10 @@ export const getOrderById = async (req, res) => {
       ? { _id: id }
       : { orderNumber: id.toUpperCase().trim() };
 
-    const order = await Order.findOne(query);
+    const order = await Order.findOne(query).populate(
+      "user",
+      "name email phone firstName lastName"
+    );
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -576,7 +593,15 @@ export const getOrderById = async (req, res) => {
     }
 
     // Verify ownership (if authenticated and not admin)
-    if (userId && order.user && order.user.toString() !== userId.toString() && req.user?.role !== 'admin') {
+    const orderUserId = order.user?._id
+      ? order.user._id.toString()
+      : order.user?.toString();
+    if (
+      userId &&
+      orderUserId &&
+      orderUserId !== userId.toString() &&
+      req.user?.role !== "admin"
+    ) {
       return res.status(403).json({
         success: false,
         message: "You are not authorized to view this order.",
@@ -599,6 +624,102 @@ export const getOrderById = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to retrieve order details.",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Update order status by Admin
+ * @route   PATCH /api/orders/admin/:id/status
+ * @access  Admin
+ */
+export const updateAdminOrderStatus = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Admin access required.",
+      });
+    }
+
+    const { id } = req.params;
+    const { status, reason } = req.body;
+
+    const allowedStatuses = [
+      "placed",
+      "confirmed",
+      "processing",
+      "shipped",
+      "delivered",
+      "cancelled",
+    ];
+
+    const normalizedStatus = String(status || "").toLowerCase().trim();
+
+    if (!allowedStatuses.includes(normalizedStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid order status "${status}". Allowed values: ${allowedStatuses.join(", ")}`,
+      });
+    }
+
+    const isMongoId = mongoose.Types.ObjectId.isValid(id);
+    const query = isMongoId
+      ? { _id: id }
+      : { orderNumber: id.toUpperCase().trim() };
+
+    const order = await Order.findOne(query);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found.",
+      });
+    }
+
+    const previousStatus = order.orderStatus;
+    order.orderStatus = normalizedStatus;
+
+    if (normalizedStatus === "delivered" && !order.deliveredAt) {
+      order.deliveredAt = new Date();
+    }
+
+    if (normalizedStatus === "cancelled") {
+      if (!order.cancelledAt) {
+        order.cancelledAt = new Date();
+      }
+      if (reason) {
+        order.cancellationReason = reason.trim();
+      }
+      if (order.paymentStatus === "paid") {
+        order.paymentStatus = "refunded";
+      }
+
+      // Restock items if was not already cancelled
+      if (previousStatus !== "cancelled") {
+        const items = await OrderItem.find({ order: order._id });
+        for (const item of items) {
+          item.status = "cancelled";
+          await item.save();
+          await Product.findByIdAndUpdate(item.product, {
+            $inc: { stock: item.quantity },
+          });
+        }
+      }
+    }
+
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Order status updated to "${normalizedStatus}" successfully.`,
+      data: order,
+    });
+  } catch (error) {
+    console.error("Error in updateAdminOrderStatus:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update order status.",
       error: error.message,
     });
   }

@@ -15,6 +15,7 @@ import couponRouter from "./coupon.route.js";
 import uploadRouter from "./upload.route.js";
 import notificationRouter from "./notification.route.js";
 import paymentRouter from "./payment.route.js";
+import reviewRouter from "./review.route.js";
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/api/orders', orderRouter);
 router.use('/api/customer', customerRouter);
 router.use('/api/payment', paymentRouter);
 router.use('/api/payments', paymentRouter);
+router.use("/api/reviews", reviewRouter);
 
 export default router;

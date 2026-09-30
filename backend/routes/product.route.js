@@ -4,6 +4,7 @@ import {
   getProductById,
   createProduct,
   createBulkProducts,
+  seedFiftyProducts,
   updateProduct,
   deleteProduct,
   deleteMultipleProducts,
@@ -26,6 +27,7 @@ const productRouter = Router();
 
 // Bulk & Maintenance Endpoints
 productRouter.post('/bulk', createBulkProducts);
+productRouter.post('/seed-50', seedFiftyProducts);
 productRouter.post('/delete-many', deleteMultipleProducts);
 productRouter.delete('/bulk', deleteMultipleProducts);
 productRouter.delete('/clear-all', clearAllProducts);

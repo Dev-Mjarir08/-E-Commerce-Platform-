@@ -35,6 +35,12 @@ export const categoryService = {
   // DELETE /api/categories/:id
   async deleteCategory(id) {
     return api.delete(`/categories/${id}`);
+  },
+
+  // POST /api/categories/bulk
+  async bulkCreateCategories(categories) {
+    const payload = Array.isArray(categories) ? { categories } : categories;
+    return api.post('/categories/bulk', payload);
   }
 };
 

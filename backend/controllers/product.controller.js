@@ -570,6 +570,43 @@ export const createBulkProducts = async (req, res) => {
   }
 };
 
+export const seedFiftyProducts = async (req, res) => {
+  try {
+    const { seedProductsData } = await import('../data/seedProductsData.js');
+    const createdList = [];
+
+    for (const item of seedProductsData) {
+      const [store, category] = await Promise.all([
+        resolveStore(item.store, req.user),
+        resolveCategory(item.category)
+      ]);
+      const slug = item.slug || slugify(item.title);
+
+      let existing = await Product.findOne({ $or: [{ slug }, { sku: item.sku }] });
+
+      if (existing) {
+        Object.assign(existing, item, { store, category });
+        await existing.save();
+        createdList.push(existing);
+      } else {
+        const prod = new Product({ ...item, store, category });
+        await prod.save();
+        createdList.push(prod);
+      }
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: `Seeded ${createdList.length} products!`,
+      count: createdList.length,
+      data: createdList
+    });
+  } catch (error) {
+    console.error('seedFiftyProducts error:', error);
+    return res.status(500).json({ success: false, message: error.message || 'Error seeding products.' });
+  }
+};
+
 /**
  * @desc    Get products belonging to current vendor's store
  * @route   GET /api/products/my-products

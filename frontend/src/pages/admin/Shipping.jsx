@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Truck,
@@ -13,64 +13,8 @@ import {
   XCircle,
   MoreHorizontal,
 } from "lucide-react";
-
-const initialShipments = [
-  {
-    id: "SHP-10021",
-    orderId: "#ORD-4821",
-    customer: "Aarav Mehta",
-    destination: "Mumbai, Maharashtra",
-    carrier: "Delhivery",
-    tracking: "DLV982731645",
-    status: "In Transit",
-    eta: "Sep 23, 2026",
-    items: 3,
-  },
-  {
-    id: "SHP-10020",
-    orderId: "#ORD-4820",
-    customer: "Diya Shah",
-    destination: "Surat, Gujarat",
-    carrier: "Blue Dart",
-    tracking: "BD457821903",
-    status: "Delivered",
-    eta: "Sep 21, 2026",
-    items: 1,
-  },
-  {
-    id: "SHP-10019",
-    orderId: "#ORD-4819",
-    customer: "Rohan Kapoor",
-    destination: "Delhi, India",
-    carrier: "Delhivery",
-    tracking: "DLV761293847",
-    status: "Processing",
-    eta: "Sep 25, 2026",
-    items: 2,
-  },
-  {
-    id: "SHP-10018",
-    orderId: "#ORD-4818",
-    customer: "Meera Patel",
-    destination: "Ahmedabad, Gujarat",
-    carrier: "Blue Dart",
-    tracking: "BD112938475",
-    status: "Out for Delivery",
-    eta: "Today",
-    items: 4,
-  },
-  {
-    id: "SHP-10017",
-    orderId: "#ORD-4817",
-    customer: "Kabir Singh",
-    destination: "Bengaluru, Karnataka",
-    carrier: "DTDC",
-    tracking: "DTC882736451",
-    status: "Delayed",
-    eta: "Sep 24, 2026",
-    items: 1,
-  },
-];
+import adminApi from "../../services/adminApi";
+import { useToast } from "../../context/ToastContext";
 
 const statusConfig = {
   Processing: {
@@ -99,43 +43,137 @@ const statusConfig = {
   },
 };
 
+/**
+ * Map backend order structure to Shipping UI shipment item
+ */
+const mapOrderToShipment = (order) => {
+  const user = order.user || {};
+  const customerName =
+    user.name ||
+    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+    order.shippingAddress?.recipientName ||
+    "Unknown Customer";
+
+  const destination = order.shippingAddress
+    ? [order.shippingAddress.city, order.shippingAddress.state]
+        .filter(Boolean)
+        .join(", ") || "Not Specified"
+    : "Not Specified";
+
+  // Calculate total item quantity from order.items
+  const totalItems = Array.isArray(order.items)
+    ? order.items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)
+    : 0;
+
+  // Map backend status to UI label
+  let uiStatus = "Processing";
+  const rawStatus = String(order.orderStatus || "").toLowerCase();
+  if (rawStatus === "shipped") {
+    uiStatus = "In Transit";
+  } else if (rawStatus === "delivered") {
+    uiStatus = "Delivered";
+  } else if (rawStatus === "cancelled") {
+    uiStatus = "Cancelled";
+  } else {
+    // placed, confirmed, processing
+    uiStatus = "Processing";
+  }
+
+  return {
+    id: order.orderNumber || String(order._id),
+    mongoId: String(order._id),
+    orderId: `#${order.orderNumber || order._id}`,
+    customer: customerName,
+    destination,
+    carrier: "Not Assigned",
+    tracking: order.trackingNumber || "Not Assigned",
+    status: uiStatus,
+    rawStatus,
+    eta: "Not Available",
+    items: totalItems,
+    rawOrder: order,
+  };
+};
+
 const Shipping = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
-  const [shipments, setShipments] = useState(initialShipments);
+  const [shipments, setShipments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [updatingId, setUpdatingId] = useState(null);
   const [openMenu, setOpenMenu] = useState(null);
 
+  // Fetch orders from real backend API
+  const fetchShipments = useCallback(
+    async (showLoading = true) => {
+      if (showLoading) setLoading(true);
+      setError(null);
+      try {
+        let backendStatus = "all";
+        if (statusFilter === "Processing") backendStatus = "processing";
+        else if (statusFilter === "In Transit") backendStatus = "shipped";
+        else if (statusFilter === "Delivered") backendStatus = "delivered";
+        else if (statusFilter === "Cancelled") backendStatus = "cancelled";
+
+        const params = { limit: 100 };
+        if (backendStatus !== "all") params.status = backendStatus;
+        if (search.trim()) params.search = search.trim();
+
+        const response = await adminApi.getAdminOrders(params);
+        const orders =
+          response?.data?.orders ||
+          response?.orders ||
+          (Array.isArray(response?.data) ? response.data : []) ||
+          [];
+
+        if (Array.isArray(orders)) {
+          setShipments(orders.map(mapOrderToShipment));
+        } else {
+          setShipments([]);
+        }
+      } catch (err) {
+        console.error("Error fetching shipments:", err);
+        setError(err.message || "Failed to load shipment records.");
+        setShipments([]);
+      } finally {
+        if (showLoading) setLoading(false);
+      }
+    },
+    [search, statusFilter],
+  );
+
+  // Debounced fetch on search or status filter change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchShipments(true);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [fetchShipments]);
+
+  // Real KPI statistics
   const stats = useMemo(() => {
     return {
       total: shipments.length,
-      processing: shipments.filter(
-        (s) => s.status === "Processing",
-      ).length,
-      transit: shipments.filter(
-        (s) => s.status === "In Transit",
-      ).length,
-      delivery: shipments.filter(
-        (s) => s.status === "Out for Delivery",
-      ).length,
-      delivered: shipments.filter(
-        (s) => s.status === "Delivered",
-      ).length,
-      delayed: shipments.filter(
-        (s) => s.status === "Delayed",
-      ).length,
+      processing: shipments.filter((s) => s.status === "Processing").length,
+      transit: shipments.filter((s) => s.status === "In Transit").length,
+      delivered: shipments.filter((s) => s.status === "Delivered").length,
+      cancelled: shipments.filter((s) => s.status === "Cancelled").length,
     };
   }, [shipments]);
 
+  // Client-side instant filter over loaded shipments
   const filteredShipments = useMemo(() => {
     const query = search.toLowerCase().trim();
 
     return shipments.filter((shipment) => {
       const matchesStatus =
-        statusFilter === "All" ||
-        shipment.status === statusFilter;
+        statusFilter === "All" || shipment.status === statusFilter;
 
       const matchesSearch =
         !query ||
@@ -150,27 +188,47 @@ const Shipping = () => {
     });
   }, [shipments, search, statusFilter]);
 
-  const refreshShipments = () => {
+  // Real refresh calling the backend
+  const refreshShipments = async () => {
     setIsRefreshing(true);
-
-    setTimeout(() => {
+    try {
+      await fetchShipments(false);
+      showToast("Shipment records refreshed.", "success");
+    } catch (err) {
+      showToast(err.message || "Failed to refresh shipments.", "error");
+    } finally {
       setIsRefreshing(false);
-    }, 800);
+    }
   };
 
-  const updateStatus = (id, status) => {
-    setShipments((prev) =>
-      prev.map((shipment) =>
-        shipment.id === id
-          ? {
-              ...shipment,
-              status,
-            }
-          : shipment,
-      ),
-    );
+  // Real backend status update
+  const updateStatus = async (shipment, newUiStatus) => {
+    let backendStatus = "processing";
+    if (newUiStatus === "In Transit" || newUiStatus === "shipped") {
+      backendStatus = "shipped";
+    } else if (newUiStatus === "Delivered" || newUiStatus === "delivered") {
+      backendStatus = "delivered";
+    } else if (newUiStatus === "Cancelled" || newUiStatus === "cancelled") {
+      backendStatus = "cancelled";
+    } else if (newUiStatus === "Processing" || newUiStatus === "processing") {
+      backendStatus = "processing";
+    }
 
-    setOpenMenu(null);
+    const targetId = shipment.mongoId || shipment.id;
+    setUpdatingId(targetId);
+    try {
+      await adminApi.updateOrderStatus(targetId, { status: backendStatus });
+      showToast(`Shipment ${shipment.id} marked as ${newUiStatus}.`, "success");
+      await fetchShipments(false);
+    } catch (err) {
+      showToast(
+        err.message || `Failed to update status for ${shipment.id}.`,
+        "error",
+      );
+    } finally {
+      setUpdatingId(null);
+      setOpenMenu(null);
+    }
   };
 
   const viewShipment = (id) => {
@@ -180,7 +238,6 @@ const Shipping = () => {
 
   const showTracking = (shipment) => {
     setOpenMenu(null);
-
     alert(
       `Tracking Information\n\nShipment: ${shipment.id}\nCarrier: ${shipment.carrier}\nTracking Number: ${shipment.tracking}\nDestination: ${shipment.destination}`,
     );
@@ -188,7 +245,7 @@ const Shipping = () => {
 
   const showReports = () => {
     alert(
-      `Shipment Reports\n\nTotal Shipments: ${stats.total}\nProcessing: ${stats.processing}\nIn Transit: ${stats.transit}\nOut for Delivery: ${stats.delivery}\nDelivered: ${stats.delivered}\nDelayed: ${stats.delayed}`,
+      `Shipment Reports\n\nTotal Shipments: ${stats.total}\nProcessing: ${stats.processing}\nIn Transit: ${stats.transit}\nDelivered: ${stats.delivered}\nCancelled: ${stats.cancelled}`,
     );
   };
 
@@ -210,29 +267,23 @@ const Shipping = () => {
             </div>
 
             <p className="text-xs text-slate-500 mt-1">
-              Monitor shipments, delivery progress, carriers,
-              and tracking activity.
+              Monitor shipments, delivery progress, carriers, and tracking
+              activity.
             </p>
           </div>
 
           <button
             type="button"
             onClick={refreshShipments}
-            disabled={isRefreshing}
+            disabled={isRefreshing || loading}
             className="flex items-center justify-center gap-1.5 px-3.5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors disabled:opacity-60"
           >
             <RefreshCw
               size={14}
-              className={
-                isRefreshing
-                  ? "animate-spin text-indigo-600"
-                  : ""
-              }
+              className={isRefreshing ? "animate-spin text-indigo-600" : ""}
             />
 
-            {isRefreshing
-              ? "Refreshing..."
-              : "Refresh Shipments"}
+            {isRefreshing ? "Refreshing..." : "Refresh Shipments"}
           </button>
         </div>
       </div>
@@ -246,10 +297,7 @@ const Shipping = () => {
               Total
             </span>
 
-            <Package
-              size={18}
-              className="text-indigo-600"
-            />
+            <Package size={18} className="text-indigo-600" />
           </div>
 
           <div className="text-2xl font-black text-slate-900 mt-3">
@@ -268,19 +316,14 @@ const Shipping = () => {
               Processing
             </span>
 
-            <Clock3
-              size={18}
-              className="text-slate-500"
-            />
+            <Clock3 size={18} className="text-slate-500" />
           </div>
 
           <div className="text-2xl font-black text-slate-900 mt-3">
             {stats.processing}
           </div>
 
-          <p className="text-[11px] text-slate-400 mt-1">
-            Awaiting dispatch
-          </p>
+          <p className="text-[11px] text-slate-400 mt-1">Awaiting dispatch</p>
         </div>
 
         {/* In Transit */}
@@ -290,19 +333,14 @@ const Shipping = () => {
               In Transit
             </span>
 
-            <Truck
-              size={18}
-              className="text-blue-600"
-            />
+            <Truck size={18} className="text-blue-600" />
           </div>
 
           <div className="text-2xl font-black text-blue-700 mt-3">
             {stats.transit}
           </div>
 
-          <p className="text-[11px] text-slate-400 mt-1">
-            Moving between hubs
-          </p>
+          <p className="text-[11px] text-slate-400 mt-1">Moving between hubs</p>
         </div>
 
         {/* Delivered */}
@@ -312,10 +350,7 @@ const Shipping = () => {
               Delivered
             </span>
 
-            <CheckCircle2
-              size={18}
-              className="text-emerald-600"
-            />
+            <CheckCircle2 size={18} className="text-emerald-600" />
           </div>
 
           <div className="text-2xl font-black text-emerald-700 mt-3">
@@ -327,26 +362,21 @@ const Shipping = () => {
           </p>
         </div>
 
-        {/* Delayed */}
+        {/* Cancelled */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Delayed
+              Cancelled
             </span>
 
-            <AlertTriangle
-              size={18}
-              className="text-rose-600"
-            />
+            <XCircle size={18} className="text-slate-500" />
           </div>
 
-          <div className="text-2xl font-black text-rose-700 mt-3">
-            {stats.delayed}
+          <div className="text-2xl font-black text-slate-700 mt-3">
+            {stats.cancelled}
           </div>
 
-          <p className="text-[11px] text-slate-400 mt-1">
-            Requires attention
-          </p>
+          <p className="text-[11px] text-slate-400 mt-1">Cancelled orders</p>
         </div>
       </div>
 
@@ -376,9 +406,7 @@ const Shipping = () => {
                 <input
                   type="text"
                   value={search}
-                  onChange={(e) =>
-                    setSearch(e.target.value)
-                  }
+                  onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search shipment..."
                   className="w-full sm:w-64 pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                 />
@@ -387,25 +415,14 @@ const Shipping = () => {
               {/* Status Filter */}
               <select
                 value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(e.target.value)
-                }
+                onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-3 py-2 text-xs font-semibold border border-slate-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-100"
               >
-                <option value="All">
-                  All Statuses
-                </option>
-
-                {Object.keys(statusConfig).map(
-                  (status) => (
-                    <option
-                      key={status}
-                      value={status}
-                    >
-                      {status}
-                    </option>
-                  ),
-                )}
+                <option value="All">All Statuses</option>
+                <option value="Processing">Processing</option>
+                <option value="In Transit">In Transit</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
               </select>
             </div>
           </div>
@@ -416,47 +433,57 @@ const Shipping = () => {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="bg-slate-50/60 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                <th className="p-3.5">
-                  Shipment
-                </th>
+                <th className="p-3.5">Shipment</th>
 
-                <th className="p-3.5">
-                  Customer
-                </th>
+                <th className="p-3.5">Customer</th>
 
-                <th className="p-3.5">
-                  Destination
-                </th>
+                <th className="p-3.5">Destination</th>
 
-                <th className="p-3.5">
-                  Carrier
-                </th>
+                <th className="p-3.5">Carrier</th>
 
-                <th className="p-3.5">
-                  Tracking
-                </th>
+                <th className="p-3.5">Tracking</th>
 
-                <th className="p-3.5">
-                  Status
-                </th>
+                <th className="p-3.5">Status</th>
 
-                <th className="p-3.5">
-                  ETA
-                </th>
+                <th className="p-3.5">ETA</th>
 
-                <th className="p-3.5 text-right">
-                  Actions
-                </th>
+                <th className="p-3.5 text-right">Actions</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-slate-100">
-              {filteredShipments.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td
-                    colSpan={8}
-                    className="p-12 text-center text-slate-400"
-                  >
+                  <td colSpan={8} className="p-12 text-center text-slate-400">
+                    <RefreshCw className="w-8 h-8 mx-auto mb-2 text-indigo-500 animate-spin" />
+                    <p className="font-semibold text-slate-600">
+                      Loading Shipments...
+                    </p>
+                    <p className="text-[11px] mt-1">
+                      Fetching live orders from database.
+                    </p>
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={8} className="p-12 text-center text-rose-500">
+                    <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-rose-400" />
+                    <p className="font-semibold text-rose-700">
+                      Failed to load shipments
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-1">{error}</p>
+                    <button
+                      type="button"
+                      onClick={() => fetchShipments(true)}
+                      className="mt-3 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold"
+                    >
+                      Retry
+                    </button>
+                  </td>
+                </tr>
+              ) : filteredShipments.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-12 text-center text-slate-400">
                     <Package className="w-8 h-8 mx-auto mb-2 text-slate-300" />
 
                     <p className="font-semibold text-slate-600">
@@ -464,18 +491,18 @@ const Shipping = () => {
                     </p>
 
                     <p className="text-[11px] mt-1">
-                      Try changing your search or status
-                      filter.
+                      Try changing your search or status filter.
                     </p>
                   </td>
                 </tr>
               ) : (
                 filteredShipments.map((shipment) => {
                   const config =
-                    statusConfig[shipment.status] ||
-                    statusConfig.Processing;
+                    statusConfig[shipment.status] || statusConfig.Processing;
 
                   const StatusIcon = config.icon;
+                  const isRowUpdating =
+                    updatingId === (shipment.mongoId || shipment.id);
 
                   return (
                     <tr
@@ -485,9 +512,15 @@ const Shipping = () => {
                       {/* Shipment */}
                       <td className="p-3.5">
                         <div>
-                          <span className="font-bold text-slate-900 block">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              viewShipment(shipment.mongoId || shipment.id)
+                            }
+                            className="font-bold text-slate-900 hover:text-indigo-600 text-left block"
+                          >
                             {shipment.id}
-                          </span>
+                          </button>
 
                           <span className="text-[10px] font-mono text-indigo-500">
                             {shipment.orderId}
@@ -503,18 +536,15 @@ const Shipping = () => {
 
                         <span className="block text-[10px] text-slate-400">
                           {shipment.items} item
-                          {shipment.items !== 1
-                            ? "s"
-                            : ""}
+                          {shipment.items !== 1 ? "s" : ""}
                         </span>
                       </td>
 
                       {/* Destination */}
                       <td className="p-3.5">
                         <div className="flex items-center gap-1.5 text-slate-600">
-                          <MapPin size={13} />
-
-                          {shipment.destination}
+                          <MapPin size={13} className="shrink-0" />
+                          <span>{shipment.destination}</span>
                         </div>
                       </td>
 
@@ -555,9 +585,7 @@ const Shipping = () => {
                             type="button"
                             title="View shipment details"
                             onClick={() =>
-                              viewShipment(
-                                shipment.id,
-                              )
+                              viewShipment(shipment.mongoId || shipment.id)
                             }
                             className="inline-flex items-center px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-[11px] font-semibold transition-colors"
                           >
@@ -568,30 +596,20 @@ const Shipping = () => {
                           <button
                             type="button"
                             title="Mark delivered"
-                            onClick={() =>
-                              updateStatus(
-                                shipment.id,
-                                "Delivered",
-                              )
-                            }
-                            className="p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50 transition-colors"
+                            disabled={isRowUpdating}
+                            onClick={() => updateStatus(shipment, "Delivered")}
+                            className="p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-50"
                           >
-                            <CheckCircle2
-                              size={14}
-                            />
+                            <CheckCircle2 size={14} />
                           </button>
 
                           {/* In Transit */}
                           <button
                             type="button"
                             title="Mark in transit"
-                            onClick={() =>
-                              updateStatus(
-                                shipment.id,
-                                "In Transit",
-                              )
-                            }
-                            className="p-1.5 rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
+                            disabled={isRowUpdating}
+                            onClick={() => updateStatus(shipment, "In Transit")}
+                            className="p-1.5 rounded-md text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
                           >
                             <Truck size={14} />
                           </button>
@@ -603,63 +621,49 @@ const Shipping = () => {
                               title="More actions"
                               onClick={() =>
                                 setOpenMenu(
-                                  openMenu ===
-                                    shipment.id
-                                    ? null
-                                    : shipment.id,
+                                  openMenu === shipment.id ? null : shipment.id,
                                 )
                               }
                               className="p-1.5 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
                             >
-                              <MoreHorizontal
-                                size={15}
-                              />
+                              <MoreHorizontal size={15} />
                             </button>
 
-                            {openMenu ===
-                              shipment.id && (
+                            {openMenu === shipment.id && (
                               <div className="absolute right-0 top-8 z-50 w-48 bg-white border border-slate-200 rounded-lg shadow-xl py-1 text-left">
                                 {/* View Details */}
                                 <button
                                   type="button"
                                   onClick={() =>
                                     viewShipment(
-                                      shipment.id,
+                                      shipment.mongoId || shipment.id,
                                     )
                                   }
                                   className="w-full px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                                 >
-                                  <Package
-                                    size={14}
-                                  />
+                                  <Package size={14} />
                                   View Details
                                 </button>
 
                                 {/* Processing */}
                                 <button
                                   type="button"
+                                  disabled={isRowUpdating}
                                   onClick={() =>
-                                    updateStatus(
-                                      shipment.id,
-                                      "Processing",
-                                    )
+                                    updateStatus(shipment, "Processing")
                                   }
                                   className="w-full px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                                 >
-                                  <Clock3
-                                    size={14}
-                                  />
+                                  <Clock3 size={14} />
                                   Mark Processing
                                 </button>
 
                                 {/* In Transit */}
                                 <button
                                   type="button"
+                                  disabled={isRowUpdating}
                                   onClick={() =>
-                                    updateStatus(
-                                      shipment.id,
-                                      "In Transit",
-                                    )
+                                    updateStatus(shipment, "In Transit")
                                   }
                                   className="w-full px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                                 >
@@ -667,38 +671,30 @@ const Shipping = () => {
                                   Mark In Transit
                                 </button>
 
-                                {/* Out for Delivery */}
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    updateStatus(
-                                      shipment.id,
-                                      "Out for Delivery",
-                                    )
-                                  }
-                                  className="w-full px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                                >
-                                  <MapPin
-                                    size={14}
-                                  />
-                                  Out for Delivery
-                                </button>
-
                                 {/* Delivered */}
                                 <button
                                   type="button"
+                                  disabled={isRowUpdating}
                                   onClick={() =>
-                                    updateStatus(
-                                      shipment.id,
-                                      "Delivered",
-                                    )
+                                    updateStatus(shipment, "Delivered")
                                   }
                                   className="w-full px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                                 >
-                                  <CheckCircle2
-                                    size={14}
-                                  />
+                                  <CheckCircle2 size={14} />
                                   Mark Delivered
+                                </button>
+
+                                {/* Cancelled */}
+                                <button
+                                  type="button"
+                                  disabled={isRowUpdating}
+                                  onClick={() =>
+                                    updateStatus(shipment, "Cancelled")
+                                  }
+                                  className="w-full px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+                                >
+                                  <XCircle size={14} />
+                                  Mark Cancelled
                                 </button>
 
                                 <div className="my-1 border-t border-slate-100" />
@@ -706,11 +702,7 @@ const Shipping = () => {
                                 {/* Tracking */}
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    showTracking(
-                                      shipment,
-                                    )
-                                  }
+                                  onClick={() => showTracking(shipment)}
                                   className="w-full px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                                 >
                                   <Truck size={14} />
@@ -732,8 +724,7 @@ const Shipping = () => {
         {/* Footer */}
         <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <span className="text-[11px] text-slate-400">
-            Showing {filteredShipments.length} of{" "}
-            {shipments.length} shipments
+            Showing {filteredShipments.length} of {shipments.length} shipments
           </span>
 
           <button
