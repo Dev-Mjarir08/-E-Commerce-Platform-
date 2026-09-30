@@ -398,9 +398,24 @@ export const applyCoupon = async (req, res) => {
 
     const cart = await Cart.findOne(userId ? { user: userId } : { guestId });
     if (!cart || cart.items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Your bag is empty.'
+      return res.status(200).json({
+        success: true,
+        message: `Coupon "${coupon.code}" applied successfully!`,
+        data: {
+          coupon: {
+            _id: coupon._id,
+            id: coupon._id,
+            code: coupon.code,
+            discountType: coupon.discountType,
+            discountValue: coupon.discountValue,
+            minOrderAmount: coupon.minOrderAmount,
+            maxDiscountAmount: coupon.maxDiscountAmount,
+            expiryDate: coupon.expiryDate,
+            isActive: coupon.isActive
+          },
+          discountAmount: 0,
+          discountPercent: coupon.discountType === 'percentage' ? coupon.discountValue : 0
+        }
       });
     }
 

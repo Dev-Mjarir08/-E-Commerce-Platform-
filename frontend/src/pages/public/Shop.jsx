@@ -64,32 +64,37 @@ export const Shop = () => {
     return list;
   }, [contextCategories]);
 
+  // Sync state if cachedProducts updates (e.g. from creation in vendor/admin)
+  useEffect(() => {
+    if (selectedCategory === 'all' && !searchQuery && cachedProducts && cachedProducts.length > 0) {
+      setProducts(cachedProducts);
+      setLoading(false);
+    }
+  }, [cachedProducts, selectedCategory, searchQuery]);
+
   useEffect(() => {
     let isCancelled = false;
 
     const loadProducts = async () => {
-      if (selectedCategory === 'all' && !searchQuery && cachedProducts.length > 0) {
-        if (!isCancelled) {
-          setProducts(cachedProducts);
-          setLoading(false);
-        }
-        return;
-      }
-
       setLoading(true);
       try {
         const res = await productApi.getProducts({
           category: selectedCategory !== 'all' ? selectedCategory : undefined,
-          search: searchQuery || undefined
+          search: searchQuery || undefined,
+          limit: 100
         });
         if (!isCancelled) {
           const items = res?.data || res?.products || [];
-          setProducts(items);
+          if (items.length > 0 || selectedCategory !== 'all' || searchQuery) {
+            setProducts(items);
+          } else if (cachedProducts && cachedProducts.length > 0) {
+            setProducts(cachedProducts);
+          }
         }
       } catch (err) {
         console.warn('Error loading products for shop:', err);
-        if (!isCancelled) {
-          setProducts([]);
+        if (!isCancelled && cachedProducts && cachedProducts.length > 0) {
+          setProducts(cachedProducts);
         }
       } finally {
         if (!isCancelled) {

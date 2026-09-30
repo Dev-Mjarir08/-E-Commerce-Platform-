@@ -74,8 +74,7 @@ const Products = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [activeFormTab, setActiveFormTab] = useState('general');
 
-  // Bulk 50+ Products Import & Seed States
-  const [isSeeding, setIsSeeding] = useState(false);
+  // Bulk Products Import States
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [bulkJsonInput, setBulkJsonInput] = useState('');
   const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
@@ -457,39 +456,6 @@ const Products = () => {
         tags: ['luxury', cat.toLowerCase(), 'editorial']
       };
     });
-  };
-
-  // 1-Click Seed 50+ Products into MongoDB
-  const handleSeedFiftyProducts = async () => {
-    const ok = await confirm({
-      title: 'Seed Curated Database Catalog',
-      message: 'This will seed/upsert 50+ curated luxury products with high-resolution imagery into your MongoDB database. Continue?',
-      confirmText: 'Seed Catalog',
-      cancelText: 'Cancel',
-      type: 'database'
-    });
-    if (!ok) return;
-    setIsSeeding(true);
-    setApiNotice(null);
-    try {
-      const res = await adminApi.seedFiftyProducts();
-      const count = res?.count || (Array.isArray(res?.data) ? res.data.length : null) || 54;
-      const msg = res?.message || res?.data?.message || `Successfully seeded ${count} products into MongoDB database!`;
-      setApiNotice({
-        type: 'success',
-        text: msg
-      });
-      await fetchProducts();
-    } catch (err) {
-      console.error('Seed 50 error:', err);
-      setApiNotice({
-        type: 'error',
-        text: err?.response?.data?.message || err?.message || 'Failed to seed 50+ products.'
-      });
-    } finally {
-      setIsSeeding(false);
-      setTimeout(() => setApiNotice(null), 6000);
-    }
   };
 
   // Submit Bulk JSON Import
@@ -878,18 +844,6 @@ const Products = () => {
             <ExternalLink size={14} />
             <span>Full Page Add</span>
           </Link>
-
-          {/* 1-Click Seed 50+ Luxury Products into MongoDB */}
-          <button
-            type="button"
-            onClick={handleSeedFiftyProducts}
-            disabled={isSeeding || isLoading}
-            title="Populate/Sync 50+ curated luxury products directly into MongoDB"
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg text-xs font-bold shadow-sm transition-all duration-150 disabled:opacity-60"
-          >
-            <Sparkles size={14} className={isSeeding ? 'animate-spin' : ''} />
-            <span>{isSeeding ? 'Seeding 50+...' : 'Seed 50+ Products'}</span>
-          </button>
 
           {/* Bulk Import JSON (50+ products) */}
           <button

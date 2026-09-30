@@ -5,7 +5,6 @@ import {
   getProductById,
   createProduct,
   createBulkProducts,
-  seedFiftyProducts,
   updateProduct,
   deleteProduct,
   deleteMultipleProducts,
@@ -49,7 +48,6 @@ adminRouter.delete('/vendors/:id', deleteVendor);
 
 // Bulk Operations (Batch Import, 1-Click Seed, Multi-Delete, Clear-All)
 adminRouter.post('/products/bulk', createBulkProducts);
-adminRouter.post('/products/seed-50', seedFiftyProducts);
 adminRouter.post('/products/delete-many', deleteMultipleProducts);
 adminRouter.delete('/products/bulk', deleteMultipleProducts);
 adminRouter.delete('/products/clear-all', clearAllProducts);

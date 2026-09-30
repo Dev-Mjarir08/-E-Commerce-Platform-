@@ -56,6 +56,18 @@ export const ShopDataProvider = ({ children }) => {
 
   useEffect(() => {
     loadInitialData();
+
+    const handleUpdate = () => {
+      loadInitialData();
+    };
+
+    window.addEventListener('shop:products-updated', handleUpdate);
+    window.addEventListener('focus', handleUpdate);
+
+    return () => {
+      window.removeEventListener('shop:products-updated', handleUpdate);
+      window.removeEventListener('focus', handleUpdate);
+    };
   }, [loadInitialData]);
 
   // Fast lookup helpers
@@ -65,7 +77,8 @@ export const ShopDataProvider = ({ children }) => {
   }, [products]);
 
   const featuredProducts = useMemo(() => {
-    return products.filter((p) => p.isFeatured || p.isBestSeller || p.badge === 'Bestseller' || p.badge === 'New');
+    const list = products.filter((p) => p.isFeatured || p.isBestSeller || p.badge === 'Bestseller' || p.badge === 'New');
+    return list.length > 0 ? list : products.slice(0, 8);
   }, [products]);
 
   const value = useMemo(() => ({

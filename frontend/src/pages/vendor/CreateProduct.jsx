@@ -49,13 +49,14 @@ export default function CreateProduct() {
   const [tags, setTags] = useState(["Bestseller", "New Arrival"]);
   const [tagInput, setTagInput] = useState("");
 
-  // Handle image upload simulation
+  // Handle image upload
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     const newImages = files.map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
       url: URL.createObjectURL(file),
       name: file.name,
+      file,
     }));
     setImages((prev) => [...prev, ...newImages]);
   };
@@ -117,24 +118,63 @@ export default function CreateProduct() {
 
   // Form Submit
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    if (!productData.title.trim()) {
+      alert("Please provide a product title.");
+      return;
+    }
+    if (!pricing.price || priceNum <= 0) {
+      alert("Please enter a valid selling price.");
+      return;
+    }
+
     setSubmitting(true);
-    const finalPayload = {
-      name: productData.title,
-      description: productData.description,
-      category: productData.category,
-      price: priceNum,
-      stock: parseInt(pricing.stockQuantity) || 0,
-      status: productData.status.toLowerCase(),
-      tags,
-    };
     try {
-      await productApi.createProduct(finalPayload);
+      const formData = new FormData();
+      formData.append("title", productData.title.trim());
+      formData.append("name", productData.title.trim());
+      formData.append("description", productData.description.trim() || "Exclusive curated collection piece.");
+      formData.append("category", productData.category || "Outerwear");
+      formData.append("basePrice", priceNum);
+      formData.append("price", priceNum);
+      if (pricing.comparePrice) {
+        formData.append("discountPrice", parseFloat(pricing.comparePrice) || 0);
+      }
+      formData.append("stock", parseInt(pricing.stockQuantity) || 15);
+      formData.append("sku", productData.sku.trim() || `SKU-${Date.now().toString().slice(-6)}`);
+      formData.append("status", productData.status.toLowerCase());
+      formData.append("isActive", productData.status.toLowerCase() === "active");
+      formData.append("isFeatured", true);
+      formData.append("tags", JSON.stringify(tags));
+
+      let hasFiles = false;
+      images.forEach((img) => {
+        if (img.file) {
+          formData.append("images", img.file);
+          hasFiles = true;
+        }
+      });
+
+      if (!hasFiles) {
+        formData.append(
+          "images",
+          JSON.stringify([
+            {
+              url: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=80",
+              isPrimary: true,
+            },
+          ])
+        );
+      }
+
+      await productApi.createProduct(formData);
+      window.dispatchEvent(new CustomEvent("shop:products-updated"));
+      navigate("/vendor/products");
     } catch (err) {
-      console.warn("Product creation fallback:", err);
+      console.error("Product creation error:", err);
+      alert(err.message || "Failed to create product.");
     } finally {
       setSubmitting(false);
-      navigate("/vendor/products");
     }
   };
 

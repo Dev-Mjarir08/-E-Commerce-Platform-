@@ -3,6 +3,7 @@ import {
   createCoupon,
   getCoupons,
   getCouponById,
+  validateCoupon,
   updateCoupon,
   deleteCoupon
 } from '../controllers/coupon.controller.js';
@@ -10,8 +11,9 @@ import { protect, authorize, optionalAuth } from '../middlewares/auth.middleware
 
 const couponRouter = Router();
 
-// Public / Client coupon lookup
+// Public / Client coupon lookup & validation
 couponRouter.get('/', optionalAuth, getCoupons);
+couponRouter.post('/validate', optionalAuth, validateCoupon);
 couponRouter.get('/:id', getCouponById);
 
 // Vendor & Admin Coupon Management

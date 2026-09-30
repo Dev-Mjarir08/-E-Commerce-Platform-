@@ -243,10 +243,39 @@ export const getProductById = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    const { title, slug, description, brand, sku, category, store, basePrice, discountPrice, stock, hasVariants, attributes, tags, isFeatured, isActive, images: rawImages } = req.body;
+    const {
+      title,
+      name,
+      slug,
+      description,
+      desc,
+      brand,
+      sku,
+      category,
+      store,
+      basePrice,
+      price,
+      discountPrice,
+      comparePrice,
+      stock,
+      stockQuantity,
+      hasVariants,
+      attributes,
+      tags,
+      isFeatured,
+      isActive,
+      status,
+      images: rawImages
+    } = req.body;
 
-    if (!title || !description || basePrice == null) {
-      return res.status(400).json({ success: false, message: 'Title, description, and basePrice are required.' });
+    const resolvedTitle = (title || name || '').trim();
+    const resolvedDesc = (description || desc || 'Curated luxury fashion and lifestyle atelier consignment.').trim();
+    const resolvedBasePrice = basePrice != null && basePrice !== ''
+      ? Number(basePrice)
+      : (price != null && price !== '' ? Number(price) : null);
+
+    if (!resolvedTitle || resolvedBasePrice == null || isNaN(resolvedBasePrice)) {
+      return res.status(400).json({ success: false, message: 'Title/name and basePrice/price are required.' });
     }
 
     const [resolvedStore, resolvedCategory] = await Promise.all([
@@ -258,33 +287,54 @@ export const createProduct = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid store or category reference.' });
     }
 
-    const uniqueSlug = slug ? await getUniqueSlug(slug) : await getUniqueSlug(title);
-    const finalSku = (sku && sku.trim()) || `SKU-${Date.now().toString().slice(-6)}`;
+    const uniqueSlug = slug ? await getUniqueSlug(slug) : await getUniqueSlug(resolvedTitle);
+    const finalSku = (sku && String(sku).trim()) || `SKU-${Date.now().toString().slice(-6)}`;
     const imageList = normalizeImages(rawImages, req.files);
+
+    const resolvedDiscountPrice = discountPrice != null && discountPrice !== ''
+      ? Number(discountPrice)
+      : (comparePrice != null && comparePrice !== '' ? Number(comparePrice) : null);
+
+    const resolvedStock = stock != null && stock !== ''
+      ? Math.max(0, parseInt(stock, 10))
+      : (stockQuantity != null && stockQuantity !== '' ? Math.max(0, parseInt(stockQuantity, 10)) : 15);
+
+    const resolvedIsActive = isActive != null
+      ? (isActive !== 'false' && isActive !== false)
+      : (status ? status.toLowerCase() === 'active' : true);
+
+    const resolvedIsFeatured = isFeatured != null
+      ? (isFeatured === 'true' || isFeatured === true)
+      : true;
 
     const product = new Product({
       store: resolvedStore,
       category: resolvedCategory,
-      title: title.trim(),
+      title: resolvedTitle,
       slug: uniqueSlug,
-      description: description.trim(),
-      brand: brand ? brand.trim() : 'Atelier Studio',
+      description: resolvedDesc,
+      brand: (brand && String(brand).trim()) || 'Atelier Studio',
       sku: finalSku,
-      basePrice: Number(basePrice),
-      discountPrice: discountPrice ? Number(discountPrice) : null,
-      stock: stock != null ? Math.max(0, parseInt(stock, 10)) : 0,
+      basePrice: resolvedBasePrice,
+      discountPrice: resolvedDiscountPrice,
+      stock: resolvedStock,
       hasVariants: hasVariants === 'true' || hasVariants === true,
       images: imageList,
       attributes: parseJSON(attributes).filter((a) => a && a.name && a.value),
       tags: parseJSON(tags).map((t) => String(t).trim().toLowerCase()),
-      isFeatured: isFeatured === 'true' || isFeatured === true,
-      isActive: isActive !== 'false' && isActive !== false
+      isFeatured: resolvedIsFeatured,
+      isActive: resolvedIsActive
     });
 
     await product.save();
     const populated = await Product.findById(product._id).populate('store category');
 
-    return res.status(201).json({ success: true, message: 'Product created successfully.', data: populated });
+    return res.status(201).json({
+      success: true,
+      message: 'Product created successfully.',
+      data: populated,
+      product: populated
+    });
   } catch (error) {
     console.error('createProduct error:', error);
     return res.status(500).json({ success: false, message: error.message || 'Error creating product.' });
@@ -517,43 +567,6 @@ export const createBulkProducts = async (req, res) => {
   } catch (error) {
     console.error('createBulkProducts error:', error);
     return res.status(500).json({ success: false, message: error.message || 'Error during bulk creation.' });
-  }
-};
-
-export const seedFiftyProducts = async (req, res) => {
-  try {
-    const { seedProductsData } = await import('../data/seedProductsData.js');
-    const createdList = [];
-
-    for (const item of seedProductsData) {
-      const [store, category] = await Promise.all([
-        resolveStore(item.store, req.user),
-        resolveCategory(item.category)
-      ]);
-      const slug = item.slug || slugify(item.title);
-
-      let existing = await Product.findOne({ $or: [{ slug }, { sku: item.sku }] });
-
-      if (existing) {
-        Object.assign(existing, item, { store, category });
-        await existing.save();
-        createdList.push(existing);
-      } else {
-        const prod = new Product({ ...item, store, category });
-        await prod.save();
-        createdList.push(prod);
-      }
-    }
-
-    return res.status(201).json({
-      success: true,
-      message: `Seeded ${createdList.length} products!`,
-      count: createdList.length,
-      data: createdList
-    });
-  } catch (error) {
-    console.error('seedFiftyProducts error:', error);
-    return res.status(500).json({ success: false, message: error.message || 'Error seeding products.' });
   }
 };
 

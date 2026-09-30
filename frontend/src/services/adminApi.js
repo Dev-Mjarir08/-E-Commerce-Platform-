@@ -113,13 +113,6 @@ export const adminApi = {
   },
 
   /**
-   * One-click seed 50+ high-end luxury products into MongoDB
-   */
-  async seedFiftyProducts() {
-    return api.post('/admin/products/seed-50');
-  },
-
-  /**
    * Delete multiple selected products at once (with disk media cleanup)
    * @param {Array<string>} ids - Array of product ObjectIds or slugs
    */

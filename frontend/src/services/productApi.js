@@ -7,7 +7,18 @@ export const productApi = {
   async getProducts(params = {}) {
     try {
       const response = await api.get('/products', { params });
-      return response.data;
+      const items = Array.isArray(response)
+        ? response
+        : (Array.isArray(response?.data) ? response.data : (Array.isArray(response?.products) ? response.products : []));
+      return {
+        success: response?.success !== false,
+        count: items.length,
+        totalCount: response?.totalCount || items.length,
+        totalPages: response?.totalPages || 1,
+        currentPage: response?.currentPage || 1,
+        data: items,
+        products: items
+      };
     } catch (error) {
       console.error('Backend product API fetch error:', error);
       return { success: false, count: 0, data: [], products: [] };
@@ -20,7 +31,12 @@ export const productApi = {
   async getProductById(id) {
     try {
       const response = await api.get(`/products/${id}`);
-      return response.data;
+      const item = response?.data || response?.product || response;
+      return {
+        success: response?.success !== false && Boolean(item),
+        data: item,
+        product: item
+      };
     } catch (error) {
       console.error('Backend product single fetch error:', error);
       return { success: false, data: null, product: null };

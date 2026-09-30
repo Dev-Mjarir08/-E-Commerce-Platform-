@@ -22,7 +22,8 @@ const initialState = {
   isOpen: false,
   currency: 'INR',
   promoCode: null,
-  discountPercent: 0
+  discountPercent: 0,
+  appliedCoupon: null
 };
 
 const cartSlice = createSlice({
@@ -103,27 +104,59 @@ const cartSlice = createSlice({
       state.isOpen = false;
     },
     applyPromo: (state, action) => {
-      const code = action.payload.trim().toUpperCase();
+      if (!action.payload) {
+        state.promoCode = null;
+        state.discountPercent = 0;
+        state.appliedCoupon = null;
+        return;
+      }
+      if (typeof action.payload === 'object') {
+        const c = action.payload.coupon || action.payload;
+        state.appliedCoupon = c;
+        state.promoCode = (c.code || '').trim().toUpperCase();
+        state.discountPercent = c.discountType === 'percentage' ? Number(c.discountValue || 0) : 0;
+        return;
+      }
+      const code = String(action.payload).trim().toUpperCase();
       if (code === 'M4M10' || code === 'WELCOME10' || code === 'ATELIER10') {
         state.promoCode = code;
         state.discountPercent = 10;
+        state.appliedCoupon = { code, discountType: 'percentage', discountValue: 10 };
       } else if (code === 'PRIVILEGE20' || code === 'VIP20') {
         state.promoCode = code;
         state.discountPercent = 20;
+        state.appliedCoupon = { code, discountType: 'percentage', discountValue: 20 };
       } else {
+        state.promoCode = code;
+        state.discountPercent = 0;
+        state.appliedCoupon = { code, discountType: 'percentage', discountValue: 0 };
+      }
+    },
+    setAppliedCoupon: (state, action) => {
+      const coupon = action.payload?.coupon || action.payload;
+      if (!coupon) {
+        state.appliedCoupon = null;
         state.promoCode = null;
         state.discountPercent = 0;
+        return;
       }
+      state.appliedCoupon = coupon;
+      state.promoCode = coupon.code ? coupon.code.toUpperCase() : null;
+      state.discountPercent = coupon.discountType === 'percentage' ? Number(coupon.discountValue || 0) : 0;
     },
     removePromo: (state) => {
       state.promoCode = null;
       state.discountPercent = 0;
+      state.appliedCoupon = null;
     },
     setCurrency: (state, action) => {
       state.currency = action.payload;
     },
     clearCart: (state) => {
       state.items = [];
+      state.appliedCoupon = null;
+      state.promoCode = null;
+      state.discountPercent = 0;
       saveCartToStorage([]);
     }
   }
@@ -137,6 +170,7 @@ export const {
   openCart,
   closeCart,
   applyPromo,
+  setAppliedCoupon,
   removePromo,
   setCurrency,
   clearCart
