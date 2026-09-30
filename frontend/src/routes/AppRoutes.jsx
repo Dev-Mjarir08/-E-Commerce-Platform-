@@ -51,6 +51,14 @@ const VendorNotifications = lazy(() => import("../pages/vendor/Notifications"));
 const VendorStore = lazy(() => import("../pages/vendor/Store"));
 const VendorStoreSettings = lazy(() => import("../pages/vendor/StoreSettings"));
 const VendorProfile = lazy(() => import("../pages/vendor/Profile"));
+const VendorLowStock = lazy(() => import("../pages/vendor/LowStock"));
+const VendorOutOfStock = lazy(() => import("../pages/vendor/OutOfStock"));
+const VendorInventoryHistory = lazy(() => import("../pages/vendor/InventoryHistory"));
+const VendorProductVariants = lazy(() => import("../pages/vendor/ProductVariant"));
+const VendorMediaUpload = lazy(() => import("../pages/vendor/MediaUpload"));
+const VendorCustomerDetails = lazy(() => import("../pages/vendor/CustomerDetails"));
+const VendorReviewDetails = lazy(() => import("../pages/vendor/ReviewDetails"));
+const VendorSystemSettings = lazy(() => import("../pages/vendor/SystemSetting"));
 
 // Lazy-loaded Admin Routes
 const Dashboard = lazy(() => import("../pages/admin/Dashboard"));
@@ -219,6 +227,14 @@ export const AppRoutes = () => {
             <Route path="analytics" element={<VendorAnalytics />} />
             <Route path="reviews" element={<VendorReviews />} />
             <Route path="notifications" element={<VendorNotifications />} />
+            <Route path="low-stock" element={<VendorLowStock />} />
+            <Route path="out-of-stock" element={<VendorOutOfStock />} />
+            <Route path="inventory-history" element={<VendorInventoryHistory />} />
+            <Route path="product-variant" element={<VendorProductVariants />} />
+            <Route path="media-upload" element={<VendorMediaUpload />} />
+            <Route path="customer-details/:id" element={<VendorCustomerDetails />} />
+            <Route path="review-details/:id" element={<VendorReviewDetails />} />
+            <Route path="system-settings" element={<VendorSystemSettings />} />
             <Route path="store" element={<VendorStore />} />
             <Route path="settings" element={<VendorStoreSettings />} />
             <Route path="profile" element={<VendorProfile />} />
