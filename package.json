@@ -1,0 +1,9 @@
+{
+  "name": "e-commerce-platform",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "install:frontend": "cd frontend && npm install"
+  }
+}
