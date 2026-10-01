@@ -31,7 +31,7 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action) => {
-      const { product, size, color, quantity = 1 } = action.payload;
+      const { product, size, color, quantity = 1, openDrawer = true } = action.payload;
       const prodId = product.id || product._id || product.slug;
       const prodName = product.name || product.title || 'Curated Atelier Piece';
       const prodPrice = Number(product.price ?? product.basePrice ?? product.discountPrice ?? 0);
@@ -64,7 +64,9 @@ const cartSlice = createSlice({
           quantity: quantity
         });
       }
-      state.isOpen = true;
+      if (openDrawer !== false && action.payload?.openDrawer !== false) {
+        state.isOpen = true;
+      }
       saveCartToStorage(state.items);
     },
     removeFromCart: (state, action) => {

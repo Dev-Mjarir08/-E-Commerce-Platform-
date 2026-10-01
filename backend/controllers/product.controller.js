@@ -97,18 +97,35 @@ const normalizeImages = (rawImages, reqFiles = null, existing = []) => {
 
 const resolveStore = async (input, user) => {
   try {
+    // 1. If explicit valid Store ObjectId was provided in the product payload
     if (input && mongoose.Types.ObjectId.isValid(input)) {
       const existing = await Store.findById(input);
       if (existing) return existing._id;
     }
+
+    // 2. If logged in vendor/admin is importing products, associate with their store
     if (user?._id) {
-      const userStore = await Store.findOne({ owner: user._id });
-      if (userStore) return userStore._id;
+      let userStore = await Store.findOne({ owner: user._id });
+      if (!userStore) {
+        // Automatically create a boutique storefront for the logged-in vendor
+        const storeName = `${user.name || 'Vendor'}'s Boutique`;
+        userStore = await Store.create({
+          owner: user._id,
+          name: storeName,
+          slug: `${slugify(storeName)}-${Date.now().toString().slice(-4)}`,
+          description: 'Official verified boutique storefront catalog',
+          status: 'active',
+          isVerified: true
+        });
+      }
+      return userStore._id;
     }
+
+    // 3. Fallback to store name match or default flagship store
     const name = input || 'Atelier Flagship Store';
     let store = await Store.findOne({ $or: [{ name }, { slug: slugify(name) }] });
     if (!store) {
-      const owner = user?._id || (await User.findOne({ role: { $in: ['admin', 'vendor'] } }))?._id || new mongoose.Types.ObjectId();
+      const owner = (await User.findOne({ role: { $in: ['admin', 'vendor'] } }))?._id || new mongoose.Types.ObjectId();
       store = await Store.create({
         owner,
         name,
@@ -163,13 +180,43 @@ export const getProducts = async (req, res) => {
     }
 
     if (category && category !== 'all') {
-      if (mongoose.Types.ObjectId.isValid(category)) {
-        query.category = category;
+      const cleanCat = String(category).trim();
+      const slugKey = slugify(cleanCat);
+      const altSlug = slugKey.replace(/-and-/g, '-');
+      const noApos = slugKey.replace(/'/g, '');
+
+      if (mongoose.Types.ObjectId.isValid(cleanCat)) {
+        query.$or = [
+          { category: cleanCat },
+          { category: new mongoose.Types.ObjectId(cleanCat) }
+        ];
       } else {
         const cat = await Category.findOne({
-          $or: [{ slug: category.toLowerCase() }, { name: new RegExp(`^${category}$`, 'i') }]
+          $or: [
+            { slug: cleanCat.toLowerCase() },
+            { slug: slugKey },
+            { slug: altSlug },
+            { slug: noApos },
+            { name: new RegExp(`^${cleanCat}$`, 'i') },
+            { slug: new RegExp(slugKey, 'i') }
+          ]
         });
-        if (cat) query.category = cat._id;
+
+        if (cat) {
+          query.$or = [
+            { category: cat._id },
+            { tags: cat.slug },
+            { tags: cleanCat.toLowerCase() },
+            { tags: slugKey },
+            { tags: altSlug }
+          ];
+        } else {
+          query.$or = [
+            { tags: cleanCat.toLowerCase() },
+            { tags: slugKey },
+            { tags: new RegExp(cleanCat, 'i') }
+          ];
+        }
       }
     }
 
@@ -439,7 +486,14 @@ export const deleteMultipleProducts = async (req, res) => {
       $or: [{ _id: { $in: validObjectIds } }, { slug: { $in: stringIds } }, { sku: { $in: stringIds } }]
     });
 
-    if (products.length === 0) return res.status(404).json({ success: false, message: 'No matching products found.' });
+    if (products.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No matching products found to delete.',
+        deletedCount: 0,
+        deletedIds: []
+      });
+    }
 
     for (const prod of products) await deleteProductImages(prod.images);
 
@@ -477,133 +531,251 @@ export const clearAllProducts = async (req, res) => {
 
 export const createBulkProducts = async (req, res) => {
   try {
+    // Step 1: Normalize incoming payload (accepts array or { products: [...] })
     let items = req.body;
     if (typeof items === 'string') {
       try { items = JSON.parse(items); } catch { }
     }
     if (items?.products) items = items.products;
     if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ success: false, message: 'Please provide an array of products.' });
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide an array of products or an object containing a "products" list.'
+      });
     }
 
+    // Step 2: Pre-fetch stores, categories, and existing product identifiers in parallel (fast!)
+    const [defaultStoreId, allStores, allCategories, existingProducts] = await Promise.all([
+      resolveStore(null, req.user),
+      Store.find({}, '_id name slug'),
+      Category.find({}, '_id name slug'),
+      Product.find({}, '_id slug sku store')
+    ]);
+
+    const storeMap = new Map();
+    allStores.forEach((s) => {
+      storeMap.set(s._id.toString(), s._id);
+      storeMap.set(s.slug, s._id);
+      storeMap.set(s.name.toLowerCase(), s._id);
+    });
+
+    const categoryMap = new Map();
+    allCategories.forEach((c) => {
+      categoryMap.set(c._id.toString(), c._id);
+      categoryMap.set(c.slug, c._id);
+      categoryMap.set(c.name.toLowerCase(), c._id);
+    });
+
+    // Default category fallback
+    let fallbackCatId = allCategories[0]?._id;
+    if (!fallbackCatId) {
+      const createdFallback = await Category.create({
+        name: 'General',
+        slug: 'general',
+        description: 'General product collection',
+        isActive: true
+      });
+      fallbackCatId = createdFallback._id;
+      categoryMap.set(createdFallback._id.toString(), createdFallback._id);
+    }
+
+    // Existing products lookup tables (in-memory O(1))
+    const existingSkuMap = new Map();
+    const existingSlugMap = new Map();
+    const existingIdMap = new Map();
+
+    existingProducts.forEach((p) => {
+      existingIdMap.set(p._id.toString(), p);
+      if (p.sku) existingSkuMap.set(String(p.sku).trim(), p);
+      if (p.slug) existingSlugMap.set(String(p.slug).trim(), p);
+    });
+
+    const bulkOps = [];
     const processed = [];
     const errors = [];
 
+    const getCategoryId = (catVal) => {
+      if (!catVal) return fallbackCatId;
+      if (categoryMap.has(catVal?.toString?.())) return categoryMap.get(catVal.toString());
+      const key = String(catVal).trim().toLowerCase();
+      if (categoryMap.has(key)) return categoryMap.get(key);
+      return fallbackCatId;
+    };
+
+    const getStoreId = (storeVal) => {
+      if (!storeVal) return defaultStoreId;
+      if (storeMap.has(storeVal?.toString?.())) return storeMap.get(storeVal.toString());
+      const key = String(storeVal).trim().toLowerCase();
+      if (storeMap.has(key)) return storeMap.get(key);
+      return defaultStoreId;
+    };
+
+    // Step 3: Fast in-memory document preparation
     for (let i = 0; i < items.length; i++) {
       const p = items[i];
       try {
-        if (!p?.title || p.basePrice == null) {
-          errors.push({ index: i, error: 'Title and basePrice are required.' });
+        const title = (p?.title || p?.name || '').trim();
+        const rawPrice = p?.basePrice != null ? p.basePrice : p?.price;
+
+        if (!title || rawPrice == null) {
+          errors.push({
+            index: i,
+            title: title || `Item #${i + 1}`,
+            error: 'Product title (or name) and basePrice (or price) are required.'
+          });
           continue;
         }
 
-        const [storeId, categoryId] = await Promise.all([
-          resolveStore(p.store, req.user),
-          resolveCategory(p.category)
-        ]);
+        const storeId = getStoreId(p.store);
+        const categoryId = getCategoryId(p.category || p.categoryName);
 
-        const imgList = normalizeImages(p.images || p.image);
+        const basePriceNum = Number(rawPrice) || 0;
+        let discountPriceNum = p.discountPrice != null
+          ? Number(p.discountPrice)
+          : (p.compareAtPrice != null ? Number(p.compareAtPrice) : null);
 
-        let existing = null;
-        if (p.sku) existing = await Product.findOne({ sku: String(p.sku).trim() });
-        if (!existing && p.slug) existing = await Product.findOne({ slug: slugify(p.slug) });
+        // Schema constraint: discountPrice must be <= basePrice
+        if (discountPriceNum != null && discountPriceNum > basePriceNum) {
+          discountPriceNum = null;
+        }
 
-        if (existing) {
-          existing.title = p.title.trim();
-          existing.basePrice = Number(p.basePrice);
-          if (p.discountPrice !== undefined) existing.discountPrice = p.discountPrice ? Number(p.discountPrice) : null;
-          if (p.stock !== undefined) existing.stock = Number(p.stock);
-          if (p.description) existing.description = p.description;
-          if (p.brand) existing.brand = p.brand;
-          if (imgList.length > 0) existing.images = imgList;
-          if (storeId) existing.store = storeId;
-          if (categoryId) existing.category = categoryId;
-          await existing.save();
-          processed.push(existing);
-        } else {
-          const uniqueSlug = await getUniqueSlug(p.slug || p.title);
-          let finalSku = p.sku ? String(p.sku).trim() : `SKU-${Date.now().toString().slice(-4)}${i}`;
-          let c = 1;
-          while (await Product.findOne({ sku: finalSku })) {
-            finalSku = `${p.sku || 'SKU'}-${Date.now().toString().slice(-3)}-${c++}`;
-          }
+        const stockNum = p.stock != null
+          ? Math.max(0, parseInt(p.stock, 10))
+          : (p.quantity != null ? Math.max(0, parseInt(p.quantity, 10)) : 25);
 
-          const doc = new Product({
-            store: storeId,
-            category: categoryId,
-            title: p.title.trim(),
-            slug: uniqueSlug,
-            description: p.description || `${p.title} handcrafted with premium materials.`,
-            brand: p.brand || 'Atelier Studio',
-            sku: finalSku,
-            basePrice: Number(p.basePrice),
-            discountPrice: p.discountPrice ? Number(p.discountPrice) : null,
-            stock: p.stock != null ? Number(p.stock) : 20,
+        // Normalize images
+        const rawImages = p.images || p.image || p.imageUrl || [];
+        let imgList = normalizeImages(rawImages);
+        if (imgList.length === 0) {
+          imgList = [{
+            url: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&q=80&w=800',
+            public_id: null,
+            isPrimary: true
+          }];
+        }
+
+        // Check if item already exists by _id, sku, or slug
+        let existingMatch = null;
+        if (p._id && existingIdMap.has(String(p._id))) {
+          existingMatch = existingIdMap.get(String(p._id));
+        } else if (p.sku && existingSkuMap.has(String(p.sku).trim())) {
+          existingMatch = existingSkuMap.get(String(p.sku).trim());
+        } else if (p.slug && existingSlugMap.has(slugify(p.slug))) {
+          existingMatch = existingSlugMap.get(slugify(p.slug));
+        }
+
+        const cleanAttributes = Array.isArray(p.attributes)
+          ? p.attributes.filter((a) => a && a.name && a.value)
+          : [];
+        const cleanTags = Array.isArray(p.tags)
+          ? p.tags.map((t) => String(t).trim().toLowerCase())
+          : ['catalog', 'boutique'];
+
+        if (existingMatch) {
+          // Prepare update operation (prevents duplicate key errors!)
+          const updateDoc = {
+            title,
+            basePrice: basePriceNum,
+            discountPrice: discountPriceNum,
+            stock: stockNum,
+            description: p.description || existingMatch.description || `${title} from our curated boutique collection.`,
+            brand: (p.brand && String(p.brand).trim()) || existingMatch.brand || 'Atelier Studio',
             hasVariants: Boolean(p.hasVariants),
             images: imgList,
-            attributes: Array.isArray(p.attributes) ? p.attributes : [],
-            tags: Array.isArray(p.tags) ? p.tags.map((t) => String(t).toLowerCase()) : ['catalog'],
-            ratingsAverage: p.ratingsAverage || 4.8,
-            numReviews: p.numReviews || Math.floor(10 + Math.random() * 30),
+            attributes: cleanAttributes,
+            tags: cleanTags,
+            ratingsAverage: Number(p.ratingsAverage) || existingMatch.ratingsAverage || 4.5,
+            numReviews: Number(p.numReviews) || existingMatch.numReviews || 12,
             isFeatured: Boolean(p.isFeatured),
-            isActive: p.isActive !== false
+            isActive: p.isActive !== false,
+            store: storeId,
+            category: categoryId
+          };
+
+          bulkOps.push({
+            updateOne: {
+              filter: { _id: existingMatch._id },
+              update: { $set: updateDoc }
+            }
           });
 
-          await doc.save();
-          processed.push(doc);
+          processed.push({ _id: existingMatch._id, title, status: 'updated' });
+        } else {
+          // Generate unique slug in-memory
+          let baseSlug = slugify(p.slug || title) || `product-${Date.now()}`;
+          let uniqueSlug = baseSlug;
+          let sc = 1;
+          while (existingSlugMap.has(uniqueSlug)) {
+            uniqueSlug = `${baseSlug}-${sc++}`;
+          }
+          existingSlugMap.set(uniqueSlug, true);
+
+          // Generate unique SKU in-memory
+          let finalSku = p.sku ? String(p.sku).trim() : `SKU-${Date.now().toString().slice(-4)}${i}`;
+          let kc = 1;
+          while (existingSkuMap.has(finalSku)) {
+            finalSku = `${p.sku || 'SKU'}-${Date.now().toString().slice(-3)}-${kc++}`;
+          }
+          existingSkuMap.set(finalSku, true);
+
+          const newDoc = {
+            store: storeId,
+            category: categoryId,
+            title,
+            slug: uniqueSlug,
+            description: p.description || `${title} from our curated boutique collection.`,
+            brand: (p.brand && String(p.brand).trim()) || 'Atelier Studio',
+            sku: finalSku,
+            basePrice: basePriceNum,
+            discountPrice: discountPriceNum,
+            stock: stockNum,
+            hasVariants: Boolean(p.hasVariants),
+            images: imgList,
+            attributes: cleanAttributes,
+            tags: cleanTags,
+            ratingsAverage: Number(p.ratingsAverage) || 4.5,
+            numReviews: Number(p.numReviews) || Math.floor(10 + Math.random() * 20),
+            isFeatured: Boolean(p.isFeatured),
+            isActive: p.isActive !== false
+          };
+
+          // If valid 24-char ObjectId provided in payload and not conflicting, preserve it
+          if (p._id && mongoose.Types.ObjectId.isValid(p._id) && !existingIdMap.has(String(p._id))) {
+            newDoc._id = new mongoose.Types.ObjectId(p._id);
+            existingIdMap.set(String(p._id), true);
+          }
+
+          bulkOps.push({
+            insertOne: {
+              document: newDoc
+            }
+          });
+
+          processed.push({ title, sku: finalSku, status: 'created' });
         }
       } catch (err) {
-        errors.push({ index: i, title: p?.title, error: err.message });
+        errors.push({ index: i, title: p?.title || `Item #${i + 1}`, error: err.message });
       }
+    }
+
+    // Step 4: Execute ultra-fast bulkWrite in a single database network call
+    if (bulkOps.length > 0) {
+      await Product.bulkWrite(bulkOps, { ordered: false });
     }
 
     return res.status(201).json({
       success: true,
-      message: `Processed ${processed.length} products.`,
+      message: `Successfully processed ${processed.length} products into boutique catalog.`,
       count: processed.length,
       errors: errors.length > 0 ? errors : undefined,
       data: processed
     });
   } catch (error) {
     console.error('createBulkProducts error:', error);
-    return res.status(500).json({ success: false, message: error.message || 'Error during bulk creation.' });
-  }
-};
-
-export const seedFiftyProducts = async (req, res) => {
-  try {
-    const { seedProductsData } = await import('../data/seedProductsData.js');
-    const createdList = [];
-
-    for (const item of seedProductsData) {
-      const [store, category] = await Promise.all([
-        resolveStore(item.store, req.user),
-        resolveCategory(item.category)
-      ]);
-      const slug = item.slug || slugify(item.title);
-
-      let existing = await Product.findOne({ $or: [{ slug }, { sku: item.sku }] });
-
-      if (existing) {
-        Object.assign(existing, item, { store, category });
-        await existing.save();
-        createdList.push(existing);
-      } else {
-        const prod = new Product({ ...item, store, category });
-        await prod.save();
-        createdList.push(prod);
-      }
-    }
-
-    return res.status(201).json({
-      success: true,
-      message: `Seeded ${createdList.length} products!`,
-      count: createdList.length,
-      data: createdList
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Error occurred during bulk product creation.'
     });
-  } catch (error) {
-    console.error('seedFiftyProducts error:', error);
-    return res.status(500).json({ success: false, message: error.message || 'Error seeding products.' });
   }
 };
 

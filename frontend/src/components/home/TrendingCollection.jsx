@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
 export const TrendingCollection = ({ onShopCollection }) => {
@@ -52,14 +53,13 @@ export const TrendingCollection = ({ onShopCollection }) => {
           </blockquote>
 
           <div>
-            <a
-              href="#new-arrivals"
-              onClick={onShopCollection}
+            <Link
+              to="/shop?filter=featured"
               className="inline-flex items-center gap-2.5 bg-[#111111] text-m4m-bg text-[11px] font-mono uppercase tracking-[0.22em] px-8 py-4 hover:bg-[#2B2B2B] transition-all duration-300 group"
             >
-              <span>SHOP COLLECTION</span>
+              <span>SHOP FEATURED COLLECTION</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </a>
+            </Link>
           </div>
         </div>
       </div>

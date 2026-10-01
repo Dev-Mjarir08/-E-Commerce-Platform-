@@ -74,7 +74,11 @@ const initialState = {
     totalOrders: 0,
     averageOrderValue: 0,
     activeProducts: 0,
-    totalProducts: 0
+    totalProducts: 0,
+    lowStockCount: 0,
+    unreadNotifications: 0,
+    totalCustomers: 0,
+    totalReviews: 0
   },
   recentOrders: [],
   topProducts: [],

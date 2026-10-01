@@ -37,6 +37,7 @@ export const getCustomerProfile = async (req, res) => {
           phone: user.phone,
           role: user.role,
           avatar: user.avatar,
+          coverImage: user.coverImage || null,
           isVerified: user.isVerified,
           status: user.status,
           createdAt: user.createdAt
@@ -67,19 +68,30 @@ export const getCustomerProfile = async (req, res) => {
 export const updateCustomerProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { name, phone, avatar } = req.body;
+    const { name, phone, avatar, coverImage } = req.body;
 
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
+    // Update basic user details
     if (name) user.name = name.trim();
     if (phone !== undefined) user.phone = phone ? phone.trim() : null;
+
+    // Update profile avatar if provided in payload
     if (avatar) {
       user.avatar = {
         public_id: avatar.public_id || null,
-        url: avatar.url || user.avatar.url
+        url: avatar.url || user.avatar?.url || 'https://placehold.co/150'
+      };
+    }
+
+    // Update cover image if provided in payload
+    if (coverImage) {
+      user.coverImage = {
+        public_id: coverImage.public_id || null,
+        url: coverImage.url || user.coverImage?.url || null
       };
     }
 
@@ -95,6 +107,7 @@ export const updateCustomerProfile = async (req, res) => {
         phone: user.phone,
         role: user.role,
         avatar: user.avatar,
+        coverImage: user.coverImage,
         isVerified: user.isVerified,
         status: user.status
       }
@@ -104,6 +117,114 @@ export const updateCustomerProfile = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to update profile.',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Upload / Update customer avatar picture
+ * @route   POST /api/customer/avatar
+ * @access  Protected
+ */
+export const uploadCustomerAvatar = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    let avatarUrl = null;
+    let publicId = null;
+
+    if (req.file) {
+      // Local multipart file upload
+      avatarUrl = `/uploads/avatars/${req.file.filename}`;
+      publicId = req.file.filename;
+    } else if (req.body.avatarUrl || req.body.url) {
+      // Direct URL string
+      avatarUrl = req.body.avatarUrl || req.body.url;
+      publicId = req.body.public_id || null;
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide an image file using multipart field "avatar" or JSON "url".'
+      });
+    }
+
+    user.avatar = {
+      public_id: publicId,
+      url: avatarUrl
+    };
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile photo updated successfully.',
+      data: {
+        avatar: user.avatar
+      }
+    });
+  } catch (error) {
+    console.error('Error in uploadCustomerAvatar:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to upload avatar.',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Upload / Update customer cover background image
+ * @route   POST /api/customer/cover
+ * @access  Protected
+ */
+export const uploadCustomerCover = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    let coverUrl = null;
+    let publicId = null;
+
+    if (req.file) {
+      coverUrl = `/uploads/categories/${req.file.filename}`;
+      publicId = req.file.filename;
+    } else if (req.body.coverUrl || req.body.url) {
+      coverUrl = req.body.coverUrl || req.body.url;
+      publicId = req.body.public_id || null;
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide an image file using multipart field "cover" or "image".'
+      });
+    }
+
+    user.coverImage = {
+      public_id: publicId,
+      url: coverUrl
+    };
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Cover image updated successfully.',
+      data: {
+        coverImage: user.coverImage
+      }
+    });
+  } catch (error) {
+    console.error('Error in uploadCustomerCover:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to upload cover image.',
       error: error.message
     });
   }

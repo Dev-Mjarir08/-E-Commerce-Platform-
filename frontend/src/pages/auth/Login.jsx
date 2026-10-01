@@ -17,12 +17,14 @@ import {
   UserCheck
 } from 'lucide-react';
 import { loginUser, clearError } from '../../redux/slices/authSlice';
+import { useToast } from '../../context/ToastContext';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
+  const { showToast } = useToast();
 
   const searchParams = new URLSearchParams(location.search);
   const redirectParam = searchParams.get('redirect');
@@ -36,6 +38,7 @@ const Login = () => {
   const [formErrors, setFormErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Handle input field changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -50,6 +53,7 @@ const Login = () => {
     }
   };
 
+  // Validate form before submission
   const validate = () => {
     const errors = {};
     if (!formData.email.trim()) {
@@ -66,11 +70,18 @@ const Login = () => {
     return Object.keys(errors).length === 0;
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+
+    // Check frontend validation first
+    if (!validate()) {
+      showToast('Please enter a valid email address and password.', 'warning');
+      return;
+    }
 
     try {
+      // Dispatch Redux login thunk
       const data = await dispatch(
         loginUser({
           email: formData.email.trim(),
@@ -78,52 +89,84 @@ const Login = () => {
         })
       ).unwrap();
 
-      const user = data.user || { email: formData.email, name: 'User', role: 'customer' };
+      const payload = data?.data || data;
+      const user = payload?.user || data?.user || { email: formData.email, name: 'User', role: 'customer' };
+      const hasStore = Boolean(payload?.store || data?.store);
 
-      // Determine target destination based on role
+      // Determine target destination based on user role
       let targetPath = '/';
+      let welcomeMsg = '';
+
       if (user.role === 'admin') {
         targetPath = '/admin/dashboard';
-        setSuccessMessage(`Welcome, Administrator ${user.name}. Opening Admin Suite...`);
-      } else if (user.role === 'vendor' || user.role === 'seller') {
-        targetPath = redirectParam ? decodeURIComponent(redirectParam) : '/vendor/dashboard';
-        setSuccessMessage(`Welcome, Partner ${user.name}. Opening Vendor Portal...`);
+        welcomeMsg = `Welcome, Administrator ${user.name || ''}. Opening Admin Suite...`;
+      } else if (user.role === 'vendor' || user.role === 'seller' || hasStore) {
+        // ALWAYS route vendor partners to Vendor Dashboard
+        targetPath = (redirectParam && redirectParam.startsWith('/vendor'))
+          ? decodeURIComponent(redirectParam)
+          : '/vendor/dashboard';
+        welcomeMsg = `Welcome, Partner ${user.name || ''}. Opening Vendor Portal...`;
       } else {
-        targetPath = redirectParam ? decodeURIComponent(redirectParam) : '/';
-        setSuccessMessage(`Welcome back, ${user.name}. Redirecting to boutique...`);
+        targetPath = (redirectParam && !redirectParam.startsWith('/login'))
+          ? decodeURIComponent(redirectParam)
+          : '/';
+        welcomeMsg = `Welcome back, ${user.name || ''}! Redirecting to boutique...`;
       }
 
+      setSuccessMessage(welcomeMsg);
+      showToast(welcomeMsg, 'success');
+
       setTimeout(() => {
-        navigate(targetPath);
-      }, 900);
+        navigate(targetPath, { replace: true });
+      }, 500);
     } catch (err) {
-      console.warn('Login rejected:', err);
+      // Show user-friendly toast message for invalid password or email
+      const errorMsg =
+        typeof err === 'string'
+          ? err
+          : err?.message || 'Invalid email address or password. Please verify your credentials.';
+      
+      console.warn('Login rejected:', errorMsg);
+      showToast(errorMsg, 'error');
     }
   };
 
+  // Quick fill handler for demo accounts
   const handleQuickFill = async (email, password) => {
     setFormData({ email, password, rememberMe: true });
     setFormErrors({});
     if (error) dispatch(clearError());
+
     try {
       const data = await dispatch(loginUser({ email, password })).unwrap();
-      const user = data.user || { email, role: 'customer' };
+      const payload = data?.data || data;
+      const user = payload?.user || data?.user || { email, role: 'customer' };
+      const hasStore = Boolean(payload?.store || data?.store);
       let targetPath = '/';
+
       if (user.role === 'admin') {
         targetPath = '/admin/dashboard';
-        setSuccessMessage(`Welcome, Administrator ${user.name}. Opening Admin Suite...`);
-      } else if (user.role === 'vendor' || user.role === 'seller') {
-        targetPath = redirectParam ? decodeURIComponent(redirectParam) : '/vendor/dashboard';
-        setSuccessMessage(`Welcome, Partner ${user.name}. Opening Vendor Portal...`);
+      } else if (user.role === 'vendor' || user.role === 'seller' || hasStore) {
+        targetPath = (redirectParam && redirectParam.startsWith('/vendor'))
+          ? decodeURIComponent(redirectParam)
+          : '/vendor/dashboard';
       } else {
-        targetPath = redirectParam ? decodeURIComponent(redirectParam) : '/';
-        setSuccessMessage(`Welcome back, ${user.name}. Redirecting to boutique...`);
+        targetPath = (redirectParam && !redirectParam.startsWith('/login'))
+          ? decodeURIComponent(redirectParam)
+          : '/';
       }
+
+      const msg = `Signed in successfully as ${user.name || email}`;
+      setSuccessMessage(msg);
+      showToast(msg, 'success');
+
       setTimeout(() => {
-        navigate(targetPath);
-      }, 700);
+        navigate(targetPath, { replace: true });
+      }, 400);
     } catch (err) {
-      console.warn('Quick login rejected:', err);
+      const errorMsg =
+        typeof err === 'string' ? err : err?.message || 'Quick login failed. Please check credentials.';
+      showToast(errorMsg, 'error');
     }
   };
 

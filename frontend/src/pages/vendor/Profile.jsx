@@ -20,7 +20,10 @@ import {
   FaStar,
 } from "react-icons/fa";
 import { fetchVendorDashboard, updateVendorProfile } from "../../redux/slices/vendorSlice";
+import { updateUser } from "../../redux/slices/authSlice";
 import vendorApi from "../../services/vendorApi";
+import storeApi from "../../services/storeApi";
+import { getImageUrl, DEFAULT_COVER_FALLBACK } from "../../utils/imageUrl";
 
 export default function Profile() {
   const dispatch = useDispatch();
@@ -84,14 +87,12 @@ export default function Profile() {
     }));
 
     if (activeUser.avatar) {
-      setAvatarPreview(
-        typeof activeUser.avatar === "object" ? activeUser.avatar.url : activeUser.avatar
-      );
+      const av = typeof activeUser.avatar === "object" ? activeUser.avatar.url : activeUser.avatar;
+      setAvatarPreview(getImageUrl(av));
     }
     if (activeStore.banner) {
-      setBannerPreview(
-        typeof activeStore.banner === "object" ? activeStore.banner.url : activeStore.banner
-      );
+      const bn = typeof activeStore.banner === "object" ? activeStore.banner.url : activeStore.banner;
+      setBannerPreview(getImageUrl(bn, DEFAULT_COVER_FALLBACK));
     }
   };
 
@@ -140,7 +141,8 @@ export default function Profile() {
     if (!file) return;
 
     // Show temporary preview
-    setAvatarPreview(URL.createObjectURL(file));
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview(previewUrl);
 
     // Upload to server
     const data = new FormData();
@@ -148,10 +150,16 @@ export default function Profile() {
 
     setIsUploadingAvatar(true);
     try {
-      await vendorApi.uploadAvatar(data);
+      const res = await vendorApi.uploadAvatar(data);
+      const newAvatarUrl = res?.data?.avatar?.url || res?.avatar?.url;
+      if (newAvatarUrl) {
+        setAvatarPreview(getImageUrl(newAvatarUrl));
+        dispatch(updateUser({ avatar: res.data?.avatar || { url: newAvatarUrl } }));
+      }
       dispatch(fetchVendorDashboard());
       showToast("success", "Profile avatar updated successfully!");
     } catch (err) {
+      console.error("Avatar upload error:", err);
       showToast("error", err.response?.data?.message || "Failed to upload avatar image.");
     } finally {
       setIsUploadingAvatar(false);
@@ -163,18 +171,24 @@ export default function Profile() {
     const file = e.target.files[0];
     if (!file) return;
 
-    setBannerPreview(URL.createObjectURL(file));
+    const previewUrl = URL.createObjectURL(file);
+    setBannerPreview(previewUrl);
 
     const data = new FormData();
     data.append("banner", file);
+    data.append("image", file);
 
     try {
-      await vendorApi.updateProfile({
-        banner: { url: URL.createObjectURL(file) }
-      });
-      showToast("success", "Cover banner updated!");
-    } catch {
-      // Local preview fallback
+      const res = await storeApi.updateStoreBanner(data);
+      const newBannerUrl = res?.data?.url || res?.url;
+      if (newBannerUrl) {
+        setBannerPreview(getImageUrl(newBannerUrl));
+      }
+      dispatch(fetchVendorDashboard());
+      showToast("success", "Storefront cover banner updated successfully!");
+    } catch (err) {
+      console.error("Cover banner upload error:", err);
+      showToast("error", err?.response?.data?.message || err?.message || "Failed to upload cover banner.");
     }
   };
 
@@ -275,7 +289,12 @@ export default function Profile() {
           {/* Cover Photo */}
           <div className="relative h-44 sm:h-56 bg-neutral-900 overflow-hidden">
             {bannerPreview ? (
-              <img src={bannerPreview} alt="Cover" className="w-full h-full object-cover opacity-90" />
+              <img
+                src={getImageUrl(bannerPreview, DEFAULT_COVER_FALLBACK)}
+                alt="Cover"
+                className="w-full h-full object-cover opacity-90"
+                onError={() => setBannerPreview(null)}
+              />
             ) : (
               <div className="w-full h-full bg-linear-to-r from-neutral-950 via-neutral-900 to-neutral-800 flex items-center justify-center">
                 <span className="text-xs font-mono uppercase tracking-[0.3em] text-neutral-400">
@@ -305,7 +324,12 @@ export default function Profile() {
               <div className="relative group">
                 <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-neutral-900 text-white flex items-center justify-center text-4xl font-semibold overflow-hidden border-4 border-white shadow-xl ring-1 ring-neutral-200">
                   {avatarPreview ? (
-                    <img src={avatarPreview} alt="Profile" className="w-full h-full object-cover" />
+                    <img
+                      src={getImageUrl(avatarPreview)}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      onError={() => setAvatarPreview(null)}
+                    />
                   ) : (
                     <span className="font-serif uppercase text-3xl font-light">
                       {formData.fullName?.charAt(0) || "V"}

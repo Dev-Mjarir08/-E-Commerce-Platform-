@@ -3,7 +3,7 @@ import { Search, Eye, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useToast } from "../../context/ToastContext";
-import { fetchAdminOrders } from "../../redux/slices/orderSlice";
+import { fetchAdminOrders, updateAdminOrderStatusThunk } from "../../redux/slices/orderSlice";
 
 const Orders = () => {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ const Orders = () => {
   const { showToast } = useToast();
 
   const [search, setSearch] = useState("");
+  const [updatingId, setUpdatingId] = useState(null);
 
   const {
     items: orders,
@@ -78,6 +79,18 @@ const Orders = () => {
 
   const handleExport = () => {
     showToast("Order export is not connected yet.", "info");
+  };
+
+  const handleStatusChange = async (orderId, newStatus) => {
+    setUpdatingId(orderId);
+    try {
+      await dispatch(updateAdminOrderStatusThunk({ orderId, status: newStatus })).unwrap();
+      showToast(`Order status updated to ${newStatus}.`, "success");
+    } catch (err) {
+      showToast(err || "Failed to update order status.", "error");
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   return (
@@ -184,13 +197,26 @@ const Orders = () => {
                   </td>
 
                   <td className="py-3.5 px-4">
-                    <span
-                      className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold border ${getBadge(
-                        order.status,
-                      )}`}
-                    >
-                      {order.status}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        value={order.rawStatus || order.status?.toLowerCase() || 'placed'}
+                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                        disabled={updatingId === order.id}
+                        className={`text-[11px] font-bold py-1 px-2 rounded-lg border cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors ${getBadge(
+                          order.status
+                        )}`}
+                      >
+                        <option value="placed">Placed</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="processing">Processing</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                      {updatingId === order.id && (
+                        <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                      )}
+                    </div>
                   </td>
 
                   <td className="py-3.5 px-4 text-right">

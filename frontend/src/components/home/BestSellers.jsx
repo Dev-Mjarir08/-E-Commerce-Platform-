@@ -7,11 +7,22 @@ import { ProductCard } from '../product/ProductCard';
 
 export const BestSellers = ({ onQuickView, onShowToast }) => {
   const { products: contextProducts } = useShopData();
-  const [bestSellerProducts, setBestSellerProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [bestSellerProducts, setBestSellerProducts] = useState(() => (
+    Array.isArray(contextProducts) && contextProducts.length > 0 ? contextProducts : []
+  ));
+  const [loading, setLoading] = useState(() => (
+    !Array.isArray(contextProducts) || contextProducts.length === 0
+  ));
   const [activeTab, setActiveTab] = useState('ALL');
 
   const tabs = ['ALL', 'ELECTRONICS', 'CLOTHING', 'ACCESSORIES', 'FOOTWEAR'];
+
+  useEffect(() => {
+    if (Array.isArray(contextProducts) && contextProducts.length > 0) {
+      setBestSellerProducts(contextProducts);
+      setLoading(false);
+    }
+  }, [contextProducts]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -96,10 +107,10 @@ export const BestSellers = ({ onQuickView, onShowToast }) => {
             </div>
 
             <Link
-              to="/shop"
+              to="/shop?filter=best-sellers"
               className="hidden lg:inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-[0.2em] text-[#111111] hover:text-m4m-secondary transition-colors shrink-0 group"
             >
-              <span>ALL PRODUCTS</span>
+              <span>VIEW ALL BEST SELLERS</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -118,16 +129,29 @@ export const BestSellers = ({ onQuickView, onShowToast }) => {
           </div>
         ) : (
           /* 4-column responsive grid */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product._id || product.id}
-                product={product}
-                onQuickView={onQuickView}
-                onShowToast={onShowToast}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product._id || product.id}
+                  product={product}
+                  onQuickView={onQuickView}
+                  onShowToast={onShowToast}
+                />
+              ))}
+            </div>
+
+            {/* Load More / Explore Dedicated Page Button */}
+            <div className="mt-12 text-center">
+              <Link
+                to="/shop?filter=best-sellers"
+                className="inline-flex items-center gap-3 bg-[#111111] text-[#F8F7F4] hover:bg-[#333333] px-8 py-3.5 text-xs font-mono uppercase tracking-[0.2em] transition-all shadow-sm group"
+              >
+                <span>EXPLORE ALL BEST SELLERS</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </>
         )}
       </div>
     </section>

@@ -1,4 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
+import bannerApi from "../../services/bannerApi";
+import { useModal } from "../../context/ModalContext";
 import {
   Search,
   Plus,
@@ -87,11 +89,40 @@ const formatDate = (date) =>
   });
 
 const Banners = () => {
+  const { confirm: modalConfirm, alert: modalAlert } = useModal();
   const [banners, setBanners] = useState(initialBanners);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [selectedBanner, setSelectedBanner] = useState(null);
   const [showForm, setShowForm] = useState(false);
+
+  const fetchLiveBanners = useCallback(async () => {
+    try {
+      const res = await bannerApi.getBanners();
+      const list = res?.data || res;
+      if (Array.isArray(list) && list.length > 0) {
+        setBanners(list.map((b, idx) => ({
+          ...b,
+          id: b._id || b.id || idx + 1,
+          title: b.title,
+          subtitle: b.subtitle || "",
+          placement: b.placement || "Homepage Hero",
+          status: b.status || (b.isActive ? "published" : "draft"),
+          position: b.position ?? idx + 1,
+          startDate: b.startDate ? new Date(b.startDate).toISOString().split('T')[0] : "2026-09-01",
+          endDate: b.endDate ? new Date(b.endDate).toISOString().split('T')[0] : "2026-10-31",
+          clicks: b.clicks || 0,
+          image: b.image?.url || (typeof b.image === 'string' ? b.image : "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?auto=format&fit=crop&w=1200&q=80")
+        })));
+      }
+    } catch {
+      // Keep initial banners fallback
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLiveBanners();
+  }, [fetchLiveBanners]);
 
   const [form, setForm] = useState({
     title: "",
@@ -128,7 +159,7 @@ const Banners = () => {
       scheduled: banners.filter((item) => item.status === "scheduled")
         .length,
       drafts: banners.filter((item) => item.status === "draft").length,
-      clicks: banners.reduce((sum, item) => sum + item.clicks, 0),
+      clicks: banners.reduce((sum, item) => sum + (Number(item.clicks) || 0), 0),
     }),
     [banners]
   );
@@ -144,11 +175,10 @@ const Banners = () => {
     });
   };
 
-  const handleCreate = (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault();
 
-    const newBanner = {
-      id: Date.now(),
+    const payload = {
       title: form.title,
       subtitle: form.subtitle,
       placement: form.placement,
@@ -156,34 +186,73 @@ const Banners = () => {
       position: banners.length + 1,
       startDate: form.startDate,
       endDate: form.endDate,
+      image: {
+        url: form.image || "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80"
+      }
+    };
+
+    let createdId = Date.now();
+    try {
+      const res = await bannerApi.createBanner(payload);
+      if (res?.data?._id) createdId = res.data._id;
+    } catch (err) {
+      console.warn("Banner create fallback:", err.message);
+    }
+
+    const newBanner = {
+      id: createdId,
+      _id: createdId,
+      ...payload,
       clicks: 0,
-      image:
-        form.image ||
-        "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80",
+      image: form.image || "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80"
     };
 
     setBanners((current) => [...current, newBanner]);
+    modalAlert({
+      title: "Banner Created",
+      message: `Promotional banner "${form.title}" has been created as draft.`,
+      type: "success"
+    });
     resetForm();
     setShowForm(false);
   };
 
-  const togglePublish = (id) => {
+  const togglePublish = async (id) => {
+    const banner = banners.find((b) => b.id === id);
+    const nextStatus = banner?.status === "published" ? "draft" : "published";
+    try {
+      await bannerApi.updateBanner(id, {
+        status: nextStatus,
+        isActive: nextStatus === "published"
+      });
+    } catch {}
+
     setBanners((current) =>
       current.map((banner) =>
         banner.id === id
-          ? {
-              ...banner,
-              status:
-                banner.status === "published" ? "draft" : "published",
-            }
+          ? { ...banner, status: nextStatus }
           : banner
       )
     );
   };
 
-  const deleteBanner = (id) => {
-    if (!window.confirm("Delete this banner?")) return;
+  const deleteBanner = async (id) => {
+    const banner = banners.find((item) => item.id === id);
+    if (!banner) return;
 
+    const ok = await modalConfirm({
+      title: "Delete Promotional Banner",
+      message: `Are you sure you want to permanently delete banner "${banner.title}"?`,
+      type: "danger",
+      confirmText: "Delete Banner",
+      cancelText: "Cancel"
+    });
+
+    if (!ok) return;
+
+    try {
+      await bannerApi.deleteBanner(id);
+    } catch {}
     setBanners((current) => current.filter((banner) => banner.id !== id));
   };
 

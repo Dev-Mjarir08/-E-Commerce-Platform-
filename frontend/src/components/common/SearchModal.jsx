@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search as SearchIcon, X, ArrowRight, Store } from 'lucide-react';
-import { stores } from '../../data/marketplaceData';
 import { useShopData } from '../../context/ShopDataContext';
 import { Link } from 'react-router-dom';
 
 export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const inputRef = useRef(null);
-  const { products: shopProducts } = useShopData();
+  const { products: shopProducts, stores = [] } = useShopData();
 
   const handleClose = () => {
     setSearchTerm('');
@@ -50,9 +49,9 @@ export const SearchModal = ({ isOpen, onClose, onSelectProduct }) => {
   const filteredStores = searchTerm.trim()
     ? stores.filter(
         (s) =>
-          s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.tagline.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.description.toLowerCase().includes(searchTerm.toLowerCase())
+          (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (s.tagline || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (s.description || '').toLowerCase().includes(searchTerm.toLowerCase())
       )
     : [];
 

@@ -15,6 +15,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import vendorApi from '../../services/vendorApi';
+import { useModal } from '../../context/ModalContext';
 
 // Initial fallback reviews for preview
 const initialReviews = [
@@ -100,6 +101,7 @@ const initialReviews = [
 ];
 
 export default function VendorReviews() {
+  const { confirm: modalConfirm } = useModal();
   const [reviews, setReviews] = useState(initialReviews);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -184,7 +186,14 @@ export default function VendorReviews() {
   };
 
   const handleDeleteReview = async (id) => {
-    if (!window.confirm('Are you sure you want to remove this review entry?')) return;
+    const ok = await modalConfirm({
+      title: "Remove Review Entry",
+      message: "Are you sure you want to remove this review entry? This cannot be undone.",
+      type: "danger",
+      confirmText: "Remove Review",
+      cancelText: "Cancel"
+    });
+    if (!ok) return;
     try {
       await vendorApi.deleteReview(id);
       setReviews((prev) => prev.filter((r) => r._id !== id));

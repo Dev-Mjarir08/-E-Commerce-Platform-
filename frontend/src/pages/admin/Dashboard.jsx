@@ -156,6 +156,16 @@ const Dashboard = () => {
             </span>
           )}
 
+          <Link
+            to="/"
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold border border-slate-200 shadow-xs transition-colors group"
+            title="Go to Customer Storefront / Page"
+          >
+            <ShoppingBag size={14} className="text-indigo-600 group-hover:scale-110 transition-transform" />
+            <span>Customer Page</span>
+            <ExternalLink size={12} className="text-slate-400 group-hover:text-slate-600 transition-colors hidden sm:inline" />
+          </Link>
+
           <button
             type="button"
             onClick={fetchDashboardData}

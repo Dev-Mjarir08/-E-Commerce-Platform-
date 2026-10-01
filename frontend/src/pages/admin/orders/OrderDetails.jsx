@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -10,9 +10,11 @@ import {
   MapPin,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
+import { useToast } from "../../../context/ToastContext";
 import {
   fetchOrderById,
   clearSelectedOrder,
+  updateAdminOrderStatusThunk,
 } from "../../../redux/slices/orderSlice";
 
 const OrderDetails = () => {
@@ -25,6 +27,26 @@ const OrderDetails = () => {
     detailsLoading,
     detailsError,
   } = useSelector((state) => state.orders);
+
+  const [updating, setUpdating] = useState(false);
+  const { showToast } = useToast();
+
+  const handleStatusChange = async (newStatus) => {
+    setUpdating(true);
+    try {
+      await dispatch(
+        updateAdminOrderStatusThunk({
+          orderId: order?.id || order?.orderNumber || id,
+          status: newStatus,
+        })
+      ).unwrap();
+      showToast(`Order status updated to ${newStatus}.`, "success");
+    } catch (err) {
+      showToast(err || "Failed to update order status.", "error");
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -150,7 +172,7 @@ const OrderDetails = () => {
               </h2>
 
               <span
-                className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold border ${getBadge(
+                className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getBadge(
                   order.status,
                 )}`}
               >
@@ -161,6 +183,26 @@ const OrderDetails = () => {
             <p className="text-xs text-slate-500 mt-1">
               Placed on {formatDate(order.createdAt)}
             </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-600">Change Status:</span>
+            <select
+              value={order.rawStatus || order.status?.toLowerCase() || "placed"}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              disabled={updating}
+              className="px-3 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="placed">Placed</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="processing">Processing</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            {updating && (
+              <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin shrink-0" />
+            )}
           </div>
         </div>
       </div>
@@ -386,20 +428,65 @@ const OrderDetails = () => {
 
       {/* Fulfillment */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Truck size={17} className="text-indigo-600" />
-
-          <h3 className="font-bold text-slate-900">Fulfillment</h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Truck size={17} className="text-indigo-600" />
+            <h3 className="font-bold text-slate-900">Fulfillment & Status</h3>
+          </div>
+          <span
+            className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getBadge(
+              order.status
+            )}`}
+          >
+            {order.status}
+          </span>
         </div>
 
-        <p className="text-sm text-slate-600">Current fulfillment status:</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-slate-500">Current Order Status</p>
+            <p className="text-sm font-bold text-slate-900 mt-0.5">{order.status}</p>
+            {order.deliveredAt && (
+              <p className="text-xs text-emerald-600 mt-1">
+                Delivered on {formatDate(order.deliveredAt)}
+              </p>
+            )}
+            {order.cancelledAt && (
+              <p className="text-xs text-red-600 mt-1">
+                Cancelled on {formatDate(order.cancelledAt)}
+                {order.cancellationReason ? ` (${order.cancellationReason})` : ''}
+              </p>
+            )}
+          </div>
 
-        <p className="text-sm font-bold text-slate-900 mt-1">{order.status}</p>
+          <div>
+            <label className="text-xs text-slate-500 block mb-1 font-medium">Update Status</label>
+            <div className="flex items-center gap-2">
+              <select
+                value={order.rawStatus || order.status?.toLowerCase() || 'placed'}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                disabled={updating}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 text-xs font-semibold rounded-lg shadow-xs cursor-pointer focus:outline-none focus:border-indigo-600"
+              >
+                <option value="placed">Set to Placed</option>
+                <option value="confirmed">Set to Confirmed</option>
+                <option value="processing">Set to Processing</option>
+                <option value="shipped">Set to Shipped</option>
+                <option value="delivered">Set to Delivered</option>
+                <option value="cancelled">Set to Cancelled</option>
+              </select>
+              {updating && (
+                <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin shrink-0" />
+              )}
+            </div>
+          </div>
+        </div>
 
         {order.trackingNumber && (
-          <p className="text-xs text-slate-500 mt-2">
-            Tracking: {order.trackingNumber}
-          </p>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span className="text-slate-500">Tracking Number:</span>
+            <span className="font-mono font-bold text-slate-900">{order.trackingNumber}</span>
+          </div>
         )}
       </div>
     </div>

@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import productApi from "../../services/productApi";
+import categoryService from "../../services/categoryService";
+import { useModal } from "../../context/ModalContext";
 import {
   FaBox,
   FaImage,
@@ -12,20 +14,68 @@ import {
   FaCheckCircle,
   FaTimes,
   FaInfoCircle,
+  FaFileCode,
+  FaLayerGroup,
 } from "react-icons/fa";
 
 export default function CreateProduct() {
   const navigate = useNavigate();
+  const { alert: modalAlert } = useModal();
   const [submitting, setSubmitting] = useState(false);
+  const [mode, setMode] = useState("single"); // "single" | "bulk"
+
+  // Live Categories State
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+
+  // Bulk Import States
+  const [bulkJson, setBulkJson] = useState("");
+  const [bulkStatus, setBulkStatus] = useState(null);
+  const [bulkSubmitting, setBulkSubmitting] = useState(false);
+  const bulkFileRef = useRef(null);
 
   // Product Basic Info
   const [productData, setProductData] = useState({
     title: "",
     sku: "",
-    category: "Electronics",
+    category: "Outerwear",
     description: "",
     status: "Active",
   });
+
+  useEffect(() => {
+    const fetchCats = async () => {
+      setLoadingCategories(true);
+      try {
+        const res = await categoryService.getCategories();
+        const list = Array.isArray(res) ? res : (res?.data?.categories || res?.data || res?.categories || []);
+        if (Array.isArray(list) && list.length > 0) {
+          const distinct = [];
+          const seen = new Set();
+          list.forEach((c) => {
+            const name = c.name?.trim();
+            if (name && !seen.has(name.toLowerCase())) {
+              seen.add(name.toLowerCase());
+              distinct.push(c);
+            }
+          });
+          setCategories(distinct);
+          if (distinct.length > 0) {
+            setProductData((prev) => ({
+              ...prev,
+              category: distinct[0].name
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to load catalog categories:", err);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCats();
+  }, []);
 
   // Pricing & Stock
   const [pricing, setPricing] = useState({
@@ -120,11 +170,19 @@ export default function CreateProduct() {
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     if (!productData.title.trim()) {
-      alert("Please provide a product title.");
+      modalAlert({
+        title: "Validation Error",
+        message: "Please provide a product title before publishing.",
+        type: "warning"
+      });
       return;
     }
     if (!pricing.price || priceNum <= 0) {
-      alert("Please enter a valid selling price.");
+      modalAlert({
+        title: "Invalid Pricing",
+        message: "Please enter a valid selling price greater than 0.",
+        type: "warning"
+      });
       return;
     }
 
@@ -169,13 +227,130 @@ export default function CreateProduct() {
 
       await productApi.createProduct(formData);
       window.dispatchEvent(new CustomEvent("shop:products-updated"));
+      await modalAlert({
+        title: "Product Published",
+        message: "Your new product listing has been successfully published to the catalog.",
+        type: "success"
+      });
       navigate("/vendor/products");
     } catch (err) {
       console.error("Product creation error:", err);
-      alert(err.message || "Failed to create product.");
+      modalAlert({
+        title: "Product Creation Failed",
+        message: err.message || "Failed to create product.",
+        type: "danger"
+      });
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Bulk Product Submit Handler
+  const handleBulkSubmit = async () => {
+    if (!bulkJson.trim()) {
+      modalAlert({
+        title: "Input Required",
+        message: "Please enter or paste JSON product data.",
+        type: "warning"
+      });
+      return;
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(bulkJson);
+    } catch (e) {
+      setBulkStatus({ type: "error", text: `Invalid JSON syntax: ${e.message}` });
+      return;
+    }
+    const items = Array.isArray(parsed) ? parsed : (parsed.products || [parsed]);
+    if (!Array.isArray(items) || items.length === 0) {
+      setBulkStatus({ type: "error", text: "JSON must be an array of products or contain a products array." });
+      return;
+    }
+    setBulkSubmitting(true);
+    setBulkStatus(null);
+    try {
+      const res = await productApi.createBulkProducts(items);
+      const createdCount = res?.count || (Array.isArray(res?.data) ? res.data.length : items.length);
+      window.dispatchEvent(new CustomEvent("shop:products-updated"));
+      await modalAlert({
+        title: "Bulk Products Created",
+        message: `Successfully created ${createdCount} products in your boutique catalog!`,
+        type: "success"
+      });
+      navigate("/vendor/products");
+    } catch (err) {
+      console.error("Vendor bulk upload error:", err);
+      setBulkStatus({
+        type: "error",
+        text: err?.response?.data?.message || err?.message || "Failed to bulk import products."
+      });
+    } finally {
+      setBulkSubmitting(false);
+    }
+  };
+
+  const loadSampleBulkTemplate = () => {
+    const catNames = categories.length > 0
+      ? categories.map((c) => c.name).filter(Boolean)
+      : ["Outerwear", "Tailoring", "Clothing", "Bags", "Footwear", "Watches"];
+    const template = [
+      {
+        title: "Signature Cashmere Overcoat",
+        basePrice: 590,
+        discountPrice: 520,
+        stock: 15,
+        category: catNames[0] || "Outerwear",
+        brand: "Atelier Couture",
+        sku: `VND-OCT-${Date.now().toString().slice(-4)}`,
+        description: "Handcrafted double-faced cashmere overcoat tailored with horn buttons.",
+        images: [{ url: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=80", isPrimary: true }],
+        tags: ["luxury", "cashmere", "winter"],
+        isActive: true
+      },
+      {
+        title: "Virgin Wool Tailored Trousers",
+        basePrice: 280,
+        discountPrice: null,
+        stock: 25,
+        category: catNames[1] || catNames[0] || "Tailoring",
+        brand: "Sartorial Works",
+        sku: `VND-TRS-${Date.now().toString().slice(-4)}`,
+        description: "High-twist gabardine trousers with side adjusters and pressed creases.",
+        images: [{ url: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=800&q=80", isPrimary: true }],
+        tags: ["wool", "tailored", "office"],
+        isActive: true
+      }
+    ];
+    setBulkJson(JSON.stringify(template, null, 2));
+    setBulkStatus({
+      type: "success",
+      text: `Loaded sample products template with active catalog categories.`
+    });
+  };
+
+  const handleBulkFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target.result;
+        JSON.parse(text);
+        setBulkJson(text);
+        setBulkStatus({
+          type: "success",
+          text: `Loaded file "${file.name}". Ready to import.`
+        });
+      } catch (err) {
+        setBulkStatus({
+          type: "error",
+          text: `Invalid JSON in file "${file.name}": ${err.message}`
+        });
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
   };
 
   return (
@@ -185,34 +360,162 @@ export default function CreateProduct() {
         {/* HEADER SECTION */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
           <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200 font-bold">
+                Vendor Boutique
+              </span>
+              <span className="text-xs text-slate-400">/</span>
+              <span className="text-xs font-semibold text-slate-600">Product Studio</span>
+            </div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Create New Product
+              {mode === "single" ? "Create New Product" : "Bulk Add Multiple Products"}
             </h1>
             <p className="text-sm text-slate-500 mt-0.5">
-              Add details, pricing, inventory options, and media for your marketplace listing.
+              {mode === "single"
+                ? "Add single piece details, dynamic categories, pricing, and media options."
+                : "Add multiple product catalog entries simultaneously via JSON or template."}
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-100 transition"
-            >
-              Save Draft
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all cursor-pointer"
-            >
-              <FaCheckCircle className="text-xs" /> Publish Product
-            </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Mode Switcher */}
+            <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setMode("single")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  mode === "single"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Single Product
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("bulk")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  mode === "bulk"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Multiple Products (Bulk)
+              </button>
+            </div>
+
+            {mode === "single" ? (
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all cursor-pointer disabled:opacity-60"
+              >
+                <FaCheckCircle className="text-xs" />
+                <span>{submitting ? "Publishing..." : "Publish Product"}</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleBulkSubmit}
+                disabled={bulkSubmitting || !bulkJson.trim()}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-900/10 active:scale-95 transition-all cursor-pointer disabled:opacity-60"
+              >
+                <FaLayerGroup className="text-xs" />
+                <span>{bulkSubmitting ? "Importing..." : "Import All Products"}</span>
+              </button>
+            )}
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* MAIN CONTENT COLUMN */}
-          <div className="lg:col-span-2 space-y-6">
+        {/* BULK MODE INTERFACE */}
+        {mode === "bulk" && (
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-5 animate-in fade-in duration-200">
+            <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-indigo-50/70 rounded-xl border border-indigo-100">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={loadSampleBulkTemplate}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+                >
+                  Load Sample Template
+                </button>
+                <button
+                  type="button"
+                  onClick={() => bulkFileRef.current?.click()}
+                  className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+                >
+                  Upload .json File
+                </button>
+                <input
+                  ref={bulkFileRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleBulkFileChange}
+                  className="hidden"
+                />
+              </div>
+
+              {bulkJson && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkJson("");
+                    setBulkStatus(null);
+                  }}
+                  className="text-xs text-slate-500 hover:text-rose-600 cursor-pointer"
+                >
+                  Clear Editor
+                </button>
+              )}
+            </div>
+
+            {bulkStatus && (
+              <div
+                className={`p-3 rounded-xl text-xs flex items-center gap-2 border ${
+                  bulkStatus.type === "error"
+                    ? "bg-rose-50 text-rose-800 border-rose-200"
+                    : "bg-indigo-50 text-indigo-800 border-indigo-200"
+                }`}
+              >
+                <span>{bulkStatus.text}</span>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <label className="font-semibold text-slate-700">
+                  Product Objects Array [ JSON ]
+                </label>
+                <span className="text-slate-400 font-mono text-[11px]">
+                  {bulkJson ? `${bulkJson.length.toLocaleString()} characters` : "Empty"}
+                </span>
+              </div>
+              <textarea
+                value={bulkJson}
+                onChange={(e) => setBulkJson(e.target.value)}
+                rows={16}
+                placeholder={`[\n  {\n    "title": "Boutique Silk Shirt",\n    "basePrice": 220,\n    "discountPrice": 180,\n    "stock": 20,\n    "category": "${categories[0]?.name || "Clothing"}",\n    "brand": "Atelier",\n    "images": [{ "url": "https://...", "isPrimary": true }]\n  }\n]`}
+                className="w-full font-mono text-xs p-4 bg-slate-900 text-emerald-400 rounded-xl border border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={handleBulkSubmit}
+                disabled={bulkSubmitting || !bulkJson.trim()}
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-2"
+              >
+                {bulkSubmitting ? "Importing Products..." : "Import Multiple Products Now"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* SINGLE PRODUCT FORM */}
+        {mode === "single" && (
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* MAIN CONTENT COLUMN */}
+            <div className="lg:col-span-2 space-y-6">
             
             {/* 1. BASIC INFORMATION */}
             <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
@@ -254,22 +557,72 @@ export default function CreateProduct() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
-                    Category *
-                  </label>
-                  <select
-                    value={productData.category}
-                    onChange={(e) =>
-                      setProductData({ ...productData, category: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
-                  >
-                    <option value="Electronics">Electronics</option>
-                    <option value="Apparel & Fashion">Apparel & Fashion</option>
-                    <option value="Home & Kitchen">Home & Kitchen</option>
-                    <option value="Health & Beauty">Health & Beauty</option>
-                    <option value="Sports & Fitness">Sports & Fitness</option>
-                  </select>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                      Category *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !isCustomCategory;
+                        setIsCustomCategory(next);
+                        if (!next && categories.length > 0) {
+                          setProductData({ ...productData, category: categories[0].name });
+                        }
+                      }}
+                      className="text-[11px] text-teal-700 hover:text-teal-900 font-semibold cursor-pointer underline"
+                    >
+                      {isCustomCategory ? "Choose from catalog" : "+ Add Custom Category"}
+                    </button>
+                  </div>
+
+                  {isCustomCategory ? (
+                    <input
+                      type="text"
+                      placeholder="e.g. Handmade Silk Scarves"
+                      value={productData.category}
+                      onChange={(e) =>
+                        setProductData({ ...productData, category: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                    />
+                  ) : (
+                    <select
+                      value={productData.category}
+                      onChange={(e) =>
+                        setProductData({ ...productData, category: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
+                    >
+                      {categories.length > 0 ? (
+                        categories.map((c) => (
+                          <option key={c._id || c.slug || c.name} value={c.name}>
+                            {c.name}
+                          </option>
+                        ))
+                      ) : (
+                        <>
+                          <option value="Outerwear">Outerwear</option>
+                          <option value="Tailoring">Tailoring</option>
+                          <option value="Clothing">Clothing</option>
+                          <option value="Knitwear">Knitwear</option>
+                          <option value="Trousers">Trousers</option>
+                          <option value="Footwear">Footwear</option>
+                          <option value="Shoes">Shoes</option>
+                          <option value="Bags">Bags</option>
+                          <option value="Watches">Watches</option>
+                          <option value="Jewelry">Jewelry</option>
+                          <option value="Accessories">Accessories</option>
+                          <option value="Electronics">Electronics</option>
+                        </>
+                      )}
+                    </select>
+                  )}
+                  {loadingCategories && (
+                    <span className="text-[10px] text-slate-400 mt-1 block">
+                      Syncing live categories from database...
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -594,6 +947,7 @@ export default function CreateProduct() {
           </div>
 
         </form>
+        )}
 
       </div>
     </div>

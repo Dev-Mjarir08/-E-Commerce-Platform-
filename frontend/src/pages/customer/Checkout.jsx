@@ -18,7 +18,7 @@ import {
   Building,
   Home
 } from 'lucide-react';
-import { clearCart, applyPromo, removePromo } from '../../redux/slices/cartSlice';
+import { clearCart, applyPromo, removePromo, closeCart } from '../../redux/slices/cartSlice';
 import addressApi from '../../services/addressApi';
 import orderApi from '../../services/orderApi';
 import couponApi from '../../services/couponApi';
@@ -57,6 +57,11 @@ export const Checkout = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(reduxAppliedCoupon || null);
   const [couponError, setCouponError] = useState('');
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
+  // Close cart drawer when on checkout page
+  useEffect(() => {
+    dispatch(closeCart());
+  }, [dispatch]);
 
   // Sync with redux appliedCoupon
   useEffect(() => {
@@ -177,12 +182,14 @@ export const Checkout = () => {
       return;
     }
 
-    if (!useNewAddress && !selectedAddressId) {
-      showToast('error', 'Please choose or provide a delivery destination.');
+    const resolvedAddressId = !useNewAddress ? (selectedAddressId || addresses[0]?._id) : undefined;
+    if (!useNewAddress && !resolvedAddressId) {
+      setUseNewAddress(true);
+      showToast('error', 'Please provide your delivery destination.');
       return;
     }
 
-    if (useNewAddress) {
+    if (useNewAddress || !resolvedAddressId) {
       const { recipientName, phone, street, city, state, postalCode } = newAddress;
       if (!recipientName || !phone || !street || !city || !state || !postalCode) {
         showToast('error', 'Please fill in all mandatory address fields.');
@@ -194,24 +201,24 @@ export const Checkout = () => {
     try {
       const orderPayload = {
         items: items.map((i) => ({
-          productId: i.id,
-          name: i.name,
+          productId: i.id || i._id,
+          name: i.name || i.title,
           image: i.image,
           price: i.price,
           quantity: i.quantity,
           variantId: i.variantId || null
         })),
-        shippingAddressId: !useNewAddress ? selectedAddressId : undefined,
-        shippingAddress: useNewAddress ? newAddress : undefined,
+        shippingAddressId: resolvedAddressId,
+        shippingAddress: (useNewAddress || !resolvedAddressId) ? newAddress : undefined,
         paymentMethod,
         couponCode: appliedCoupon ? appliedCoupon.code : (promoCode || undefined),
         notes
       };
 
       const response = await orderApi.createOrder(orderPayload);
+      const createdOrder = response?.data?.order || response?.order || response?.data;
 
-      if (response && response.data) {
-        const createdOrder = response.data.order;
+      if (createdOrder) {
         // Clear local Redux cart
         dispatch(clearCart());
 
@@ -220,8 +227,9 @@ export const Checkout = () => {
             const checkoutRes = await paymentApi.createCheckoutSession({
               orderId: createdOrder._id
             });
-            if (checkoutRes && checkoutRes.url) {
-              window.location.href = checkoutRes.url;
+            const stripeUrl = checkoutRes?.url || checkoutRes?.data?.url;
+            if (stripeUrl) {
+              window.location.href = stripeUrl;
               return;
             }
           } catch (stripeErr) {
@@ -230,9 +238,13 @@ export const Checkout = () => {
         }
 
         // Navigate to confirmation page
-        navigate(`/order/success/${createdOrder._id || createdOrder.orderNumber}`);
+        const orderIdentifier = createdOrder._id || createdOrder.orderNumber;
+        navigate(`/order/success/${orderIdentifier}`);
+      } else {
+        throw new Error(response?.message || 'Failed to place order.');
       }
     } catch (error) {
+      console.error('Checkout error:', error);
       showToast('error', error.message || 'Failed to place order. Please try again.');
     } finally {
       setIsSubmitting(false);

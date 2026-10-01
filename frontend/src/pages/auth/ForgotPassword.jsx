@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Mail, ShieldCheck, AlertCircle, CheckCircle2, KeyRound } from 'lucide-react';
 import authApi from '../../services/authApi';
+import { useToast } from '../../context/ToastContext';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,10 +16,12 @@ const ForgotPassword = () => {
   const validate = () => {
     if (!email.trim()) {
       setFormError('Email address is required.');
+      showToast('Please enter your account email address.', 'warning');
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setFormError('Please enter a valid email address.');
+      showToast('Please enter a valid email address.', 'warning');
       return false;
     }
     setFormError('');
@@ -35,14 +39,17 @@ const ForgotPassword = () => {
     try {
       const res = await authApi.forgotPassword(email.trim());
       const payload = res.data || res;
+      const msg = payload.message || 'If an account exists with this email, a verification code has been dispatched.';
       setSuccessData({
-        message: payload.message || 'If an account exists with this email, a verification code has been dispatched.',
+        message: msg,
         devOtp: payload.devOtp || null,
         devToken: payload.devResetToken || null
       });
+      showToast(msg, 'success');
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.message || 'Unable to process request. Please try again.';
       setFormError(errorMsg);
+      showToast(errorMsg, 'error');
     } finally {
       setLoading(false);
     }

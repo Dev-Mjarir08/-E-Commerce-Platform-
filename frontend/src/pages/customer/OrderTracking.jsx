@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import orderApi from "../../services/orderApi";
 
 const FALLBACK_ORDERS = [
   {
@@ -167,32 +168,57 @@ export const OrderTracking = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!id?.trim()) {
-        setError("A valid order reference is required to open tracking.");
-        setLoading(false);
-        return;
-      }
-
-      const orders = [...getStoredOrders(), ...FALLBACK_ORDERS];
-      const foundOrder = orders.find(
-        (candidate) =>
-          candidate._id === id ||
-          candidate.orderNumber?.toLowerCase() === id.toLowerCase(),
-      );
-
-      if (!foundOrder) {
-        setError(
-          `Order record "${id}" could not be located in your account archive.`,
-        );
-      } else {
-        setOrder(foundOrder);
-      }
-
+    let isMounted = true;
+    if (!id?.trim()) {
+      setError("A valid order reference is required to open tracking.");
       setLoading(false);
-    }, 300);
+      return;
+    }
 
-    return () => clearTimeout(timer);
+    setLoading(true);
+    setError(null);
+
+    orderApi.getTracking(id)
+      .then((res) => {
+        if (!isMounted) return;
+        const liveOrder = res?.data || res?.order || res;
+        if (liveOrder && (liveOrder._id || liveOrder.orderNumber)) {
+          setOrder(liveOrder);
+        } else {
+          const orders = [...getStoredOrders(), ...FALLBACK_ORDERS];
+          const foundOrder = orders.find(
+            (candidate) =>
+              candidate._id === id ||
+              candidate.orderNumber?.toLowerCase() === id.toLowerCase()
+          );
+          if (foundOrder) {
+            setOrder(foundOrder);
+          } else {
+            setError(`Order record "${id}" could not be located in your account archive.`);
+          }
+        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        const orders = [...getStoredOrders(), ...FALLBACK_ORDERS];
+        const foundOrder = orders.find(
+          (candidate) =>
+            candidate._id === id ||
+            candidate.orderNumber?.toLowerCase() === id.toLowerCase()
+        );
+        if (foundOrder) {
+          setOrder(foundOrder);
+        } else {
+          setError(`Order record "${id}" could not be located in your account archive.`);
+        }
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   const activeIndex = useMemo(

@@ -479,6 +479,81 @@ export const getAllStores = async (req, res) => {
 };
 
 /**
+ * @desc    Get public active stores for storefront & homepage showcase
+ * @route   GET /api/stores/public
+ * @access  Public
+ */
+export const getPublicStores = async (req, res) => {
+  try {
+    const { limit = 20, search } = req.query;
+    const query = {};
+    if (search) {
+      query.name = { $regex: search, $options: 'i' };
+    }
+
+    let stores = await Store.find({ ...query, status: 'active' })
+      .populate('owner', 'name email avatar')
+      .sort({ ratingAverage: -1, isVerified: -1, createdAt: -1 })
+      .limit(Number(limit))
+      .lean();
+
+    // Fallback if no store is explicitly marked 'active' yet in dev/fresh DB
+    if (!stores || stores.length === 0) {
+      stores = await Store.find(query)
+        .populate('owner', 'name email avatar')
+        .sort({ isVerified: -1, createdAt: -1 })
+        .limit(Number(limit))
+        .lean();
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: stores
+    });
+  } catch (error) {
+    console.error('Error fetching public stores:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch stores.',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get single store by slug
+ * @route   GET /api/stores/slug/:slug
+ * @access  Public
+ */
+export const getStoreBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const store = await Store.findOne({ slug: slug.toLowerCase() })
+      .populate('owner', 'name email avatar')
+      .lean();
+
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        message: 'Store not found.'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: store
+    });
+  } catch (error) {
+    console.error('Error fetching store by slug:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch store details.',
+      error: error.message
+    });
+  }
+};
+
+/**
  * @desc    Update store by ID (Admin)
  * @route   PATCH /api/stores/:id
  * @access  Private / Admin

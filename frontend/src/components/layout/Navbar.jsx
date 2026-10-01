@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Search, Heart, User, ShoppingBag, Menu, X, ArrowRight, LayoutDashboard, Store } from 'lucide-react';
+import { Search, Heart, User, ShoppingBag, Menu, X, ArrowRight, LayoutDashboard, Store, Package } from 'lucide-react';
 import { openCart } from '../../redux/slices/cartSlice';
+import { getImageUrl } from '../../utils/imageUrl';
 
 export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
   const dispatch = useDispatch();
@@ -25,48 +26,47 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
   }, []);
 
   const navLinks = [
-    { label: 'All Products', href: '/shop', isRouter: true },
-    { label: 'All Departments', href: '#category-section' },
-    { label: 'Electronics', href: '/shop?category=electronics', isRouter: true },
-    { label: 'Fashion', href: '/shop?category=fashion', isRouter: true },
-    { label: 'Footwear', href: '/shop?category=footwear', isRouter: true },
-    { label: 'Watches', href: '/shop?category=watches', isRouter: true },
+    { label: 'Shop All', href: '/shop', isRouter: true },
+    { label: 'Categories', href: '/categories', isRouter: true },
+    { label: 'Orders', href: '/orders', isRouter: true },
+    { label: 'New Arrivals', href: '/shop?filter=new-arrivals', isRouter: true },
+    { label: 'Best Sellers', href: '/shop?filter=best-sellers', isRouter: true },
     { label: 'Stores', href: '#featured-stores' },
-    { label: 'Deals', href: '#sale' }
+    { label: 'Sale', href: '/shop?filter=sale', isRouter: true }
   ];
 
   return (
     <header
-      className={`sticky top-0 z-40 w-full transition-all duration-300 ${
+      className={`sticky top-0 z-40 w-full transition-colors duration-200 ${
         isScrolled
-          ? 'bg-[#F8F7F4]/95 backdrop-blur-md border-b border-[#E5E3DF] shadow-xs py-3.5'
-          : 'bg-[#F8F7F4] border-b border-[#E5E3DF]/50 py-5'
+          ? 'bg-[#F8F7F4]/95 backdrop-blur-md border-b border-[#E5E3DF] shadow-xs'
+          : 'bg-[#F8F7F4] border-b border-[#E5E3DF]/70'
       }`}
     >
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-12 h-18 sm:h-20 flex items-center justify-between gap-4">
         {/* Left: Platform Logo & Mobile Hamburger */}
-        <div className="flex items-center gap-4 sm:gap-8">
+        <div className="flex items-center gap-3 sm:gap-6 shrink-0">
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
-            className="lg:hidden text-[#111111] hover:text-[#666666] p-1"
+            className="lg:hidden text-[#111111] hover:text-[#666666] p-1.5 -ml-1.5 rounded-md hover:bg-[#111111]/5 transition-colors"
             aria-label="Open mobile navigation"
           >
             <Menu className="w-5 h-5" />
           </button>
 
-          <Link to="/" className="inline-block group">
+          <Link to="/" className="flex flex-col group shrink-0">
             <h1 className="font-serif text-2xl sm:text-3xl tracking-[0.2em] uppercase text-[#111111] font-normal leading-none">
               ATELIER
             </h1>
-            <span className="block text-[8px] sm:text-[9px] font-mono tracking-[0.35em] text-[#8E877F] uppercase mt-1 group-hover:text-[#111111] transition-colors">
-              GLOBAL MULTI-CATEGORY MARKETPLACE
+            <span className="block text-[8px] sm:text-[9px] font-mono tracking-[0.3em] text-[#8E877F] uppercase mt-1 group-hover:text-[#111111] transition-colors">
+              CURATED GLOBAL MARKETPLACE
             </span>
           </Link>
         </div>
 
         {/* Center: Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-7 text-[11px] uppercase tracking-[0.22em] font-medium text-[#111111]">
+        <nav className="hidden lg:flex items-center gap-5 xl:gap-8 text-xs uppercase tracking-[0.18em] font-medium text-[#111111]">
           {navLinks.map((link) =>
             link.isRouter ? (
               <Link
@@ -88,39 +88,49 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
           )}
         </nav>
 
-        {/* Right: Actions (Search, Wishlist ♡, Account, Bag) */}
-        <div className="flex items-center gap-3 sm:gap-5 text-[#111111]">
-          {/* Search */}
+        {/* Right: Actions (Search, Wishlist, Role Dashboard, Profile, Bag) */}
+        <div className="flex items-center gap-1.5 sm:gap-3 text-[#111111] shrink-0">
+          {/* Search Button */}
           <button
             type="button"
             onClick={onOpenSearch}
-            className="p-1.5 hover:text-[#666666] transition-colors flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider"
+            className="h-9 px-2.5 sm:px-3 rounded-full hover:bg-[#111111]/5 transition-colors flex items-center gap-2 text-xs font-mono uppercase tracking-wider"
             aria-label="Search garments and stores"
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-4 h-4 text-[#111111]" />
             <span className="hidden xl:inline text-[11px]">Search</span>
           </button>
 
-          {/* Wishlist ♡ */}
+          {/* Wishlist Button */}
           <Link
             to="/wishlist"
-            className="p-1.5 hover:text-[#666666] transition-colors relative"
+            className="h-9 w-9 rounded-full hover:bg-[#111111]/5 transition-colors flex items-center justify-center relative"
             aria-label="Wishlist"
             title="Wishlist Archive"
           >
-            <Heart className="w-4 h-4" />
+            <Heart className="w-4 h-4 text-[#111111]" />
             {totalWishlistCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-[#111111] text-[#F8F7F4] text-[8px] font-mono w-3.5 h-3.5 rounded-full flex items-center justify-center">
+              <span className="absolute 1 top-1 right-1 bg-[#111111] text-[#F8F7F4] text-[8px] font-mono w-4 h-4 rounded-full flex items-center justify-center font-bold">
                 {totalWishlistCount}
               </span>
             )}
+          </Link>
+
+          {/* Orders Link */}
+          <Link
+            to="/orders"
+            className="h-9 w-9 rounded-full hover:bg-[#111111]/5 transition-colors flex items-center justify-center relative"
+            aria-label="My Orders"
+            title="My Orders & Consignments"
+          >
+            <Package className="w-4 h-4 text-[#111111]" />
           </Link>
 
           {/* Role-Based Operations Dashboard Button (Admin or Vendor only, never for Customer) */}
           {user && (user.role === 'admin' || user.role === 'vendor' || user.role === 'seller') && (
             <Link
               to={user.role === 'admin' ? '/admin/dashboard' : '/vendor/dashboard'}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#111111] text-[#F8F7F4] hover:bg-[#2A2A2A] text-[10px] font-mono uppercase tracking-[0.18em] font-medium border border-[#111111] transition-all shadow-xs"
+              className="h-9 inline-flex items-center gap-1.5 px-3 bg-[#111111] text-[#F8F7F4] hover:bg-[#2A2A2A] text-[10px] font-mono uppercase tracking-[0.16em] font-medium border border-[#111111] transition-all shadow-xs"
               title={user.role === 'admin' ? 'Open Admin Control Suite' : 'Open Vendor Atelier Portal'}
             >
               {user.role === 'admin' ? (
@@ -139,29 +149,61 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
             </Link>
           )}
 
-          {/* Account */}
+          {/* Account Profile - Precision aligned */}
           <Link
             to={user ? '/profile' : '/login'}
-            className="p-1.5 hover:text-[#666666] transition-colors"
+            className="h-9 flex items-center gap-2 p-0.5 sm:px-1.5 rounded-full hover:bg-[#111111]/5 transition-colors group"
             aria-label="Account"
-            title={user ? `Signed in as ${user.name}` : 'Sign In / Account'}
+            title={user ? `Signed in as ${user.name}` : 'Sign In / Register'}
           >
-            <User className="w-4 h-4" />
+            <div className="relative w-8 h-8 rounded-full shrink-0 flex items-center justify-center overflow-hidden border border-[#111111]/20 shadow-2xs group-hover:border-[#111111] transition-colors">
+              {user && (user.avatar?.url || (typeof user.avatar === 'string' && user.avatar)) ? (
+                <img
+                  src={getImageUrl(user.avatar?.url || user.avatar)}
+                  alt={user.name || 'User'}
+                  className="w-full h-full object-cover"
+                />
+              ) : user ? (
+                <div className="w-full h-full bg-[#111111] text-[#F8F7F4] flex items-center justify-center text-xs font-bold font-mono tracking-wider">
+                  {(user.name || 'User')
+                    .split(' ')
+                    .filter(Boolean)
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2) || 'U'}
+                </div>
+              ) : (
+                <div className="w-full h-full bg-[#EAE6DF] flex items-center justify-center text-[#111111]">
+                  <User className="w-4 h-4 text-[#111111]" />
+                </div>
+              )}
+
+              {user && (
+                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1.5 ring-white" />
+              )}
+            </div>
+
+            {user && (
+              <span className="hidden xl:inline text-xs font-sans uppercase tracking-wider text-[#111111] font-semibold truncate max-w-[85px]">
+                {user.name?.split(' ')?.[0] || 'Account'}
+              </span>
+            )}
           </Link>
 
-          {/* Bag */}
+          {/* Bag Button */}
           <button
             type="button"
             onClick={() => dispatch(openCart())}
-            className="p-1.5 hover:text-[#666666] transition-colors flex items-center gap-2 relative"
+            className="h-9 px-2.5 sm:px-3 rounded-full hover:bg-[#111111]/5 transition-colors flex items-center gap-2 relative text-xs font-mono uppercase tracking-wider"
             aria-label="Bag"
           >
-            <ShoppingBag className="w-4 h-4" />
+            <ShoppingBag className="w-4 h-4 text-[#111111]" />
             <span className="text-[11px] font-mono font-medium tracking-widest hidden sm:inline uppercase">
               BAG ({totalCartCount})
             </span>
             {totalCartCount > 0 && (
-              <span className="sm:hidden absolute -top-1 -right-1 bg-[#111111] text-[#F8F7F4] text-[8px] font-mono w-3.5 h-3.5 rounded-full flex items-center justify-center">
+              <span className="sm:hidden absolute -top-1 -right-1 bg-[#111111] text-[#F8F7F4] text-[8px] font-mono w-4 h-4 rounded-full flex items-center justify-center font-bold">
                 {totalCartCount}
               </span>
             )}

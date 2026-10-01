@@ -10,7 +10,19 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    host: true
+    host: true,
+    proxy: {
+      // Proxy static uploads directly to Express backend
+      '/uploads': {
+        target: 'http://localhost:8081',
+        changeOrigin: true
+      },
+      // Proxy API requests to Express backend
+      '/api': {
+        target: 'http://localhost:8081',
+        changeOrigin: true
+      }
+    }
   },
   build: {
     rollupOptions: {

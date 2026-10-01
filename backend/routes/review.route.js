@@ -4,11 +4,15 @@ import {
   getAdminReviews,
   getAdminReviewById,
   updateAdminReviewStatus,
+  getPublicReviews
 } from "../controllers/review.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
 
 const router = Router();
+
+// Public: customer testimonials and product reviews
+router.get("/", getPublicReviews);
 
 router.use(protect);
 

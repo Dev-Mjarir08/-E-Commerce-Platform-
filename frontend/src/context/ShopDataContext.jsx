@@ -1,54 +1,85 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import productApi from '../services/productApi';
 import { categoryService } from '../services/categoryService';
-import { categories as fallbackCategories } from '../data/categories';
+import storeService from '../services/storeService';
 
 const ShopDataContext = createContext(null);
 
+const getStoredProducts = () => {
+  try {
+    const raw = localStorage.getItem('ecommerce_admin_products');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return [];
+};
+
 export const ShopDataProvider = ({ children }) => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(getStoredProducts);
   const [categories, setCategories] = useState([]);
+  const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Initial load of catalog data
+  // Initial load of live catalog data from MongoDB
   const loadInitialData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [productRes, categoryRes] = await Promise.allSettled([
+      const [productRes, categoryRes, storeRes] = await Promise.allSettled([
         productApi.getProducts({ limit: 100 }),
-        categoryService.getCategories()
+        categoryService.getCategories(),
+        storeService.getStores({ limit: 20 })
       ]);
 
       if (productRes.status === 'fulfilled') {
-        const prodList = productRes.value?.data || productRes.value?.products;
-        if (Array.isArray(prodList)) {
-          setProducts(prodList);
-        } else {
-          setProducts([]);
-        }
+        const prodList = productRes.value?.data || productRes.value?.products || [];
+        const validProdList = Array.isArray(prodList) ? prodList : [];
+        const localList = getStoredProducts();
+
+        const mergedMap = new Map();
+        localList.forEach((p) => {
+          const key = p._id || p.id || p.sku;
+          if (key) mergedMap.set(String(key), p);
+        });
+        validProdList.forEach((p) => {
+          const key = p._id || p.id || p.sku;
+          if (key) mergedMap.set(String(key), p);
+        });
+
+        const combined = Array.from(mergedMap.values());
+        setProducts(combined.length > 0 ? combined : validProdList);
       } else {
-        setProducts([]);
+        const localList = getStoredProducts();
+        if (localList.length > 0) {
+          setProducts(localList);
+        }
       }
 
       if (categoryRes.status === 'fulfilled') {
         const catList = Array.isArray(categoryRes.value)
           ? categoryRes.value
           : (categoryRes.value?.data || categoryRes.value?.categories || []);
-        if (Array.isArray(catList) && catList.length > 0) {
-          setCategories(catList);
-        } else {
-          setCategories(fallbackCategories);
-        }
+        setCategories(Array.isArray(catList) ? catList : []);
       } else {
-        setCategories(fallbackCategories);
+        setCategories([]);
+      }
+
+      if (storeRes.status === 'fulfilled') {
+        const storeList = storeRes.value || [];
+        setStores(Array.isArray(storeList) ? storeList : []);
+      } else {
+        setStores([]);
       }
     } catch (err) {
       console.warn('Initial shop data loading error:', err);
-      setProducts([]);
-      setCategories(fallbackCategories);
       setError(err);
+      const localList = getStoredProducts();
+      if (localList.length > 0) {
+        setProducts(localList);
+      }
     } finally {
       setLoading(false);
     }
@@ -84,12 +115,13 @@ export const ShopDataProvider = ({ children }) => {
   const value = useMemo(() => ({
     products,
     categories,
+    stores,
     featuredProducts,
     loading,
     error,
     refreshData: loadInitialData,
     getProductById
-  }), [products, categories, featuredProducts, loading, error, loadInitialData, getProductById]);
+  }), [products, categories, stores, featuredProducts, loading, error, loadInitialData, getProductById]);
 
   return (
     <ShopDataContext.Provider value={value}>

@@ -7,8 +7,19 @@ import { ProductCard } from '../product/ProductCard';
 
 export const NewArrivals = ({ onQuickView, onShowToast }) => {
   const { products: contextProducts } = useShopData();
-  const [newArrivalProducts, setNewArrivalProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [newArrivalProducts, setNewArrivalProducts] = useState(() => (
+    Array.isArray(contextProducts) && contextProducts.length > 0 ? contextProducts.slice(0, 8) : []
+  ));
+  const [loading, setLoading] = useState(() => (
+    !Array.isArray(contextProducts) || contextProducts.length === 0
+  ));
+
+  useEffect(() => {
+    if (Array.isArray(contextProducts) && contextProducts.length > 0) {
+      setNewArrivalProducts(contextProducts.slice(0, 8));
+      setLoading(false);
+    }
+  }, [contextProducts]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -59,10 +70,10 @@ export const NewArrivals = ({ onQuickView, onShowToast }) => {
         </div>
 
         <Link
-          to="/shop"
+          to="/shop?filter=new-arrivals"
           className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-[#111111] hover:text-m4m-secondary transition-colors mt-4 sm:mt-0 group"
         >
-          <span>VIEW ALL PRODUCTS</span>
+          <span>VIEW ALL NEW ARRIVALS</span>
           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>
@@ -80,16 +91,29 @@ export const NewArrivals = ({ onQuickView, onShowToast }) => {
         </div>
       ) : (
         /* Responsive Grid: 4 cols desktop, 3 cols tablet, 2 cols mobile */
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {newArrivalProducts.map((product) => (
-            <ProductCard
-              key={product._id || product.id}
-              product={product}
-              onQuickView={onQuickView}
-              onShowToast={onShowToast}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {newArrivalProducts.map((product) => (
+              <ProductCard
+                key={product._id || product.id}
+                product={product}
+                onQuickView={onQuickView}
+                onShowToast={onShowToast}
+              />
+            ))}
+          </div>
+
+          {/* Load More / Explore Dedicated Page Button */}
+          <div className="mt-12 text-center">
+            <Link
+              to="/shop?filter=new-arrivals"
+              className="inline-flex items-center gap-3 bg-[#111111] text-[#F8F7F4] hover:bg-[#333333] px-8 py-3.5 text-xs font-mono uppercase tracking-[0.2em] transition-all shadow-sm group"
+            >
+              <span>EXPLORE ALL NEW ARRIVALS</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </>
       )}
     </section>
   );

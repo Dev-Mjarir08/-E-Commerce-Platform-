@@ -87,6 +87,23 @@ export const uploadCategoryImage = multer({
   fileFilter
 }).single('image');
 
+export const uploadBanner = (req, res, next) => {
+  multer({
+    storage: categoryStorage,
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter
+  }).fields([
+    { name: 'banner', maxCount: 1 },
+    { name: 'image', maxCount: 1 }
+  ])(req, res, (err) => {
+    if (err) return res.status(400).json({ success: false, message: err.message });
+    if (req.files) {
+      req.file = req.files.banner?.[0] || req.files.image?.[0] || null;
+    }
+    next();
+  });
+};
+
 export const uploadAvatar = multer({
   storage: avatarStorage,
   limits: {

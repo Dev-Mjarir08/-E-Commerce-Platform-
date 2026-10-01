@@ -60,6 +60,18 @@ export const productApi = {
     });
   },
 
+  // POST /api/products/bulk - Create multiple products in bulk
+  async createBulkProducts(products) {
+    const payload = Array.isArray(products) ? { products } : products;
+    return api.post('/products/bulk', payload);
+  },
+
+  // POST /api/products/delete-many - Delete multiple products in bulk
+  async deleteMultipleProducts(ids) {
+    const payload = Array.isArray(ids) ? { ids } : (ids?.ids ? ids : { ids: [ids] });
+    return api.post('/products/delete-many', payload);
+  },
+
   // PATCH /api/products/:id - Update product
   async updateProduct(id, productData) {
     const isFormData = productData instanceof FormData;

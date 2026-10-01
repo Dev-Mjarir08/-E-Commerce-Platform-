@@ -34,7 +34,7 @@ import {
   updateProduct as updateProductRedux,
   deleteProduct as deleteProductRedux,
 } from "../../redux/slices/productSlice";
-import { categories } from "../../data/categories";
+import categoryService from "../../services/categoryService";
 import adminApi from "../../services/adminApi";
 import { useConfirm } from "../../context/ModalContext";
 
@@ -71,8 +71,30 @@ const Products = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState(null);
-  const [editingProduct, setEditingProduct] = useState(null);
   const [activeFormTab, setActiveFormTab] = useState("general");
+
+  const [categories, setCategories] = useState([
+    { id: "clothing", slug: "clothing", name: "Clothing" },
+    { id: "shoes", slug: "shoes", name: "Shoes" },
+    { id: "accessories", slug: "accessories", name: "Accessories" },
+    { id: "outerwear", slug: "outerwear", name: "Outerwear" },
+    { id: "bags", slug: "bags", name: "Bags" },
+    { id: "jewelry", slug: "jewelry", name: "Jewelry" }
+  ]);
+
+  useEffect(() => {
+    categoryService.getCategories().then((res) => {
+      const list = Array.isArray(res) ? res : (res?.data || res?.categories || []);
+      if (Array.isArray(list) && list.length > 0) {
+        setCategories(list.map((c) => ({
+          ...c,
+          id: c._id || c.id || c.slug,
+          slug: c.slug || c.id,
+          name: c.name
+        })));
+      }
+    }).catch(() => {});
+  }, []);
 
   // Bulk Products Import States
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -507,47 +529,6 @@ const Products = () => {
     });
   };
 
-  // 1-Click Seed 50+ Products into MongoDB
-  const handleSeedFiftyProducts = async () => {
-    const ok = await confirm({
-      title: "Seed Curated Database Catalog",
-      message:
-        "This will seed/upsert 50+ curated luxury products with high-resolution imagery into your MongoDB database. Continue?",
-      confirmText: "Seed Catalog",
-      cancelText: "Cancel",
-      type: "database",
-    });
-    if (!ok) return;
-    setIsSeeding(true);
-    setApiNotice(null);
-    try {
-      const res = await adminApi.seedFiftyProducts();
-      const count =
-        res?.count || (Array.isArray(res?.data) ? res.data.length : null) || 54;
-      const msg =
-        res?.message ||
-        res?.data?.message ||
-        `Successfully seeded ${count} products into MongoDB database!`;
-      setApiNotice({
-        type: "success",
-        text: msg,
-      });
-      await fetchProducts();
-    } catch (err) {
-      console.error("Seed 50 error:", err);
-      setApiNotice({
-        type: "error",
-        text:
-          err?.response?.data?.message ||
-          err?.message ||
-          "Failed to seed 50+ products.",
-      });
-    } finally {
-      setIsSeeding(false);
-      setTimeout(() => setApiNotice(null), 6000);
-    }
-  };
-
   // Submit Bulk JSON Import
   const handleBulkSubmit = async () => {
     if (!bulkJsonInput.trim()) {
@@ -755,11 +736,15 @@ const Products = () => {
       return;
     }
 
-    const confirmPrompt = window.prompt(
-      `DANGER: This will permanently delete ALL ${productList.length} products in the database and clean up images.\n\nTo confirm, type "DELETE" below:`,
-    );
+    const confirmed = await confirm({
+      title: "Permanent Catalog Deletion",
+      message: `DANGER: This will permanently delete ALL ${productList.length} products in the database and clean up images. Are you absolutely certain you want to proceed?`,
+      confirmText: "Delete All Products",
+      cancelText: "Cancel",
+      type: "danger"
+    });
 
-    if (confirmPrompt !== "DELETE") {
+    if (!confirmed) {
       return;
     }
 
@@ -997,18 +982,6 @@ const Products = () => {
             <ExternalLink size={14} />
             <span>Full Page Add</span>
           </Link>
-
-          {/* 1-Click Seed 50+ Luxury Products into MongoDB */}
-          <button
-            type="button"
-            onClick={handleSeedFiftyProducts}
-            disabled={isSeeding || isLoading}
-            title="Populate/Sync 50+ curated luxury products directly into MongoDB"
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg text-xs font-bold shadow-sm transition-all duration-150 disabled:opacity-60"
-          >
-            <Sparkles size={14} className={isSeeding ? "animate-spin" : ""} />
-            <span>{isSeeding ? "Seeding 50+..." : "Seed 50+ Products"}</span>
-          </button>
 
           {/* Bulk Import JSON (50+ products) */}
           <button

@@ -3,8 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { ProductCard } from "../../components/product/ProductCard";
-import { categories as catalogCategories } from "../../data/categories";
 import { useShopData } from "../../context/ShopDataContext";
+import { getCategoryImageUrl, getCategoryFallbackImage } from "../../utils/imageUrl";
 
 const PRICE_OPTIONS = [
   { value: "all", label: "All prices" },
@@ -64,30 +64,15 @@ const getProducts = (adminProducts, shopProducts = []) => {
 
 export const Categories = () => {
   const navigate = useNavigate();
-  const { products: shopProducts } = useShopData();
+  const { products: shopProducts, categories: shopCategories = [] } = useShopData();
   const adminProducts = useSelector((state) => state.products?.items || []);
   const [searchTerm, setSearchTerm] = useState("");
   const [priceRange, setPriceRange] = useState("all");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [toast, setToast] = useState("");
 
   const products = useMemo(() => getProducts(adminProducts, shopProducts), [adminProducts, shopProducts]);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      try {
-        if (!Array.isArray(catalogCategories)) {
-          throw new Error("Category data is unavailable.");
-        }
-        setIsLoading(false);
-      } catch {
-        setLoadError("Something went wrong while loading categories.");
-        setIsLoading(false);
-      }
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -97,19 +82,21 @@ export const Categories = () => {
 
   const categoryCards = useMemo(
     () =>
-      catalogCategories.map((category) => {
-        const catTarget = (category.slug || category.id || category.name || "").toLowerCase();
+      shopCategories.map((category) => {
+        const catTarget = (category.slug || category._id || category.id || category.name || "").toLowerCase();
         const categoryProducts = products.filter((product) => {
           const pCat = String(product.category || product.categoryName || "").toLowerCase();
           return pCat.includes(catTarget) || catTarget.includes(pCat);
         });
         return {
           ...category,
+          id: category._id || category.id || category.slug,
           count: categoryProducts.length,
           products: categoryProducts,
+          image: getCategoryImageUrl(category),
         };
       }),
-    [products],
+    [shopCategories, products],
   );
 
   const visibleCategories = useMemo(() => {
@@ -142,11 +129,11 @@ export const Categories = () => {
   const handleSearch = (event) => {
     event.preventDefault();
     const query = searchTerm.trim();
-    navigate(query ? `/search?q=${encodeURIComponent(query)}` : "/search");
+    navigate(query ? `/shop?search=${encodeURIComponent(query)}` : "/shop");
   };
 
   const handleCategoryBrowse = (categoryId) => {
-    navigate(`/search?category=${encodeURIComponent(categoryId)}`);
+    navigate(`/shop?category=${encodeURIComponent(categoryId)}`);
   };
 
   const renderCategoryCard = (category, featured = false) => (
@@ -155,10 +142,13 @@ export const Categories = () => {
       className={`group relative overflow-hidden border border-m4m-border bg-white ${featured ? "min-h-96" : "min-h-80"}`}
     >
       <img
-        src={category.image}
+        src={category.image || getCategoryFallbackImage(category.name)}
         alt={category.name}
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         loading="lazy"
+        onError={(e) => {
+          e.currentTarget.src = getCategoryFallbackImage(category.name);
+        }}
       />
       <div className="absolute inset-0 bg-linear-to-t from-[#111111]/85 via-[#111111]/15 to-transparent" />
       <div className="relative flex h-full min-h-80 flex-col justify-between p-5 text-m4m-bg sm:p-6">
@@ -179,7 +169,7 @@ export const Categories = () => {
           </p>
           <button
             type="button"
-            onClick={() => handleCategoryBrowse(category.id)}
+            onClick={() => handleCategoryBrowse(category.slug || category.id)}
             className="mt-5 inline-flex items-center gap-2 border border-white/60 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.18em] transition-colors hover:bg-white hover:text-[#111111]"
           >
             Browse {category.name} <ArrowRight className="h-3.5 w-3.5" />

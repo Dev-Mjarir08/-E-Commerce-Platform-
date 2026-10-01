@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import {
   Menu,
   Bell,
@@ -9,19 +9,27 @@ import {
   ShieldCheck,
   PlusCircle,
   ShoppingBag,
-  Boxes
+  Boxes,
+  LogOut
 } from 'lucide-react';
+import { getImageUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/imageUrl';
+import { logoutUser } from '../../redux/slices/authSlice';
 
 const VendorNavbar = ({ onMenuClick, onRefresh, loading }) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user, store } = useSelector((state) => state.vendor || {});
   const { user: authUser } = useSelector((state) => state.auth || {});
 
+  const handleLogout = () => {
+    dispatch(logoutUser());
+    navigate('/login');
+  };
+
   const vendorName = user?.name || authUser?.name || 'Vendor Partner';
   const storeName = store?.name || 'Atelier Store';
-  const avatarUrl =
-    user?.avatar?.url ||
-    authUser?.avatar?.url ||
-    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80';
+  const rawAvatar = user?.avatar?.url || authUser?.avatar?.url || user?.avatar || authUser?.avatar;
+  const avatarUrl = getImageUrl(rawAvatar, DEFAULT_AVATAR_FALLBACK);
 
   return (
     <header className="bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between sticky top-0 z-20">
@@ -114,6 +122,17 @@ const VendorNavbar = ({ onMenuClick, onRefresh, loading }) => {
             <p className="text-[10px] font-mono uppercase text-slate-500 mt-1">{storeName}</p>
           </div>
         </Link>
+
+        {/* Direct Logout Button */}
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 text-xs font-semibold border border-rose-200 transition-colors shadow-xs ml-1"
+          title="Log Out of Vendor Portal"
+        >
+          <LogOut size={14} className="text-rose-600 shrink-0" />
+          <span className="hidden sm:inline">Logout</span>
+        </button>
       </div>
     </header>
   );

@@ -61,7 +61,7 @@ const orderSchema = new mongoose.Schema(
     },
     orderStatus: {
       type: String,
-      enum: ['placed', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
+      enum: ['placed', 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
       default: 'placed'
     },
     subtotal: {
@@ -94,6 +94,24 @@ const orderSchema = new mongoose.Schema(
       trim: true,
       default: null
     },
+    carrier: {
+      type: String,
+      trim: true,
+      default: 'Atelier Logistics'
+    },
+    estimatedDelivery: {
+      type: Date,
+      default: null
+    },
+    trackingEvents: [
+      {
+        status: { type: String, required: true },
+        title: { type: String, required: true },
+        location: { type: String, default: '' },
+        description: { type: String, default: '' },
+        timestamp: { type: Date, default: Date.now }
+      }
+    ],
     notes: {
       type: String,
       trim: true

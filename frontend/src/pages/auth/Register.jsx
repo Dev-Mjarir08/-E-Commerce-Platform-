@@ -21,11 +21,13 @@ import {
   Sparkles
 } from 'lucide-react';
 import { registerUser, registerVendorUser, clearError } from '../../redux/slices/authSlice';
+import { useToast } from '../../context/ToastContext';
 
 const Register = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
+  const { showToast } = useToast();
 
   const [accountType, setAccountType] = useState('customer'); // 'customer' | 'vendor'
   const [formData, setFormData] = useState({
@@ -105,7 +107,12 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+
+    // Check validation first
+    if (!validate()) {
+      showToast('Please correct the highlighted fields before submitting.', 'warning');
+      return;
+    }
 
     try {
       if (accountType === 'customer') {
@@ -139,12 +146,24 @@ const Register = () => {
         ).unwrap();
       }
 
-      setSuccessMessage('Registration successful! Directing to boutique...');
+      const welcomeMsg =
+        accountType === 'vendor'
+          ? 'Vendor account registered! Storefront created.'
+          : 'Registration successful! Directing to boutique...';
+
+      setSuccessMessage(welcomeMsg);
+      showToast(welcomeMsg, 'success');
+
       setTimeout(() => {
-        navigate('/');
+        navigate(accountType === 'vendor' ? '/vendor/dashboard' : '/');
       }, 1200);
     } catch (err) {
-      console.warn('Registration failed:', err);
+      const errorMsg =
+        typeof err === 'string'
+          ? err
+          : err?.message || 'Registration failed. An account with this email may already exist.';
+      console.warn('Registration failed:', errorMsg);
+      showToast(errorMsg, 'error');
     }
   };
 

@@ -21,7 +21,7 @@ import { Footer } from '../../components/layout/Footer';
 import { AnnouncementBar } from '../../components/layout/AnnouncementBar';
 import { CartDrawer } from '../../components/common/CartDrawer';
 import { ProductCard } from '../../components/product/ProductCard';
-import { addToCart, openCart } from '../../redux/slices/cartSlice';
+import { addToCart, openCart, closeCart } from '../../redux/slices/cartSlice';
 import { toggleWishlist } from '../../redux/slices/wishlistSlice';
 import { useToast } from '../../context/ToastContext';
 import productApi from '../../services/productApi';
@@ -215,9 +215,11 @@ export const ProductDetails = () => {
         },
         size: selectedSize,
         color: selectedColor?.name || 'Standard',
-        quantity
+        quantity,
+        openDrawer: false
       })
     );
+    dispatch(closeCart());
     navigate('/checkout');
   };
 

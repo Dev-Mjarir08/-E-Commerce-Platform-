@@ -7,7 +7,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api'
  */
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60000,
+  timeout: 120000,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -37,13 +37,23 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response) {
-      // 401 Unauthorized: token expired or invalid
-      if (error.response.status === 401) {
+      const url = error.config?.url || '';
+      const isAuthEndpoint =
+        url.includes('/auth/login') ||
+        url.includes('/auth/register') ||
+        url.includes('/auth/verify');
+
+      // Only dispatch unauthorized session reset for expired tokens on protected endpoints,
+      // NOT when a user simply enters wrong credentials on login/register pages!
+      if (error.response.status === 401 && !isAuthEndpoint) {
         window.dispatchEvent(new CustomEvent('atelier:unauthorized'));
       }
 
-      // Format custom message from backend response if available
-      const message = error.response.data?.message || `Request failed with status ${error.response.status}`;
+      // Extract specific backend error message
+      const message =
+        error.response.data?.message ||
+        error.response.data?.error ||
+        `Request failed with status ${error.response.status}`;
       error.message = message;
     } else if (error.request) {
       error.message = 'Unable to connect to backend server. Please ensure the API is running on port 8081.';

@@ -5,14 +5,18 @@ import {
   createPaymentIntent,
   createCheckoutSession,
   verifyPayment,
-  stripeWebhook
+  stripeWebhook,
+  getPaymentTransactions
 } from '../controllers/payment.controller.js';
-import { protect, optionalAuth } from '../middlewares/auth.middleware.js';
+import { protect, optionalAuth, authorize } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
 // Public: Get Stripe publishable key
 router.get('/config', getStripeConfig);
+
+// Admin: Get all transaction history and financial analytics
+router.get('/transactions', protect, authorize('admin'), getPaymentTransactions);
 
 // Create Payment Intent (protected with optionalAuth fallback so guest or user can pay)
 router.post('/create-payment-intent', optionalAuth, createPaymentIntent);

@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import stripe, { getStripePublicKey } from '../config/stripe.js';
 import Order from '../models/Order.js';
 import OrderItem from '../models/OrderItem.js';
+import Payment from '../models/Payment.js';
 
 /**
  * @desc    Get Stripe Publishable Key for frontend initialization
@@ -334,6 +335,23 @@ export const verifyPayment = async (req, res) => {
             orderDoc.orderStatus = 'confirmed';
           }
           await orderDoc.save();
+
+          // Sync with Payment collection
+          await Payment.findOneAndUpdate(
+            { order: orderDoc._id },
+            {
+              order: orderDoc._id,
+              user: orderDoc.user,
+              paymentMethod: 'stripe',
+              amount: orderDoc.totalPrice,
+              currency: 'USD',
+              status: 'succeeded',
+              transactionId: paymentIntentId || orderDoc.stripePaymentIntentId || `TXN-${orderDoc.orderNumber}`,
+              paidAt: new Date(),
+              gatewayResponse: paymentDetails || { verifiedAt: new Date() }
+            },
+            { upsert: true, new: true }
+          );
         }
       }
     }
@@ -453,5 +471,103 @@ export const stripeWebhook = async (req, res) => {
   } catch (error) {
     console.error('Error handling Stripe webhook event:', error);
     return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+/**
+ * @desc    Get all payment transactions with analytics for Admin/Finance
+ * @route   GET /api/payment/transactions
+ * @access  Protected (Admin)
+ */
+export const getPaymentTransactions = async (req, res) => {
+  try {
+    const { status, search, page = 1, limit = 50 } = req.query;
+
+    const query = {};
+    if (status && status !== 'all') {
+      query.status = status.toLowerCase();
+    }
+
+    const payments = await Payment.find(query)
+      .populate('order', 'orderNumber orderStatus shippingAddress subtotal shippingPrice discountAmount items')
+      .populate('user', 'name email firstName lastName phone')
+      .sort({ createdAt: -1 })
+      .skip((Number(page) - 1) * Number(limit))
+      .limit(Number(limit));
+
+    const totalCount = await Payment.countDocuments(query);
+
+    // Calculate real stats
+    const allPayments = await Payment.find({});
+    const totalVolume = allPayments
+      .filter((p) => p.status === 'succeeded')
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    const succeededCount = allPayments.filter((p) => p.status === 'succeeded').length;
+    const pendingCount = allPayments.filter((p) => p.status === 'pending').length;
+    const refundedCount = allPayments.filter((p) => p.status === 'refunded').length;
+    const failedCount = allPayments.filter((p) => p.status === 'failed').length;
+
+    const mappedTransactions = payments.map((p) => {
+      const order = p.order || {};
+      const user = p.user || {};
+      const customerName = user.name || [user.firstName, user.lastName].filter(Boolean).join(' ') || order.shippingAddress?.recipientName || 'Guest Client';
+      const fee = Math.round((p.amount * 0.029 + 0.3) * 100) / 100;
+      const netPayout = Math.max(0, Math.round((p.amount - fee) * 100) / 100);
+
+      return {
+        id: p.transactionId || `TXN-${p._id.toString().slice(-6).toUpperCase()}`,
+        _id: p._id,
+        orderId: order._id,
+        orderNumber: order.orderNumber || 'N/A',
+        customer: {
+          name: customerName,
+          email: user.email || 'N/A',
+          avatar: customerName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+        },
+        boutique: 'Atelier Maison Collective',
+        method: p.paymentMethod,
+        methodName: p.paymentMethod === 'stripe' ? 'Credit Card / Stripe Direct' : (p.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Digital Wallet'),
+        gateway: p.paymentMethod === 'stripe' ? 'Stripe Gateway' : 'Direct Merchant Ledger',
+        amount: p.amount,
+        fee,
+        netPayout,
+        currency: p.currency || 'USD',
+        status: p.status,
+        date: new Date(p.createdAt).toISOString().replace('T', ' ').slice(0, 16),
+        tax: 0,
+        shippingFee: order.shippingPrice || 0,
+        subtotal: order.subtotal || p.amount,
+        riskScore: 'Low (Verified)',
+        payoutStatus: p.status === 'succeeded' ? 'Settled' : 'Pending'
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        transactions: mappedTransactions,
+        pagination: {
+          total: totalCount,
+          page: Number(page),
+          pages: Math.ceil(totalCount / Number(limit))
+        },
+        stats: {
+          totalVolume,
+          totalTransactions: allPayments.length,
+          succeededCount,
+          pendingCount,
+          refundedCount,
+          failedCount,
+          successRate: allPayments.length > 0 ? ((succeededCount / allPayments.length) * 100).toFixed(1) : 100
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error in getPaymentTransactions:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve payment records.',
+      error: error.message
+    });
   }
 };

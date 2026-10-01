@@ -115,6 +115,7 @@ export const AppRoutes = () => {
         <Route path="/" element={<Home />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/products" element={<Shop />} />
+        <Route path="/categories" element={<CustomerCategories />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/products/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
@@ -253,6 +254,10 @@ export const AppRoutes = () => {
             <Route path="products/add" element={<AddProduct />} />
             <Route path="products/categories" element={<Categories />} />
             <Route path="products/inventory" element={<Inventory />} />
+
+            {/* Direct Categories Routes */}
+            <Route path="categories" element={<Categories />} />
+            <Route path="category" element={<Navigate to="/admin/categories" replace />} />
 
             {/* Stores */}
             <Route path="stores" element={<Stores />} />

@@ -37,7 +37,7 @@ export const loginUser = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await authApi.login(credentials);
-      return response.data; // { user, accessToken, refreshToken }
+      return response?.data || response;
     } catch (error) {
       return rejectWithValue(error.message || 'Login failed. Please verify credentials.');
     }
@@ -63,7 +63,7 @@ export const registerVendorUser = createAsyncThunk(
   async (vendorData, { rejectWithValue }) => {
     try {
       const response = await authApi.registerVendor(vendorData);
-      return response.data;
+      return response?.data || response;
     } catch (error) {
       return rejectWithValue(error.message || 'Vendor registration failed.');
     }
@@ -90,7 +90,7 @@ export const fetchCurrentUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await authApi.getMe();
-      return response.data; // { user }
+      return response?.data || response;
     } catch (error) {
       return rejectWithValue({
         message: error.message || 'Session expired.',
@@ -163,16 +163,21 @@ export const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.user = action.payload.user;
-        state.token = action.payload.accessToken;
-        state.refreshToken = action.payload.refreshToken;
+        const payload = action.payload?.data || action.payload;
+        const user = payload?.user || action.payload?.user;
+        const token = payload?.accessToken || payload?.token || action.payload?.accessToken;
+        const refreshToken = payload?.refreshToken || action.payload?.refreshToken;
+
+        state.user = user;
+        state.token = token;
+        state.refreshToken = refreshToken;
         state.error = null;
 
         try {
-          localStorage.setItem('atelier_token', action.payload.accessToken);
-          localStorage.setItem('atelier_user', JSON.stringify(action.payload.user));
-          if (action.payload.refreshToken) {
-            localStorage.setItem('atelier_refresh_token', action.payload.refreshToken);
+          if (token) localStorage.setItem('atelier_token', token);
+          if (user) localStorage.setItem('atelier_user', JSON.stringify(user));
+          if (refreshToken) {
+            localStorage.setItem('atelier_refresh_token', refreshToken);
           }
         } catch (err) {
           console.warn('LocalStorage save failed:', err);
@@ -218,15 +223,20 @@ export const authSlice = createSlice({
       })
       .addCase(registerVendorUser.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload?.accessToken) {
+        const token = action.payload?.accessToken || action.payload?.token;
+        const user = action.payload?.user;
+        if (token && user) {
           state.isAuthenticated = true;
-          state.user = action.payload.user;
-          state.token = action.payload.accessToken;
-          state.refreshToken = action.payload.refreshToken;
+          state.user = user;
+          state.token = token;
+          state.refreshToken = action.payload.refreshToken || null;
 
           try {
-            localStorage.setItem('atelier_token', action.payload.accessToken);
-            localStorage.setItem('atelier_user', JSON.stringify(action.payload.user));
+            localStorage.setItem('atelier_token', token);
+            localStorage.setItem('atelier_user', JSON.stringify(user));
+            if (action.payload.refreshToken) {
+              localStorage.setItem('atelier_refresh_token', action.payload.refreshToken);
+            }
           } catch (err) {
             console.warn('LocalStorage save failed:', err);
           }
@@ -271,11 +281,13 @@ export const authSlice = createSlice({
     // fetchCurrentUser
     builder
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
-        if (action.payload?.user) {
-          state.user = action.payload.user;
+        const payload = action.payload?.data || action.payload;
+        const user = payload?.user || action.payload?.user;
+        if (user) {
+          state.user = user;
           state.isAuthenticated = true;
           try {
-            localStorage.setItem('atelier_user', JSON.stringify(action.payload.user));
+            localStorage.setItem('atelier_user', JSON.stringify(user));
           } catch (err) {
             console.warn('LocalStorage save failed:', err);
           }

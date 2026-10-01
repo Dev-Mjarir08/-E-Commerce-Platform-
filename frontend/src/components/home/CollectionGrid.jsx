@@ -1,7 +1,8 @@
 import { ArrowRight } from 'lucide-react';
-import { categories } from '../../data/categories';
+import { useShopData } from '../../context/ShopDataContext';
 
 export const CollectionGrid = ({ onSelectCategory }) => {
+  const { categories } = useShopData();
   return (
     <section id="collections" className="py-16 md:py-24 max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-12">
       {/* Section Header */}
@@ -21,21 +22,21 @@ export const CollectionGrid = ({ onSelectCategory }) => {
 
       {/* Grid: 3 columns on desktop, 2 on tablet, 1 on mobile */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-        {categories.map((cat) => (
+        {categories.slice(0, 6).map((cat, idx) => (
           <a
-            key={cat.id}
+            key={cat._id || cat.id || cat.slug || idx}
             href="#catalog"
             onClick={(e) => {
               e.preventDefault();
               if (onSelectCategory) {
-                onSelectCategory(cat.id);
+                onSelectCategory(cat.slug || cat._id || cat.id);
               }
             }}
             className="group relative block overflow-hidden bg-m4m-stone border border-m4m-border aspect-[3/4] sm:aspect-[4/5] cursor-pointer"
           >
             {/* Background Image with subtle zoom */}
             <img
-              src={cat.image}
+              src={cat.image || cat.imageUrl || "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=800&auto=format&fit=crop"}
               alt={cat.name}
               className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03]"
               loading="lazy"

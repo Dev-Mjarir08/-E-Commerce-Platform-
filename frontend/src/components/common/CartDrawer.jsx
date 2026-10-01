@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { X, Plus, Minus, Trash2, ArrowRight, ShoppingBag, ShieldCheck, ExternalLink, Loader2 } from 'lucide-react';
 import { closeCart, removeFromCart, updateQuantity, applyPromo, removePromo } from '../../redux/slices/cartSlice';
 import couponApi from '../../services/couponApi';
@@ -8,10 +8,20 @@ import couponApi from '../../services/couponApi';
 export const CartDrawer = ({ onOpenCheckout }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { items, isOpen, promoCode, discountPercent, appliedCoupon } = useSelector((state) => state.cart);
   const [promoInput, setPromoInput] = useState('');
   const [promoMsg, setPromoMsg] = useState('');
   const [isApplying, setIsApplying] = useState(false);
+
+  const isCheckoutRoute = location.pathname.startsWith('/checkout') || location.pathname.startsWith('/order/');
+  const shouldShow = isOpen && !isCheckoutRoute;
+
+  useEffect(() => {
+    if (isCheckoutRoute && isOpen) {
+      dispatch(closeCart());
+    }
+  }, [isCheckoutRoute, isOpen, dispatch]);
 
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
@@ -73,7 +83,7 @@ export const CartDrawer = ({ onOpenCheckout }) => {
   return (
     <div
       className={`fixed inset-0 z-50 transition-opacity duration-300 ${
-        isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        shouldShow ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
       }`}
       aria-modal="true"
       role="dialog"
@@ -87,7 +97,7 @@ export const CartDrawer = ({ onOpenCheckout }) => {
       {/* Drawer Panel */}
       <div
         className={`absolute top-0 right-0 h-full w-full max-w-md bg-[#F8F7F4] text-[#111111] shadow-2xl flex flex-col transition-transform duration-500 ease-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+          shouldShow ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}

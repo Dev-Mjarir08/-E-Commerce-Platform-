@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import adminApi from "../../../services/adminApi";
 import { useToast } from "../../../context/ToastContext";
+import { useModal } from "../../../context/ModalContext";
 
 const statusConfig = {
   Processing: {
@@ -80,6 +81,7 @@ const ShipmentDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { alert: modalAlert } = useModal();
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -144,14 +146,22 @@ const ShipmentDetails = () => {
       await navigator.clipboard.writeText(tracking);
       showToast("Tracking number copied to clipboard.", "success");
     } catch {
-      alert(`Tracking Number: ${tracking}`);
+      modalAlert({
+        title: "Consignment Tracking Number",
+        message: tracking,
+        type: "info"
+      });
     }
   };
 
   const openTracking = () => {
     const tracking = order?.trackingNumber;
     if (tracking) {
-      alert(`Tracking ${tracking} with Carrier: Not Assigned`);
+      modalAlert({
+        title: "Live Courier Tracking",
+        message: `Tracking Number: ${tracking}\nCarrier: ${order?.carrier || "Standard Courier"}\nStatus: ${order?.orderStatus || "In Transit"}`,
+        type: "info"
+      });
     } else {
       showToast("No tracking number assigned to this shipment.", "info");
     }

@@ -33,6 +33,22 @@ export const orderApi = {
   cancelOrder: async (orderId, reason) => {
     return api.patch(`/orders/${orderId}/cancel`, { reason });
   },
+
+  // Get real-time verified shipping tracking timeline
+  getTracking: async (orderIdOrTracking) => {
+    return api.get(`/orders/track/${orderIdOrTracking}`);
+  },
+
+  // Update order status by Admin/Vendor
+  updateOrderStatus: async (orderId, statusData) => {
+    const payload = typeof statusData === 'string' ? { status: statusData } : statusData;
+    return api.patch(`/orders/admin/${orderId}/status`, payload);
+  },
+
+  // Update order shipping status and tracking
+  updateShipping: async (orderId, shippingData) => {
+    return api.patch(`/orders/admin/${orderId}/shipping`, shippingData);
+  },
 };
 
 export default orderApi;

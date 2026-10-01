@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { paymentApi } from '../../services/paymentApi';
 import {
   CreditCard,
   DollarSign,
@@ -236,6 +237,22 @@ const Payment = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
+  const fetchLiveTransactions = useCallback(async () => {
+    try {
+      const res = await paymentApi.getTransactions({ limit: 50 });
+      const raw = res?.data?.transactions || res?.transactions || res?.data;
+      if (Array.isArray(raw) && raw.length > 0) {
+        setTransactions(raw);
+      }
+    } catch {
+      // Keep initial transactions fallback if offline
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLiveTransactions();
+  }, [fetchLiveTransactions]);
+
   // Gateway toggle states for Admin preview
   const [gatewayConfigs, setGatewayConfigs] = useState({
     stripe: { active: true, mode: 'Live Production', fee: '2.9% + ₹30' },
@@ -256,12 +273,11 @@ const Payment = () => {
     setTimeout(() => setCopiedId(''), 2000);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      showToast('Payment records and gateway telemetry refreshed');
-    }, 600);
+    await fetchLiveTransactions();
+    setIsRefreshing(false);
+    showToast('Payment records and gateway telemetry refreshed');
   };
 
   const toggleGateway = (key) => {

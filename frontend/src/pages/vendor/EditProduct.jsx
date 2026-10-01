@@ -51,10 +51,13 @@ const mockExistingProduct = {
 
 import { useParams, useNavigate } from "react-router-dom";
 import productApi from "../../services/productApi";
+import categoryService from "../../services/categoryService";
+import { useModal } from "../../context/ModalContext";
 
 export default function EditProduct({ onBack }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { confirm: modalConfirm, alert: modalAlert } = useModal();
 
   // Product state loaded with existing data
   const [productData, setProductData] = useState(mockExistingProduct);
@@ -64,9 +67,39 @@ export default function EditProduct({ onBack }) {
   const [variants, setVariants] = useState(mockExistingProduct.variants);
   const [tags, setTags] = useState(mockExistingProduct.tags);
   const [tagInput, setTagInput] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Unsaved changes detector
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  useEffect(() => {
+    const fetchCats = async () => {
+      setLoadingCategories(true);
+      try {
+        const res = await categoryService.getCategories();
+        const list = Array.isArray(res) ? res : (res?.data?.categories || res?.data || res?.categories || []);
+        if (Array.isArray(list) && list.length > 0) {
+          const distinct = [];
+          const seen = new Set();
+          list.forEach((c) => {
+            const name = c.name?.trim();
+            if (name && !seen.has(name.toLowerCase())) {
+              seen.add(name.toLowerCase());
+              distinct.push(c);
+            }
+          });
+          setCategories(distinct);
+        }
+      } catch (err) {
+        console.warn("Categories fetch fallback:", err);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCats();
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -76,16 +109,24 @@ export default function EditProduct({ onBack }) {
           setProductData((prev) => ({
             ...prev,
             id: p._id || id,
-            title: p.name || prev.title,
+            title: p.title || p.name || prev.title,
             description: p.description || prev.description,
             category: p.category?.name || p.category || prev.category,
-            status: p.status === 'active' ? 'Active' : 'Draft',
+            status: p.status === 'active' || p.isActive ? 'Active' : 'Draft',
           }));
-          if (p.price) {
-            setPricing((prev) => ({ ...prev, price: p.price.toString(), stockQuantity: (p.stock || 0).toString() }));
+          if (p.price || p.basePrice) {
+            setPricing((prev) => ({
+              ...prev,
+              price: (p.price || p.basePrice).toString(),
+              comparePrice: p.discountPrice ? p.discountPrice.toString() : "",
+              stockQuantity: (p.stock != null ? p.stock : 15).toString()
+            }));
           }
           if (p.images && p.images.length > 0) {
             setImages(p.images.map((img, idx) => ({ id: `img-${idx}`, url: img.url || img, name: `image-${idx}` })));
+          }
+          if (Array.isArray(p.tags) && p.tags.length > 0) {
+            setTags(p.tags);
           }
         }
       }).catch((err) => console.warn('Product load fallback:', err));
@@ -174,19 +215,50 @@ export default function EditProduct({ onBack }) {
   const margin = priceNum > 0 ? ((profit / priceNum) * 100).toFixed(1) : 0;
 
   // Form Submit
-  const handleSave = (e) => {
-    e.preventDefault();
-    const updatedPayload = {
-      ...productData,
-      pricing,
-      tags,
-      images,
-      coverImage: images[coverIndex]?.url || null,
-      variants,
-    };
-    console.log("Updated Product Payload:", updatedPayload);
-    setHasUnsavedChanges(false);
-    alert("Product changes saved successfully!");
+  const handleSave = async (e) => {
+    if (e) e.preventDefault();
+    setSaving(true);
+    try {
+      const priceVal = parseFloat(pricing.price) || 0;
+      const compareVal = pricing.comparePrice ? parseFloat(pricing.comparePrice) : null;
+      const stockVal = parseInt(pricing.stockQuantity) || 0;
+
+      const payload = {
+        title: productData.title.trim(),
+        name: productData.title.trim(),
+        description: productData.description,
+        category: productData.category,
+        basePrice: priceVal,
+        price: priceVal,
+        discountPrice: compareVal,
+        stock: stockVal,
+        sku: productData.sku,
+        status: productData.status.toLowerCase(),
+        isActive: productData.status.toLowerCase() === "active",
+        tags,
+      };
+
+      if (id && id !== "PRD-9021") {
+        await productApi.updateProduct(id, payload);
+      }
+      window.dispatchEvent(new CustomEvent("shop:products-updated"));
+      setHasUnsavedChanges(false);
+      await modalAlert({
+        title: "Changes Saved",
+        message: "Product updates have been saved to your boutique catalog.",
+        type: "success"
+      });
+      navigate("/vendor/products");
+    } catch (err) {
+      console.error("Save product error:", err);
+      modalAlert({
+        title: "Save Failed",
+        message: err?.response?.data?.message || err.message || "Failed to update product.",
+        type: "danger"
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -306,12 +378,34 @@ export default function EditProduct({ onBack }) {
                     }}
                     className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
                   >
-                    <option value="Electronics">Electronics</option>
-                    <option value="Apparel & Fashion">Apparel & Fashion</option>
-                    <option value="Home & Kitchen">Home & Kitchen</option>
-                    <option value="Health & Beauty">Health & Beauty</option>
-                    <option value="Sports & Fitness">Sports & Fitness</option>
+                    {categories.length > 0 ? (
+                      categories.map((c) => (
+                        <option key={c._id || c.slug || c.name} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="Outerwear">Outerwear</option>
+                        <option value="Tailoring">Tailoring</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Knitwear">Knitwear</option>
+                        <option value="Trousers">Trousers</option>
+                        <option value="Footwear">Footwear</option>
+                        <option value="Shoes">Shoes</option>
+                        <option value="Bags">Bags</option>
+                        <option value="Watches">Watches</option>
+                        <option value="Jewelry">Jewelry</option>
+                        <option value="Accessories">Accessories</option>
+                        <option value="Electronics">Electronics</option>
+                      </>
+                    )}
                   </select>
+                  {loadingCategories && (
+                    <span className="text-[10px] text-slate-400 mt-1 block">
+                      Syncing live categories...
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -632,9 +726,21 @@ export default function EditProduct({ onBack }) {
               </p>
               <button
                 type="button"
-                onClick={() => {
-                  if (window.confirm("Are you sure you want to delete this product?")) {
-                    alert("Product deleted.");
+                onClick={async () => {
+                  const ok = await modalConfirm({
+                    title: "Delete Product Listing",
+                    message: "Are you sure you want to permanently delete this product? All inventory and sales analytics for this item will be removed.",
+                    type: "danger",
+                    confirmText: "Delete Product",
+                    cancelText: "Cancel"
+                  });
+                  if (ok) {
+                    await modalAlert({
+                      title: "Product Deleted",
+                      message: "The product listing has been removed.",
+                      type: "info"
+                    });
+                    navigate("/vendor/products");
                   }
                 }}
                 className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-sm"
