@@ -660,6 +660,76 @@ export const deleteCategory = async (req, res) => {
 };
 
 /**
+ * @desc    Bulk delete multiple categories
+ * @route   POST /api/categories/bulk-delete or DELETE /api/categories/bulk
+ * @access  Public / Admin
+ */
+export const bulkDeleteCategories = async (req, res) => {
+  try {
+    const ids = req.body?.ids || req.body?.categoryIds || req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide an array of category IDs to delete.'
+      });
+    }
+
+    const validMongoIds = ids.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    const categories = await Category.find({
+      $or: [
+        ...(validMongoIds.length > 0 ? [{ _id: { $in: validMongoIds } }] : []),
+        { slug: { $in: ids } }
+      ]
+    });
+
+    if (!categories || categories.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No matching categories found in database (they may have already been deleted).',
+        deletedCount: 0,
+        deletedIds: ids
+      });
+    }
+
+    const matchedIds = categories.map((c) => c._id);
+
+    // Clean up category image files if any
+    for (const cat of categories) {
+      if (cat.image && cat.image.url) {
+        await removeImageFile(cat.image.url, cat.image.public_id).catch(() => {});
+      }
+    }
+
+    // Detach subcategories whose parent is being deleted
+    await Category.updateMany(
+      { parentCategory: { $in: matchedIds } },
+      { $set: { parentCategory: null } }
+    );
+
+    // Detach deleted categories from products so products aren't orphaned
+    await Product.updateMany(
+      { category: { $in: matchedIds } },
+      { $unset: { category: 1 } }
+    );
+
+    const result = await Category.deleteMany({ _id: { $in: matchedIds } });
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully deleted ${result.deletedCount} categories.`,
+      deletedCount: result.deletedCount,
+      deletedIds: ids
+    });
+  } catch (error) {
+    console.error('Error bulk deleting categories:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Internal server error while bulk deleting categories.'
+    });
+  }
+};
+
+/**
  * @desc    Bulk create categories
  * @route   POST /api/categories/bulk
  * @access  Public / Admin

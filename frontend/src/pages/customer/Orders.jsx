@@ -28,27 +28,24 @@ export const Orders = () => {
     triggerToast(text, type);
   }, [triggerToast]);
 
-  const fetchOrders = useCallback(async (status) => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (status && status !== 'all') {
-        params.status = status;
-      }
-      const response = await orderApi.getMyOrders(params);
-      if (response && response.data) {
-        setOrders(response.data.orders || []);
-      }
-    } catch (error) {
-      showToast('error', error.message || 'Failed to fetch order history.');
-    } finally {
-      setLoading(false);
-    }
-  }, [showToast]);
 
   useEffect(() => {
-    fetchOrders(selectedStatus);
-  }, [fetchOrders, selectedStatus]);
+    let active = true;
+    const params = selectedStatus && selectedStatus !== 'all' ? { status: selectedStatus } : {};
+    orderApi.getMyOrders(params)
+      .then((response) => {
+        if (active && response && response.data) {
+          setOrders(response.data.orders || []);
+        }
+      })
+      .catch((error) => {
+        if (active) showToast('error', error.message || 'Failed to fetch order history.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, [selectedStatus, showToast]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -212,7 +209,7 @@ export const Orders = () => {
                       Consignment Total
                     </span>
                     <span className="font-serif text-xl font-medium text-[#111111]">
-                      ${order.totalPrice?.toFixed(2) || '0.00'}
+                      ₹{Number(order.totalPrice || 0).toLocaleString('en-IN')}
                     </span>
                   </div>
                 </div>
@@ -241,7 +238,7 @@ export const Orders = () => {
                               {item.name}
                             </h5>
                             <p className="text-[11px] text-[#8E877F] font-mono mt-0.5">
-                              Qty: {item.quantity} × ${item.price?.toFixed(2)}
+                              Qty: {item.quantity} × ₹{Number(item.price || 0).toLocaleString('en-IN')}
                             </p>
                             {item.store?.name && (
                               <p className="text-[10px] text-[#8E877F] font-mono truncate">
@@ -259,6 +256,41 @@ export const Orders = () => {
                   )}
                 </div>
 
+                {/* Mini Status Progress Stepper */}
+                <div className="py-3 px-4 bg-[#FBF9F5] border border-[#E5E3DF] my-2">
+                  <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-[#666666] mb-2">
+                    <span>Fulfillment Progress</span>
+                    <span className="font-semibold text-[#111111]">{order.orderStatus?.toUpperCase()}</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {['Placed', 'Processing', 'Shipped', 'Delivered'].map((step, sIdx) => {
+                      const statusMap = { placed: 0, pending: 0, confirmed: 0, processing: 1, shipped: 2, delivered: 3 };
+                      const currentIdx = statusMap[order.orderStatus?.toLowerCase()] ?? 0;
+                      const isComplete = sIdx <= currentIdx && order.orderStatus !== 'cancelled';
+                      return (
+                        <div key={step} className="flex flex-col gap-1">
+                          <div
+                            className={`h-1.5 rounded-full transition-all ${
+                              order.orderStatus === 'cancelled'
+                                ? 'bg-rose-200'
+                                : isComplete
+                                ? 'bg-[#111111]'
+                                : 'bg-[#E5E3DF]'
+                            }`}
+                          />
+                          <span
+                            className={`text-[9px] font-mono uppercase ${
+                              isComplete ? 'text-[#111111] font-semibold' : 'text-[#8E877F]'
+                            }`}
+                          >
+                            {step}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Order Footer & Actions */}
                 <div className="pt-4 border-t border-[#E5E3DF] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="text-xs text-[#666666] font-sans">
@@ -269,7 +301,7 @@ export const Orders = () => {
                   </div>
 
                   <Link
-                    to={`/orders/${order._id}`}
+                    to={`/orders/${order.orderNumber || order._id}`}
                     className="inline-flex items-center justify-center gap-2 px-5 py-2 bg-[#111111] hover:bg-[#222222] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider transition-colors"
                   >
                     <span>Inspect Consignment</span>

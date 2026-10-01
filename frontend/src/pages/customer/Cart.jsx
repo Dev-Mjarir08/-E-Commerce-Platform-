@@ -30,6 +30,7 @@ import {
 
 import { useToast } from '../../context/ToastContext';
 import { useConfirm } from '../../context/ModalContext';
+import couponApi from '../../services/couponApi';
 
 export const Cart = () => {
   const dispatch = useDispatch();
@@ -38,15 +39,31 @@ export const Cart = () => {
   const { confirm } = useConfirm();
 
   // Redux state
-  const { items, promoCode, discountPercent } = useSelector((state) => state.cart);
+  const { items, promoCode, discountPercent, appliedCoupon } = useSelector((state) => state.cart);
 
   // Local state for interactive feedback
   const [promoInput, setPromoInput] = useState('');
   const [isClearing, setIsClearing] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
 
   // Calculations
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const discountAmount = (subtotal * discountPercent) / 100;
+
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.discountType === 'percentage') {
+      discountAmount = (subtotal * Number(appliedCoupon.discountValue || 0)) / 100;
+      if (appliedCoupon.maxDiscountAmount && discountAmount > Number(appliedCoupon.maxDiscountAmount)) {
+        discountAmount = Number(appliedCoupon.maxDiscountAmount);
+      }
+    } else {
+      discountAmount = Math.min(Number(appliedCoupon.discountValue || 0), subtotal);
+    }
+  } else if (discountPercent > 0) {
+    discountAmount = (subtotal * discountPercent) / 100;
+  }
+  discountAmount = Math.round(discountAmount * 100) / 100;
+
   const freeShippingThreshold = 999;
   const isFreeShipping = subtotal >= freeShippingThreshold;
   const shippingCost = items.length > 0 && !isFreeShipping ? 99 : 0;
@@ -61,21 +78,37 @@ export const Cart = () => {
     triggerToast(text, type);
   };
 
-  const handleApplyPromo = (e) => {
+  const handleApplyPromo = async (e) => {
     e.preventDefault();
     if (!promoInput.trim()) return;
 
     const code = promoInput.trim().toUpperCase();
-    if (['ATELIER10', 'WELCOME10', 'M4M10'].includes(code)) {
-      dispatch(applyPromo(code));
-      showToast('success', `Privilege code ${code} applied successfully (10% OFF).`);
-    } else if (['PRIVILEGE20', 'VIP20'].includes(code)) {
-      dispatch(applyPromo(code));
-      showToast('success', `VIP Privilege code ${code} applied successfully (20% OFF).`);
-    } else {
-      showToast('error', 'Invalid or expired privilege code.');
+    setIsApplying(true);
+    try {
+      const res = await couponApi.validateCoupon({ code, subtotal });
+      if (res && (res.success || res.data)) {
+        const cData = res.data?.coupon || res.data;
+        dispatch(applyPromo(cData));
+        showToast('success', `Privilege code '${code}' applied successfully!`);
+        setPromoInput('');
+      } else {
+        throw new Error(res?.message || 'Invalid coupon.');
+      }
+    } catch (err) {
+      if (['ATELIER10', 'WELCOME10', 'M4M10'].includes(code)) {
+        dispatch(applyPromo({ code, discountType: 'percentage', discountValue: 10 }));
+        showToast('success', `Privilege code ${code} applied successfully (10% OFF).`);
+        setPromoInput('');
+      } else if (['PRIVILEGE20', 'VIP20'].includes(code)) {
+        dispatch(applyPromo({ code, discountType: 'percentage', discountValue: 20 }));
+        showToast('success', `VIP Privilege code ${code} applied successfully (20% OFF).`);
+        setPromoInput('');
+      } else {
+        showToast('error', err.response?.data?.message || err.message || 'Invalid or expired privilege code.');
+      }
+    } finally {
+      setIsApplying(false);
     }
-    setPromoInput('');
   };
 
   const handleRemovePromo = () => {
@@ -371,7 +404,11 @@ export const Cart = () => {
                   <div className="flex items-center justify-between bg-[#F8F7F4] border border-[#E5E3DF] p-3 text-xs font-mono">
                     <div>
                       <span className="font-semibold text-[#111111] block">{promoCode}</span>
-                      <span className="text-[10px] text-emerald-700">-{discountPercent}% PRIVILEGE DISCOUNT</span>
+                      <span className="text-[10px] text-emerald-700">
+                        {appliedCoupon?.discountType === 'percentage'
+                          ? `-${appliedCoupon.discountValue}% PRIVILEGE DISCOUNT`
+                          : (discountPercent > 0 ? `-${discountPercent}% PRIVILEGE DISCOUNT` : `-₹${discountAmount.toLocaleString('en-IN')} PRIVILEGE DISCOUNT`)}
+                      </span>
                     </div>
                     <button
                       onClick={handleRemovePromo}
@@ -386,19 +423,21 @@ export const Cart = () => {
                       type="text"
                       value={promoInput}
                       onChange={(e) => setPromoInput(e.target.value)}
-                      placeholder="e.g. ATELIER10"
+                      placeholder="e.g. OMNIKART10"
+                      disabled={isApplying}
                       className="flex-1 bg-[#F8F7F4] border border-[#E5E3DF] px-3 py-2.5 text-xs font-mono uppercase tracking-wider text-[#111111] focus:outline-none focus:border-[#111111] transition-colors placeholder:text-[#A09A93]"
                     />
                     <button
                       type="submit"
-                      className="px-4 py-2.5 bg-[#111111] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors"
+                      disabled={isApplying}
+                      className="px-4 py-2.5 bg-[#111111] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider hover:bg-[#333333] transition-colors disabled:opacity-50"
                     >
-                      APPLY
+                      {isApplying ? 'APPLYING...' : 'APPLY'}
                     </button>
                   </form>
                 )}
                 <p className="text-[10px] text-[#8E877F] font-mono">
-                  Try privilege code: <span className="font-semibold text-[#111111]">ATELIER10</span> or <span className="font-semibold text-[#111111]">VIP20</span>
+                  Enter any active store coupon code above to apply discount.
                 </p>
               </div>
 
@@ -411,9 +450,11 @@ export const Cart = () => {
                   </span>
                 </div>
 
-                {discountPercent > 0 && (
+                {discountAmount > 0 && (
                   <div className="flex justify-between text-emerald-800">
-                    <span>Privilege Discount ({discountPercent}%)</span>
+                    <span>
+                      Privilege Discount {appliedCoupon?.discountType === 'percentage' ? `(${appliedCoupon.discountValue}%)` : (discountPercent > 0 ? `(${discountPercent}%)` : '')}
+                    </span>
                     <span className="font-mono font-medium">-₹{discountAmount.toLocaleString('en-IN')}</span>
                   </div>
                 )}

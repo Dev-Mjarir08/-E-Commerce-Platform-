@@ -51,10 +51,30 @@ export const customerApi = {
 
   /**
    * Update personal profile information
-   * @param {Object} profileData - { name, phone, avatar }
+   * @param {Object} profileData - { name, phone, avatar, coverImage }
    */
   updateProfile: async (profileData) => {
     return api.put('/customer/profile', profileData);
+  },
+
+  /**
+   * Upload customer avatar image
+   * @param {FormData} formData - Multipart data containing 'avatar'
+   */
+  uploadAvatar: async (formData) => {
+    return api.post('/customer/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+
+  /**
+   * Upload customer cover banner image
+   * @param {FormData} formData - Multipart data containing 'cover' or 'image'
+   */
+  uploadCover: async (formData) => {
+    return api.post('/customer/cover', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
   },
 
   /**

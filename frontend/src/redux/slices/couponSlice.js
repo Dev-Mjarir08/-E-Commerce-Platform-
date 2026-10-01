@@ -137,7 +137,7 @@ export const toggleCouponStatus = createAsyncThunk(
         return rejectWithValue('Coupon not found.');
       }
 
-      const nextIsActive = !Boolean(coupon.isActive);
+      const nextIsActive = !coupon.isActive;
 
       const response = await couponApi.updateCoupon(id, {
         isActive: nextIsActive
@@ -161,8 +161,27 @@ export const toggleCouponStatus = createAsyncThunk(
   }
 );
 
+export const validateCoupon = createAsyncThunk(
+  'coupons/validateCoupon',
+  async ({ code, subtotal = 0 }, { rejectWithValue }) => {
+    try {
+      const response = await couponApi.validateCoupon({ code, subtotal });
+      return response?.data || response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          'Failed to validate coupon.'
+      );
+    }
+  }
+);
+
 const initialState = {
   items: [],
+  appliedCoupon: null,
+  validationLoading: false,
+  validationError: null,
   loading: false,
   error: null
 };
@@ -174,11 +193,40 @@ const couponSlice = createSlice({
   reducers: {
     clearCouponError: (state) => {
       state.error = null;
+      state.validationError = null;
+    },
+    setAppliedCoupon: (state, action) => {
+      state.appliedCoupon = action.payload;
+    },
+    clearAppliedCoupon: (state) => {
+      state.appliedCoupon = null;
+      state.validationError = null;
     }
   },
 
   extraReducers: (builder) => {
     builder
+
+      // ==============================
+      // VALIDATE / APPLY
+      // ==============================
+
+      .addCase(validateCoupon.pending, (state) => {
+        state.validationLoading = true;
+        state.validationError = null;
+      })
+
+      .addCase(validateCoupon.fulfilled, (state, action) => {
+        state.validationLoading = false;
+        state.appliedCoupon = action.payload?.coupon || action.payload;
+        state.validationError = null;
+      })
+
+      .addCase(validateCoupon.rejected, (state, action) => {
+        state.validationLoading = false;
+        state.validationError = action.payload;
+        state.appliedCoupon = null;
+      })
 
       // ==============================
       // FETCH
@@ -292,7 +340,9 @@ const couponSlice = createSlice({
 });
 
 export const {
-  clearCouponError
+  clearCouponError,
+  clearAppliedCoupon,
+  setAppliedCoupon
 } = couponSlice.actions;
 
 export default couponSlice.reducer;

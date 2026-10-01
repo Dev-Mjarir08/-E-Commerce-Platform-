@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ProductCard } from "../../components/product/ProductCard";
-import { products as catalogProducts } from "../../data/products";
+import { useShopData } from "../../context/ShopDataContext";
 
 const PRICE_RANGES = [
   { value: "all", label: "All prices" },
@@ -41,20 +41,39 @@ const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
 ];
 
-const normalizeProduct = (product) => ({
-  ...product,
-  originalPrice: product.originalPrice || product.compareAtPrice || null,
-  storeName: product.storeName || "Atelier House",
-  storeSlug: product.storeSlug || "atelier-house",
-});
+const normalizeProduct = (product) => {
+  const catSlug = typeof product.category === 'object'
+    ? (product.category?.slug || product.category?.name || product.category?._id)
+    : product.category;
+  const catName = typeof product.category === 'object' ? product.category?.name : (product.categoryName || catSlug);
+  const primaryImg = (product.images && product.images[0]?.url) ||
+    product.image ||
+    (typeof product.images?.[0] === 'string' ? product.images[0] : 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=80');
 
-const getProducts = (adminProducts) => {
-  const available = catalogProducts.map(normalizeProduct);
+  return {
+    ...product,
+    id: product._id || product.id,
+    _id: product._id || product.id,
+    name: product.title || product.name || 'Curated Atelier Piece',
+    title: product.title || product.name || 'Curated Atelier Piece',
+    price: Number(product.basePrice ?? product.price ?? 999),
+    originalPrice: product.discountPrice || product.originalPrice || product.compareAtPrice || null,
+    category: catSlug || 'outerwear',
+    categoryName: catName || 'Outerwear',
+    image: primaryImg,
+    images: product.images?.length > 0 ? product.images : [{ url: primaryImg, isPrimary: true }],
+    storeName: product.store?.name || product.storeName || "Atelier House",
+    storeSlug: product.store?.slug || product.storeSlug || "atelier-house",
+  };
+};
+
+const getProducts = (adminProducts, shopProducts = []) => {
+  const available = shopProducts.map(normalizeProduct);
   adminProducts.forEach((product) => {
     const normalized = normalizeProduct(product);
     if (
       !available.some(
-        (item) => item.id === normalized.id || item._id === normalized._id,
+        (item) => (item.id || item._id) === (normalized.id || normalized._id),
       )
     ) {
       available.push(normalized);
@@ -66,6 +85,7 @@ const getProducts = (adminProducts) => {
 export const SearchResults = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { products: shopProducts } = useShopData();
   const adminProducts = useSelector((state) => state.products?.items || []);
   const query = searchParams.get("q")?.trim() || "";
   const category = searchParams.get("category") || "all";
@@ -81,8 +101,8 @@ export const SearchResults = () => {
   const [visibleCount, setVisibleCount] = useState(8);
 
   const allProducts = useMemo(
-    () => getProducts(adminProducts),
-    [adminProducts],
+    () => getProducts(adminProducts, shopProducts),
+    [adminProducts, shopProducts],
   );
   const categories = useMemo(
     () => [

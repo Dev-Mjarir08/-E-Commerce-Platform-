@@ -23,9 +23,8 @@ export default function CustomerDetails() {
   const location = useLocation();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // 1. Check state passed via navigate(), or 2. Find customer in customers array by URL id
-  const customer =
-    location.state?.customer || customers.find((c) => c.id === id);
+  // 1. Check state passed via navigate(), or 2. Safely fallback to null if direct access
+  const customer = location.state?.customer || null;
 
   // Fallback UI if no matching customer is found
   if (!customer) {
@@ -40,7 +39,7 @@ export default function CustomerDetails() {
             No record matching the ID <span className="font-mono text-slate-800">{id}</span> could be located.
           </p>
           <button
-            onClick={() => navigate("/pages/vendor/customers")}
+            onClick={() => navigate("/vendor/customers")}
             className="inline-flex items-center gap-2 px-4 py-2 bg-teal-800 hover:bg-teal-900 text-white rounded-xl text-sm font-semibold transition"
           >
             <FaArrowLeft /> Back to Customers

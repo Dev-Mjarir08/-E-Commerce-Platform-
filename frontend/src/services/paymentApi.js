@@ -22,6 +22,11 @@ export const paymentApi = {
   // Verify payment status (by orderId, sessionId, or paymentIntentId)
   verifyPayment: async (payload) => {
     return await api.post('/payment/verify-payment', payload);
+  },
+
+  // Get admin payment transactions and analytics
+  getTransactions: async (params = {}) => {
+    return await api.get('/payment/transactions', { params });
   }
 };
 

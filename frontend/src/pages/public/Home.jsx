@@ -1,5 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
-import Lenis from 'lenis';
+import { useState, lazy, Suspense } from 'react';
 import { useToast } from '../../context/ToastContext';
 
 // Layout Components
@@ -32,39 +31,6 @@ const Home = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
 
-  // Initialize Lenis smooth scrolling with prefers-reduced-motion check
-  useEffect(() => {
-    let animationFrameId;
-    let lenis;
-
-    try {
-      if (typeof window !== 'undefined' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        lenis = new Lenis({
-          duration: 1.1,
-          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-          smoothWheel: true,
-          wheelMultiplier: 0.9
-        });
-
-        function raf(time) {
-          if (lenis) {
-            lenis.raf(time);
-            animationFrameId = requestAnimationFrame(raf);
-          }
-        }
-
-        animationFrameId = requestAnimationFrame(raf);
-      }
-    } catch (err) {
-      console.warn('Lenis smooth scroll fallback:', err);
-    }
-
-    return () => {
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      if (lenis) lenis.destroy();
-    };
-  }, []);
-
   const handleOpenProduct = (product) => {
     setQuickViewProduct(product);
   };
@@ -91,7 +57,7 @@ const Home = () => {
       />
 
       <main className="flex-1">
-        {/* 3. Hero Section (with GSAP timeline) */}
+        {/* 3. Hero Section */}
         <Hero
           onShopNewArrivals={() => scrollToSection('new-arrivals')}
           onExploreStores={() => scrollToSection('featured-stores')}

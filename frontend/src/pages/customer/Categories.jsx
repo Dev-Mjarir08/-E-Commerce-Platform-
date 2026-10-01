@@ -3,8 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { ProductCard } from "../../components/product/ProductCard";
-import { categories as catalogCategories } from "../../data/categories";
-import { products as catalogProducts } from "../../data/products";
+import { useShopData } from "../../context/ShopDataContext";
+import { getCategoryImageUrl, getCategoryFallbackImage } from "../../utils/imageUrl";
 
 const PRICE_OPTIONS = [
   { value: "all", label: "All prices" },
@@ -21,20 +21,39 @@ const PRICE_OPTIONS = [
   },
 ];
 
-const normalizeProduct = (product) => ({
-  ...product,
-  originalPrice: product.originalPrice || product.compareAtPrice || null,
-  storeName: product.storeName || "Atelier House",
-  storeSlug: product.storeSlug || "atelier-house",
-});
+const normalizeProduct = (product) => {
+  const catSlug = typeof product.category === 'object'
+    ? (product.category?.slug || product.category?.name || product.category?._id)
+    : product.category;
+  const catName = typeof product.category === 'object' ? product.category?.name : (product.categoryName || catSlug);
+  const primaryImg = (product.images && product.images[0]?.url) ||
+    product.image ||
+    (typeof product.images?.[0] === 'string' ? product.images[0] : 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=80');
 
-const getProducts = (adminProducts) => {
-  const available = catalogProducts.map(normalizeProduct);
+  return {
+    ...product,
+    id: product._id || product.id,
+    _id: product._id || product.id,
+    name: product.title || product.name || 'Curated Atelier Piece',
+    title: product.title || product.name || 'Curated Atelier Piece',
+    price: Number(product.basePrice ?? product.price ?? 999),
+    originalPrice: product.discountPrice || product.originalPrice || product.compareAtPrice || null,
+    category: catSlug || 'outerwear',
+    categoryName: catName || 'Outerwear',
+    image: primaryImg,
+    images: product.images?.length > 0 ? product.images : [{ url: primaryImg, isPrimary: true }],
+    storeName: product.store?.name || product.storeName || "Atelier House",
+    storeSlug: product.store?.slug || product.storeSlug || "atelier-house",
+  };
+};
+
+const getProducts = (adminProducts, shopProducts = []) => {
+  const available = shopProducts.map(normalizeProduct);
   adminProducts.forEach((product) => {
     const normalized = normalizeProduct(product);
     if (
       !available.some(
-        (item) => item.id === normalized.id || item._id === normalized._id,
+        (item) => (item.id || item._id) === (normalized.id || normalized._id),
       )
     ) {
       available.push(normalized);
@@ -45,29 +64,18 @@ const getProducts = (adminProducts) => {
 
 export const Categories = () => {
   const navigate = useNavigate();
+  const {
+    products: shopProducts,
+    categories: shopCategories = [],
+    loading: isLoading,
+    error: loadError,
+  } = useShopData();
   const adminProducts = useSelector((state) => state.products?.items || []);
   const [searchTerm, setSearchTerm] = useState("");
   const [priceRange, setPriceRange] = useState("all");
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
   const [toast, setToast] = useState("");
 
-  const products = useMemo(() => getProducts(adminProducts), [adminProducts]);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      try {
-        if (!Array.isArray(catalogCategories)) {
-          throw new Error("Category data is unavailable.");
-        }
-        setIsLoading(false);
-      } catch {
-        setLoadError("Something went wrong while loading categories.");
-        setIsLoading(false);
-      }
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, []);
+  const products = useMemo(() => getProducts(adminProducts, shopProducts), [adminProducts, shopProducts]);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -77,17 +85,21 @@ export const Categories = () => {
 
   const categoryCards = useMemo(
     () =>
-      catalogCategories.map((category) => {
-        const categoryProducts = products.filter(
-          (product) => product.category === category.id,
-        );
+      shopCategories.map((category) => {
+        const catTarget = (category.slug || category._id || category.id || category.name || "").toLowerCase();
+        const categoryProducts = products.filter((product) => {
+          const pCat = String(product.category || product.categoryName || "").toLowerCase();
+          return pCat.includes(catTarget) || catTarget.includes(pCat);
+        });
         return {
           ...category,
+          id: category._id || category.id || category.slug,
           count: categoryProducts.length,
           products: categoryProducts,
+          image: getCategoryImageUrl(category),
         };
       }),
-    [products],
+    [shopCategories, products],
   );
 
   const visibleCategories = useMemo(() => {
@@ -111,18 +123,20 @@ export const Categories = () => {
   const featuredCategories = categoryCards.filter((category) =>
     category.products.some((product) => product.isFeatured),
   );
-  const featuredProducts = products
-    .filter((product) => product.isFeatured)
-    .slice(0, 4);
+  const featuredProducts = (
+    products.filter((product) => product.isFeatured).length > 0
+      ? products.filter((product) => product.isFeatured)
+      : products
+  ).slice(0, 4);
 
   const handleSearch = (event) => {
     event.preventDefault();
     const query = searchTerm.trim();
-    navigate(query ? `/search?q=${encodeURIComponent(query)}` : "/search");
+    navigate(query ? `/shop?search=${encodeURIComponent(query)}` : "/shop");
   };
 
   const handleCategoryBrowse = (categoryId) => {
-    navigate(`/search?category=${encodeURIComponent(categoryId)}`);
+    navigate(`/shop?category=${encodeURIComponent(categoryId)}`);
   };
 
   const renderCategoryCard = (category, featured = false) => (
@@ -131,10 +145,13 @@ export const Categories = () => {
       className={`group relative overflow-hidden border border-m4m-border bg-white ${featured ? "min-h-96" : "min-h-80"}`}
     >
       <img
-        src={category.image}
+        src={category.image || getCategoryFallbackImage(category.name)}
         alt={category.name}
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         loading="lazy"
+        onError={(e) => {
+          e.currentTarget.src = getCategoryFallbackImage(category.name);
+        }}
       />
       <div className="absolute inset-0 bg-linear-to-t from-[#111111]/85 via-[#111111]/15 to-transparent" />
       <div className="relative flex h-full min-h-80 flex-col justify-between p-5 text-m4m-bg sm:p-6">
@@ -155,7 +172,7 @@ export const Categories = () => {
           </p>
           <button
             type="button"
-            onClick={() => handleCategoryBrowse(category.id)}
+            onClick={() => handleCategoryBrowse(category.slug || category.id)}
             className="mt-5 inline-flex items-center gap-2 border border-white/60 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.18em] transition-colors hover:bg-white hover:text-[#111111]"
           >
             Browse {category.name} <ArrowRight className="h-3.5 w-3.5" />

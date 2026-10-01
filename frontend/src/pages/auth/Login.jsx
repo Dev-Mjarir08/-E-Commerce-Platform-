@@ -17,12 +17,14 @@ import {
   UserCheck
 } from 'lucide-react';
 import { loginUser, clearError } from '../../redux/slices/authSlice';
+import { useToast } from '../../context/ToastContext';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
+  const { showToast } = useToast();
 
   const searchParams = new URLSearchParams(location.search);
   const redirectParam = searchParams.get('redirect');
@@ -36,6 +38,7 @@ const Login = () => {
   const [formErrors, setFormErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Handle input field changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -50,6 +53,7 @@ const Login = () => {
     }
   };
 
+  // Validate form before submission
   const validate = () => {
     const errors = {};
     if (!formData.email.trim()) {
@@ -66,11 +70,18 @@ const Login = () => {
     return Object.keys(errors).length === 0;
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+
+    // Check frontend validation first
+    if (!validate()) {
+      showToast('Please enter a valid email address and password.', 'warning');
+      return;
+    }
 
     try {
+      // Dispatch Redux login thunk
       const data = await dispatch(
         loginUser({
           email: formData.email.trim(),
@@ -78,52 +89,84 @@ const Login = () => {
         })
       ).unwrap();
 
-      const user = data.user || { email: formData.email, name: 'User', role: 'customer' };
+      const payload = data?.data || data;
+      const user = payload?.user || data?.user || { email: formData.email, name: 'User', role: 'customer' };
+      const hasStore = Boolean(payload?.store || data?.store);
 
-      // Determine target destination based on role
+      // Determine target destination based on user role
       let targetPath = '/';
+      let welcomeMsg = '';
+
       if (user.role === 'admin') {
         targetPath = '/admin/dashboard';
-        setSuccessMessage(`Welcome, Administrator ${user.name}. Opening Admin Suite...`);
-      } else if (user.role === 'vendor' || user.role === 'seller') {
-        targetPath = redirectParam ? decodeURIComponent(redirectParam) : '/vendor/dashboard';
-        setSuccessMessage(`Welcome, Partner ${user.name}. Opening Vendor Portal...`);
+        welcomeMsg = `Welcome, Administrator ${user.name || ''}. Opening Admin Suite...`;
+      } else if (user.role === 'vendor' || user.role === 'seller' || hasStore) {
+        // ALWAYS route vendor partners to Vendor Dashboard
+        targetPath = (redirectParam && redirectParam.startsWith('/vendor'))
+          ? decodeURIComponent(redirectParam)
+          : '/vendor/dashboard';
+        welcomeMsg = `Welcome, Partner ${user.name || ''}. Opening Vendor Portal...`;
       } else {
-        targetPath = redirectParam ? decodeURIComponent(redirectParam) : '/';
-        setSuccessMessage(`Welcome back, ${user.name}. Redirecting to boutique...`);
+        targetPath = (redirectParam && !redirectParam.startsWith('/login'))
+          ? decodeURIComponent(redirectParam)
+          : '/';
+        welcomeMsg = `Welcome back, ${user.name || ''}! Redirecting to boutique...`;
       }
 
+      setSuccessMessage(welcomeMsg);
+      showToast(welcomeMsg, 'success');
+
       setTimeout(() => {
-        navigate(targetPath);
-      }, 900);
+        navigate(targetPath, { replace: true });
+      }, 500);
     } catch (err) {
-      console.warn('Login rejected:', err);
+      // Show user-friendly toast message for invalid password or email
+      const errorMsg =
+        typeof err === 'string'
+          ? err
+          : err?.message || 'Invalid email address or password. Please verify your credentials.';
+      
+      console.warn('Login rejected:', errorMsg);
+      showToast(errorMsg, 'error');
     }
   };
 
+  // Quick fill handler for demo accounts
   const handleQuickFill = async (email, password) => {
     setFormData({ email, password, rememberMe: true });
     setFormErrors({});
     if (error) dispatch(clearError());
+
     try {
       const data = await dispatch(loginUser({ email, password })).unwrap();
-      const user = data.user || { email, role: 'customer' };
+      const payload = data?.data || data;
+      const user = payload?.user || data?.user || { email, role: 'customer' };
+      const hasStore = Boolean(payload?.store || data?.store);
       let targetPath = '/';
+
       if (user.role === 'admin') {
         targetPath = '/admin/dashboard';
-        setSuccessMessage(`Welcome, Administrator ${user.name}. Opening Admin Suite...`);
-      } else if (user.role === 'vendor' || user.role === 'seller') {
-        targetPath = redirectParam ? decodeURIComponent(redirectParam) : '/vendor/dashboard';
-        setSuccessMessage(`Welcome, Partner ${user.name}. Opening Vendor Portal...`);
+      } else if (user.role === 'vendor' || user.role === 'seller' || hasStore) {
+        targetPath = (redirectParam && redirectParam.startsWith('/vendor'))
+          ? decodeURIComponent(redirectParam)
+          : '/vendor/dashboard';
       } else {
-        targetPath = redirectParam ? decodeURIComponent(redirectParam) : '/';
-        setSuccessMessage(`Welcome back, ${user.name}. Redirecting to boutique...`);
+        targetPath = (redirectParam && !redirectParam.startsWith('/login'))
+          ? decodeURIComponent(redirectParam)
+          : '/';
       }
+
+      const msg = `Signed in successfully as ${user.name || email}`;
+      setSuccessMessage(msg);
+      showToast(msg, 'success');
+
       setTimeout(() => {
-        navigate(targetPath);
-      }, 700);
+        navigate(targetPath, { replace: true });
+      }, 400);
     } catch (err) {
-      console.warn('Quick login rejected:', err);
+      const errorMsg =
+        typeof err === 'string' ? err : err?.message || 'Quick login failed. Please check credentials.';
+      showToast(errorMsg, 'error');
     }
   };
 
@@ -144,10 +187,10 @@ const Login = () => {
 
           <Link to="/" className="text-center group">
             <h1 className="font-serif text-2xl sm:text-3xl tracking-[0.2em] uppercase text-[#111111] font-normal leading-none">
-              ATELIER
+              OMNIKART
             </h1>
             <span className="block text-[8px] font-mono tracking-[0.35em] text-[#8E877F] uppercase mt-1">
-              INDEPENDENT FASHION SAAS
+              MULTI-VENDOR MARKETPLACE
             </span>
           </Link>
 
@@ -188,7 +231,7 @@ const Login = () => {
             {/* Member Privileges List */}
             <div className="bg-[#111111]/60 backdrop-blur-md border border-white/10 p-6 space-y-4 my-8">
               <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#D4CEC5] block">
-                ATELIER CLIENT PRIVILEGES
+                OMNIKART CLIENT PRIVILEGES
               </span>
               <ul className="space-y-2.5 text-xs text-[#E5E3DF] font-sans">
                 <li className="flex items-center gap-2.5">
@@ -341,7 +384,7 @@ const Login = () => {
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <span>SIGN IN TO ATELIER</span>
+                    <span>SIGN IN TO OMNIKART</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
@@ -409,7 +452,7 @@ const Login = () => {
             {/* Register Switch Link */}
             <div className="mt-8 pt-6 border-t border-[#E5E3DF] text-center space-y-3">
               <p className="text-xs text-[#666666] font-sans">
-                Don't have an atelier membership yet?
+                Don't have an OmniKart account yet?
               </p>
               <Link
                 to="/register"
@@ -424,7 +467,7 @@ const Login = () => {
 
       {/* Subtle Footer Note */}
       <footer className="border-t border-[#E5E3DF] py-4 px-4 text-center text-[10px] font-mono uppercase tracking-widest text-[#8E877F] bg-[#FAF9F6]">
-        SECURE 256-BIT ENCRYPTION • ATELIER GLOBAL CONCIERGE
+        SECURE 256-BIT ENCRYPTION • OMNIKART GLOBAL SUPPORT
       </footer>
     </div>
   );

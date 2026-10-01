@@ -1,6 +1,4 @@
 import api from './api';
-import { products as fallbackProducts } from '../data/products';
-
 export const productApi = {
   /**
    * Get public products catalog
@@ -9,24 +7,21 @@ export const productApi = {
   async getProducts(params = {}) {
     try {
       const response = await api.get('/products', { params });
-      return response.data;
+      const items = Array.isArray(response)
+        ? response
+        : (Array.isArray(response?.data) ? response.data : (Array.isArray(response?.products) ? response.products : []));
+      return {
+        success: response?.success !== false,
+        count: items.length,
+        totalCount: response?.totalCount || items.length,
+        totalPages: response?.totalPages || 1,
+        currentPage: response?.currentPage || 1,
+        data: items,
+        products: items
+      };
     } catch (error) {
-      console.warn('Backend product API fetch fallback:', error);
-      // Fallback to local products dataset if backend error
-      let filtered = [...fallbackProducts];
-      if (params.category && params.category !== 'all') {
-        filtered = filtered.filter((p) => p.category?.toLowerCase() === params.category.toLowerCase());
-      }
-      if (params.search) {
-        const q = params.search.toLowerCase().trim();
-        filtered = filtered.filter(
-          (p) =>
-            p.name.toLowerCase().includes(q) ||
-            p.description?.toLowerCase().includes(q) ||
-            p.fabric?.toLowerCase().includes(q)
-        );
-      }
-      return { success: true, count: filtered.length, data: filtered, products: filtered };
+      console.error('Backend product API fetch error:', error);
+      return { success: false, count: 0, data: [], products: [] };
     }
   },
 
@@ -36,11 +31,15 @@ export const productApi = {
   async getProductById(id) {
     try {
       const response = await api.get(`/products/${id}`);
-      return response.data;
+      const item = response?.data || response?.product || response;
+      return {
+        success: response?.success !== false && Boolean(item),
+        data: item,
+        product: item
+      };
     } catch (error) {
-      console.warn('Backend product single fetch fallback:', error);
-      const found = fallbackProducts.find((p) => p.id === id || p._id === id || p.slug === id);
-      return { success: true, data: found, product: found };
+      console.error('Backend product single fetch error:', error);
+      return { success: false, data: null, product: null };
     }
   },
 
@@ -59,6 +58,18 @@ export const productApi = {
     return api.post('/products', productData, {
       headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {}
     });
+  },
+
+  // POST /api/products/bulk - Create multiple products in bulk
+  async createBulkProducts(products) {
+    const payload = Array.isArray(products) ? { products } : products;
+    return api.post('/products/bulk', payload);
+  },
+
+  // POST /api/products/delete-many - Delete multiple products in bulk
+  async deleteMultipleProducts(ids) {
+    const payload = Array.isArray(ids) ? { ids } : (ids?.ids ? ids : { ids: [ids] });
+    return api.post('/products/delete-many', payload);
   },
 
   // PATCH /api/products/:id - Update product

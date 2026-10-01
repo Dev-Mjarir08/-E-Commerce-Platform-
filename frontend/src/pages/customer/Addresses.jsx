@@ -53,7 +53,6 @@ export const Addresses = () => {
   }, [triggerToast]);
 
   const fetchAddresses = useCallback(async () => {
-    setLoading(true);
     try {
       const response = await addressApi.getAddresses();
       if (response && response.data) {
@@ -67,8 +66,21 @@ export const Addresses = () => {
   }, [showToast]);
 
   useEffect(() => {
-    fetchAddresses();
-  }, [fetchAddresses]);
+    let active = true;
+    addressApi.getAddresses()
+      .then((response) => {
+        if (active && response && response.data) {
+          setAddresses(response.data);
+        }
+      })
+      .catch((error) => {
+        if (active) showToast('error', error.message || 'Failed to load addresses.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, [showToast]);
 
   const openAddModal = () => {
     setEditingId(null);
@@ -204,31 +216,6 @@ export const Addresses = () => {
           </button>
         </div>
 
-        {/* Toast Feedback */}
-        {toastMessage && (
-          <div
-            className={`mb-8 p-4 border flex items-center justify-between text-xs font-mono uppercase tracking-wider ${
-              toastMessage.type === 'success'
-                ? 'bg-emerald-50/90 border-emerald-300 text-emerald-900'
-                : 'bg-rose-50/90 border-rose-300 text-rose-900'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              {toastMessage.type === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-              )}
-              <span>{toastMessage.text}</span>
-            </div>
-            <button
-              onClick={() => setToastMessage(null)}
-              className="text-xs text-[#8E877F] hover:text-[#111111]"
-            >
-              ✕
-            </button>
-          </div>
-        )}
 
         {/* Content Body */}
         {loading ? (

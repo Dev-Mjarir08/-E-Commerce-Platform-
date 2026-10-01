@@ -40,24 +40,24 @@ const Vendors = () => {
     image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1000&q=85'
   });
 
-  // Fetch live vendor directory from MongoDB
-  const fetchLiveVendors = async () => {
-    setIsLoading(true);
-    try {
-      const response = await adminApi.getAllVendors();
-      const list = response?.data || response;
-      if (Array.isArray(list)) {
-        setVendorList(list);
-      }
-    } catch (err) {
-      console.warn('Notice loading live vendors:', err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchLiveVendors();
+    let active = true;
+    adminApi.getAllVendors()
+      .then((response) => {
+        if (!active) return;
+        const list = response?.data || response;
+        if (Array.isArray(list)) {
+          setVendorList(list);
+        }
+      })
+      .catch((err) => {
+        console.warn('Notice loading live vendors:', err.message);
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => { active = false; };
   }, []);
 
   // Filtered vendors
@@ -209,6 +209,13 @@ const Vendors = () => {
             Manage multi-tenant boutique storefronts, verification badges, seller credentials, and approvals.
           </p>
         </div>
+        <button
+          onClick={handleOpenAddModal}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Boutique</span>
+        </button>
       </div>
 
       {/* KPI Counters (Direct Solid Colors) */}

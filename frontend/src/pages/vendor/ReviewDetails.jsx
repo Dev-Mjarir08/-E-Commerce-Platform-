@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Star,
   ArrowLeft,
@@ -64,32 +64,19 @@ export default function ReviewDetails() {
   const { reviewId } = useParams();
   const navigate = useNavigate();
 
-  const [review, setReview] = useState(null);
-  const [replyText, setReplyText] = useState("");
-  const [existingReply, setExistingReply] = useState("");
-
-  // Find review using URL ID
-  useEffect(() => {
-    const selectedReview = reviews.find(
-      (item) => item.id === reviewId
-    );
-
-    setReview(selectedReview || null);
-
-    if (selectedReview?.status === "Replied") {
-      setExistingReply(
-        "Thank you so much for your support! We are thrilled that you love your new item."
-      );
-    } else {
-      setExistingReply("");
-    }
-
-    setReplyText("");
+  const review = useMemo(() => {
+    return reviews.find((item) => item.id === reviewId) || null;
   }, [reviewId]);
+
+  const [replyText, setReplyText] = useState("");
+  const [submittedReply, setSubmittedReply] = useState(null);
+  const existingReply = submittedReply || (review?.status === "Replied"
+    ? "Thank you so much for your support! We are thrilled that you love your new item."
+    : "");
 
   // Back to Reviews
   const handleBack = () => {
-    navigate("/pages/vendor/reviews");
+    navigate("/vendor/reviews");
   };
 
   // Submit response
@@ -98,11 +85,8 @@ export default function ReviewDetails() {
 
     if (!replyText.trim()) return;
 
-    setExistingReply(replyText.trim());
+    setSubmittedReply(replyText.trim());
     setReplyText("");
-
-    console.log("Review ID:", reviewId);
-    console.log("Vendor Response:", replyText.trim());
   };
 
   // Review not found

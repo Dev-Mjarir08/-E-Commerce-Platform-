@@ -26,7 +26,7 @@ const ResetPassword = () => {
 
   // Form State
   const [email, setEmail] = useState(emailParam);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState(() => (devOtpParam && devOtpParam.length === 6 ? devOtpParam.split('') : ['', '', '', '', '', '']));
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -57,11 +57,9 @@ const ResetPassword = () => {
     };
   }, [resendTimer]);
 
-  // Autofill dev OTP if present in query
+  // Focus appropriate OTP input box
   useEffect(() => {
     if (devOtpParam && devOtpParam.length === 6) {
-      const digits = devOtpParam.split('');
-      setOtp(digits);
       inputRefs.current[5]?.focus();
     } else {
       inputRefs.current[0]?.focus();
@@ -233,10 +231,10 @@ const ResetPassword = () => {
 
           <Link to="/" className="text-center group">
             <h1 className="font-serif text-2xl sm:text-3xl tracking-[0.2em] uppercase text-[#111111] font-normal leading-none">
-              ATELIER
+              OMNIKART
             </h1>
             <span className="block text-[8px] font-mono tracking-[0.35em] text-[#8E877F] uppercase mt-1">
-              INDEPENDENT FASHION SAAS
+              MULTI-VENDOR MARKETPLACE
             </span>
           </Link>
 
@@ -546,7 +544,7 @@ const ResetPassword = () => {
 
       {/* Subtle Footer Note */}
       <footer className="border-t border-[#E5E3DF] py-4 px-4 text-center text-[10px] font-mono uppercase tracking-widest text-[#8E877F] bg-[#FAF9F6]">
-        SECURE 256-BIT ENCRYPTION • ATELIER GLOBAL CONCIERGE
+        SECURE 256-BIT ENCRYPTION • OMNIKART GLOBAL SUPPORT
       </footer>
     </div>
   );

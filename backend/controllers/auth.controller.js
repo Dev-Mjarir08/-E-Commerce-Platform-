@@ -188,16 +188,17 @@ export const registerVendor = async (req, res) => {
     const hashedVerificationToken = crypto.createHash('sha256').update(rawVerificationToken).digest('hex');
     const verificationExpire = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // Create user as seller/vendor
+    // Create user with vendor role and active status
     const user = new User({
       name: name.trim(),
       email: email.toLowerCase().trim(),
       password,
       phone: phone ? phone.trim() : null,
-      role: 'seller',
+      role: 'vendor',
       verificationToken: hashedVerificationToken,
       verificationTokenExpire: verificationExpire,
-      isVerified: false
+      isVerified: true,
+      status: 'active'
     });
 
     const accessToken = generateAccessToken(user);
@@ -226,7 +227,7 @@ export const registerVendor = async (req, res) => {
       };
     }
 
-    // Create associated Store according to Store.js model
+    // Create associated Store with active status so vendor can manage store immediately
     const store = await Store.create({
       owner: user._id,
       name: storeName.trim(),
@@ -235,7 +236,7 @@ export const registerVendor = async (req, res) => {
       email: storeEmail ? storeEmail.trim().toLowerCase() : user.email,
       phone: storePhone ? storePhone.trim() : user.phone,
       address: resolvedAddress,
-      status: 'pending' // pending administrative review or instant active
+      status: 'active'
     });
 
     // Send verification email

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import adminApi from "../../../services/adminApi";
 import { useToast } from "../../../context/ToastContext";
+import { useModal } from "../../../context/ModalContext";
 
 const statusConfig = {
   Processing: {
@@ -80,6 +81,7 @@ const ShipmentDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { alert: modalAlert } = useModal();
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -89,7 +91,6 @@ const ShipmentDetails = () => {
   // Fetch real order details from API
   const fetchOrderDetails = useCallback(async () => {
     if (!id) return;
-    setLoading(true);
     setError(null);
     try {
       const response = await adminApi.getOrderById(id);
@@ -108,8 +109,30 @@ const ShipmentDetails = () => {
   }, [id]);
 
   useEffect(() => {
-    fetchOrderDetails();
-  }, [fetchOrderDetails]);
+    let active = true;
+    if (id) {
+      adminApi.getOrderById(id)
+        .then((response) => {
+          if (!active) return;
+          const data = response?.data || response;
+          if (data && (data._id || data.orderNumber)) {
+            setOrder(data);
+          } else {
+            setError("Order record not found.");
+          }
+        })
+        .catch((err) => {
+          if (active) {
+            console.error("Failed to load order details:", err);
+            setError(err.message || "Failed to load order details.");
+          }
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    return () => { active = false; };
+  }, [id]);
 
   // Status update
   const handleUpdateStatus = async (newUiStatus) => {
@@ -144,14 +167,22 @@ const ShipmentDetails = () => {
       await navigator.clipboard.writeText(tracking);
       showToast("Tracking number copied to clipboard.", "success");
     } catch {
-      alert(`Tracking Number: ${tracking}`);
+      modalAlert({
+        title: "Consignment Tracking Number",
+        message: tracking,
+        type: "info"
+      });
     }
   };
 
   const openTracking = () => {
     const tracking = order?.trackingNumber;
     if (tracking) {
-      alert(`Tracking ${tracking} with Carrier: Not Assigned`);
+      modalAlert({
+        title: "Live Courier Tracking",
+        message: `Tracking Number: ${tracking}\nCarrier: ${order?.carrier || "Standard Courier"}\nStatus: ${order?.orderStatus || "In Transit"}`,
+        type: "info"
+      });
     } else {
       showToast("No tracking number assigned to this shipment.", "info");
     }

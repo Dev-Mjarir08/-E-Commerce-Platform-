@@ -7,6 +7,7 @@ import {
   updateCategory,
   toggleCategoryStatus,
   deleteCategory,
+  bulkDeleteCategories,
   bulkCreateCategories,
   seedCategories
 } from '../controllers/category.controller.js';
@@ -18,6 +19,8 @@ const categoryRouter = Router();
 categoryRouter.get('/tree', getCategoryTree);
 categoryRouter.post('/seed', seedCategories);
 categoryRouter.post('/bulk', bulkCreateCategories);
+categoryRouter.post('/bulk-delete', bulkDeleteCategories);
+categoryRouter.delete('/bulk', bulkDeleteCategories);
 
 // Primary CRUD Endpoints
 categoryRouter.get('/', getCategories);

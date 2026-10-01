@@ -2,8 +2,8 @@ import api from './api';
 
 export const categoryService = {
   // GET /api/categories
-  async getCategories() {
-    return api.get('/categories');
+  async getCategories(params = { all: 'true' }) {
+    return api.get('/categories', { params });
   },
 
   // GET /api/categories/:id
@@ -41,6 +41,11 @@ export const categoryService = {
   async bulkCreateCategories(categories) {
     const payload = Array.isArray(categories) ? { categories } : categories;
     return api.post('/categories/bulk', payload);
+  },
+
+  // POST /api/categories/bulk-delete
+  async bulkDeleteCategories(ids) {
+    return api.post('/categories/bulk-delete', { ids });
   }
 };
 

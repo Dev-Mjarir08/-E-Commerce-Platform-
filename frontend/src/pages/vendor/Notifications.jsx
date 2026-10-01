@@ -64,13 +64,22 @@ const initialNotifications = [
   }
 ];
 
+const formatTimeAgo = (dateStr) => {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / (1000 * 60));
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hr ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} d ago`;
+};
+
 export default function VendorNotifications() {
   const [notifications, setNotifications] = useState(initialNotifications);
   const [filter, setFilter] = useState('All');
   const [loading, setLoading] = useState(false);
 
   const fetchNotifications = async () => {
-    setLoading(true);
     try {
       const response = await vendorApi.getNotifications();
       const data = response?.data?.notifications || response?.notifications || response?.data;
@@ -85,14 +94,29 @@ export default function VendorNotifications() {
   };
 
   useEffect(() => {
-    fetchNotifications();
+    let active = true;
+    vendorApi.getNotifications()
+      .then((response) => {
+        if (!active) return;
+        const data = response?.data?.notifications || response?.notifications || response?.data;
+        if (Array.isArray(data) && data.length > 0) {
+          setNotifications(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Using local fallback notifications:', err);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
   }, []);
 
   const handleMarkAllRead = async () => {
     try {
       await vendorApi.markAllNotificationsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    } catch (err) {
+    } catch {
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     }
   };
@@ -103,7 +127,7 @@ export default function VendorNotifications() {
       setNotifications((prev) =>
         prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
       );
-    } catch (err) {
+    } catch {
       setNotifications((prev) =>
         prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
       );
@@ -138,16 +162,6 @@ export default function VendorNotifications() {
       default:
         return 'bg-slate-100';
     }
-  };
-
-  const formatTimeAgo = (dateStr) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const minutes = Math.floor(diff / (1000 * 60));
-    if (minutes < 60) return `${minutes} min ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} hr ago`;
-    const days = Math.floor(hours / 24);
-    return `${days} d ago`;
   };
 
   const filteredNotifications = notifications.filter((n) => {

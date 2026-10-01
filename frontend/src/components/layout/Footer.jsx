@@ -13,13 +13,13 @@ export const Footer = () => {
           {/* Platform Logo & Tagline (2 cols) */}
           <div className="lg:col-span-2 pr-0 lg:pr-8">
             <h2 className="font-serif text-3xl tracking-[0.2em] uppercase mb-2">
-              ATELIER
+              OMNIKART
             </h2>
             <p className="font-serif text-lg text-[#D4CEC5] font-light italic mb-4">
-              Independent fashion. One destination.
+              Millions of Products. One Destination.
             </p>
             <p className="text-xs text-m4m-accent font-sans leading-relaxed max-w-sm mb-6">
-              A unified contemporary fashion marketplace connecting discerning customers with independent clothing brands, bespoke tailoring houses, and artisan makers worldwide.
+              A unified contemporary multi-vendor marketplace connecting shoppers with verified vendors, top brands, and quality products worldwide.
             </p>
             {/* Social Icons SVG */}
             <div className="flex items-center gap-5 text-m4m-accent">
@@ -103,7 +103,7 @@ export const Footer = () => {
 
         {/* Bottom Strip */}
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] font-mono text-m4m-secondary">
-          <p>© 2026 ATELIER PLATFORM. ALL RIGHTS RESERVED.</p>
+          <p>© 2026 OMNIKART PLATFORM. ALL RIGHTS RESERVED.</p>
           <div className="flex items-center gap-6">
             <a href="#privacy" className="hover:text-m4m-card transition-colors uppercase">PRIVACY</a>
             <a href="#terms" className="hover:text-m4m-card transition-colors uppercase">TERMS</a>

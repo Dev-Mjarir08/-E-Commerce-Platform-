@@ -172,6 +172,28 @@ export const fetchOrderById = createAsyncThunk(
   }
 );
 
+export const updateAdminOrderStatusThunk = createAsyncThunk(
+  'orders/updateAdminOrderStatus',
+  async ({ orderId, status, trackingNumber, carrier, reason }, { rejectWithValue }) => {
+    try {
+      const response = await orderApi.updateOrderStatus(orderId, {
+        status,
+        trackingNumber,
+        carrier,
+        reason
+      });
+      const updatedOrder = response?.data?.order || response?.data || response;
+      return { orderId, status, updatedOrder: mapOrder(updatedOrder) };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          'Failed to update order status'
+      );
+    }
+  }
+);
+
 const initialState = {
   items: [],
   selectedOrder: null,
@@ -267,6 +289,41 @@ const orderSlice = createSlice({
           state.detailsError =
             action.payload ||
             'Failed to fetch order details';
+        }
+      )
+
+      // Update Order Status
+      .addCase(
+        updateAdminOrderStatusThunk.fulfilled,
+        (state, action) => {
+          const { orderId, status, updatedOrder } = action.payload;
+          const formatted = formatOrderStatus(status);
+
+          const index = state.items.findIndex(
+            (o) => o.id === orderId || o.orderNumber === orderId
+          );
+          if (index !== -1) {
+            state.items[index].status = formatted;
+            state.items[index].rawStatus = status.toLowerCase();
+            if (updatedOrder) {
+              state.items[index] = { ...state.items[index], ...updatedOrder };
+            }
+          }
+
+          if (
+            state.selectedOrder &&
+            (state.selectedOrder.id === orderId ||
+              state.selectedOrder.orderNumber === orderId)
+          ) {
+            state.selectedOrder.status = formatted;
+            state.selectedOrder.rawStatus = status.toLowerCase();
+            if (updatedOrder) {
+              state.selectedOrder = {
+                ...state.selectedOrder,
+                ...updatedOrder
+              };
+            }
+          }
         }
       );
   }

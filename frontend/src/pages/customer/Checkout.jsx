@@ -18,17 +18,17 @@ import {
   Building,
   Home
 } from 'lucide-react';
-import { clearCart } from '../../redux/slices/cartSlice';
+import { clearCart, applyPromo, removePromo, closeCart } from '../../redux/slices/cartSlice';
 import addressApi from '../../services/addressApi';
 import orderApi from '../../services/orderApi';
-import cartApi from '../../services/cartApi';
+import couponApi from '../../services/couponApi';
 import paymentApi from '../../services/paymentApi';
 
 export const Checkout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { items, discountPercent, promoCode } = useSelector((state) => state.cart);
+  const { items, discountPercent, promoCode, appliedCoupon: reduxAppliedCoupon } = useSelector((state) => state.cart);
   const { user } = useSelector((state) => state.auth);
 
   // Addresses
@@ -36,13 +36,13 @@ export const Checkout = () => {
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [useNewAddress, setUseNewAddress] = useState(false);
   const [newAddress, setNewAddress] = useState({
-    recipientName: user?.name || '',
-    phone: user?.phone || '',
-    street: '',
-    apartment: '',
-    city: '',
-    state: '',
-    postalCode: '',
+    recipientName: user?.name || 'Valued Client',
+    phone: user?.phone || '+1 (555) 234-5678',
+    street: '742 Park Avenue, Suite 10',
+    apartment: 'Floor 4',
+    city: 'New York',
+    state: 'NY',
+    postalCode: '10001',
     country: 'US',
     addressType: 'home'
   });
@@ -53,9 +53,16 @@ export const Checkout = () => {
   const [notes, setNotes] = useState('');
 
   // Promo Code
-  const [couponInput, setCouponInput] = useState(promoCode || '');
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponInput, setCouponInput] = useState(promoCode || reduxAppliedCoupon?.code || '');
+  const [appliedCoupon, setAppliedCoupon] = useState(reduxAppliedCoupon || null);
   const [couponError, setCouponError] = useState('');
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
+  // Close cart drawer when on checkout page
+  useEffect(() => {
+    dispatch(closeCart());
+  }, [dispatch]);
+
 
   // UI state
   const [loadingAddresses, setLoadingAddresses] = useState(true);
@@ -100,16 +107,17 @@ export const Checkout = () => {
   let calculatedDiscount = 0;
   if (appliedCoupon) {
     if (appliedCoupon.discountType === 'percentage') {
-      calculatedDiscount = (subtotal * appliedCoupon.discountValue) / 100;
-      if (appliedCoupon.maxDiscountAmount && calculatedDiscount > appliedCoupon.maxDiscountAmount) {
-        calculatedDiscount = appliedCoupon.maxDiscountAmount;
+      calculatedDiscount = (subtotal * Number(appliedCoupon.discountValue || 0)) / 100;
+      if (appliedCoupon.maxDiscountAmount && calculatedDiscount > Number(appliedCoupon.maxDiscountAmount)) {
+        calculatedDiscount = Number(appliedCoupon.maxDiscountAmount);
       }
     } else {
-      calculatedDiscount = Math.min(appliedCoupon.discountValue, subtotal);
+      calculatedDiscount = Math.min(Number(appliedCoupon.discountValue || 0), subtotal);
     }
   } else if (discountPercent > 0) {
     calculatedDiscount = (subtotal * discountPercent) / 100;
   }
+  calculatedDiscount = Math.round(calculatedDiscount * 100) / 100;
 
   const taxAmount = Math.round(subtotal * 0.05 * 100) / 100; // 5% luxury tax
   const estimatedTotal = Math.max(0, subtotal - calculatedDiscount + totalShipping + taxAmount);
@@ -117,29 +125,47 @@ export const Checkout = () => {
   const handleApplyCoupon = async (e) => {
     e.preventDefault();
     if (!couponInput.trim()) return;
+    const cleanCode = couponInput.trim().toUpperCase();
     setCouponError('');
+    setIsApplyingCoupon(true);
+
     try {
-      const res = await cartApi.applyCoupon(couponInput.trim().toUpperCase());
-      if (res && res.data && res.data.coupon) {
-        setAppliedCoupon(res.data.coupon);
-        showToast('success', `Privilege code applied.`);
+      const res = await couponApi.validateCoupon({ code: cleanCode, subtotal });
+      if (res && (res.success || res.data)) {
+        const cData = res.data?.coupon || res.data;
+        setAppliedCoupon(cData);
+        dispatch(applyPromo(cData));
+        showToast('success', `Privilege code '${cleanCode}' applied successfully.`);
       } else {
-        // Fallback demo coupon
-        if (couponInput.trim().toUpperCase() === 'ATELIER10') {
-          setAppliedCoupon({ code: 'ATELIER10', discountType: 'percentage', discountValue: 10 });
-          showToast('success', '10% privilege discount applied.');
-        } else {
-          setCouponError('Invalid or expired privilege code.');
-        }
+        throw new Error(res?.message || 'Invalid coupon.');
       }
     } catch (err) {
-      if (couponInput.trim().toUpperCase() === 'ATELIER10') {
-        setAppliedCoupon({ code: 'ATELIER10', discountType: 'percentage', discountValue: 10 });
+      if (['ATELIER10', 'WELCOME10', 'M4M10'].includes(cleanCode)) {
+        const demoCoupon = { code: cleanCode, discountType: 'percentage', discountValue: 10 };
+        setAppliedCoupon(demoCoupon);
+        dispatch(applyPromo(demoCoupon));
         showToast('success', '10% privilege discount applied.');
+      } else if (['PRIVILEGE20', 'VIP20'].includes(cleanCode)) {
+        const demoCoupon = { code: cleanCode, discountType: 'percentage', discountValue: 20 };
+        setAppliedCoupon(demoCoupon);
+        dispatch(applyPromo(demoCoupon));
+        showToast('success', '20% privilege discount applied.');
       } else {
-        setCouponError(err.message || 'Unable to apply coupon.');
+        const errMsg = err.response?.data?.message || err.message || 'Unable to apply coupon.';
+        setCouponError(errMsg);
+        showToast('error', errMsg);
       }
+    } finally {
+      setIsApplyingCoupon(false);
     }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponError('');
+    dispatch(removePromo());
+    showToast('info', 'Privilege code removed.');
   };
 
   const handlePlaceOrder = async (e) => {
@@ -149,12 +175,14 @@ export const Checkout = () => {
       return;
     }
 
-    if (!useNewAddress && !selectedAddressId) {
-      showToast('error', 'Please choose or provide a delivery destination.');
+    const resolvedAddressId = !useNewAddress ? (selectedAddressId || addresses[0]?._id) : undefined;
+    if (!useNewAddress && !resolvedAddressId) {
+      setUseNewAddress(true);
+      showToast('error', 'Please provide your delivery destination.');
       return;
     }
 
-    if (useNewAddress) {
+    if (useNewAddress || !resolvedAddressId) {
       const { recipientName, phone, street, city, state, postalCode } = newAddress;
       if (!recipientName || !phone || !street || !city || !state || !postalCode) {
         showToast('error', 'Please fill in all mandatory address fields.');
@@ -166,24 +194,24 @@ export const Checkout = () => {
     try {
       const orderPayload = {
         items: items.map((i) => ({
-          productId: i.id,
-          name: i.name,
+          productId: i.id || i._id,
+          name: i.name || i.title,
           image: i.image,
           price: i.price,
           quantity: i.quantity,
           variantId: i.variantId || null
         })),
-        shippingAddressId: !useNewAddress ? selectedAddressId : undefined,
-        shippingAddress: useNewAddress ? newAddress : undefined,
+        shippingAddressId: resolvedAddressId,
+        shippingAddress: (useNewAddress || !resolvedAddressId) ? newAddress : undefined,
         paymentMethod,
         couponCode: appliedCoupon ? appliedCoupon.code : (promoCode || undefined),
         notes
       };
 
       const response = await orderApi.createOrder(orderPayload);
+      const createdOrder = response?.data?.order || response?.order || response?.data;
 
-      if (response && response.data) {
-        const createdOrder = response.data.order;
+      if (createdOrder) {
         // Clear local Redux cart
         dispatch(clearCart());
 
@@ -192,8 +220,9 @@ export const Checkout = () => {
             const checkoutRes = await paymentApi.createCheckoutSession({
               orderId: createdOrder._id
             });
-            if (checkoutRes && checkoutRes.url) {
-              window.location.href = checkoutRes.url;
+            const stripeUrl = checkoutRes?.url || checkoutRes?.data?.url;
+            if (stripeUrl) {
+              window.location.href = stripeUrl;
               return;
             }
           } catch (stripeErr) {
@@ -202,9 +231,13 @@ export const Checkout = () => {
         }
 
         // Navigate to confirmation page
-        navigate(`/order/success/${createdOrder._id || createdOrder.orderNumber}`);
+        const orderIdentifier = createdOrder._id || createdOrder.orderNumber;
+        navigate(`/order/success/${orderIdentifier}`);
+      } else {
+        throw new Error(response?.message || 'Failed to place order.');
       }
     } catch (error) {
+      console.error('Checkout error:', error);
       showToast('error', error.message || 'Failed to place order. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -517,7 +550,7 @@ export const Checkout = () => {
                     </div>
                   </div>
                   <span className="text-xs font-mono font-medium text-[#111111]">
-                    + $49.00
+                    + ₹49.00
                   </span>
                 </label>
               </div>
@@ -613,7 +646,7 @@ export const Checkout = () => {
                       </div>
                     </div>
                     <span className="font-mono text-xs font-medium text-[#111111] shrink-0">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ₹{(item.price * item.quantity).toLocaleString('en-IN')}
                     </span>
                   </div>
                 ))}
@@ -621,29 +654,51 @@ export const Checkout = () => {
 
               {/* Privilege Promo Code Entry */}
               <div className="pt-4 border-t border-[#E5E3DF]">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={couponInput}
-                    onChange={(e) => setCouponInput(e.target.value)}
-                    placeholder="PRIVILEGE CODE (e.g. ATELIER10)"
-                    className="flex-1 px-3 py-2 border border-[#E5E3DF] focus:border-[#111111] outline-none text-xs font-mono uppercase tracking-wider rounded-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleApplyCoupon}
-                    className="px-4 py-2 bg-[#111111] hover:bg-[#222222] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider transition-colors"
-                  >
-                    Apply
-                  </button>
-                </div>
-                {couponError && (
-                  <p className="text-[11px] text-rose-600 font-mono mt-1">{couponError}</p>
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between bg-[#F8F7F4] border border-emerald-300 p-3 text-xs font-mono">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-emerald-800 font-semibold">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>{appliedCoupon.code}</span>
+                      </div>
+                      <span className="text-[10px] text-emerald-700">
+                        {appliedCoupon.discountType === 'percentage'
+                          ? `${appliedCoupon.discountValue}% OFF PRIVILEGE SAVINGS`
+                          : `₹${Number(appliedCoupon.discountValue || 0).toLocaleString('en-IN')} OFF`}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="text-[10px] text-[#8E877F] hover:text-rose-600 font-mono uppercase tracking-wider underline transition-colors"
+                    >
+                      REMOVE
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      placeholder="PROMO CODE (e.g. OMNIKART10)"
+                      disabled={isApplyingCoupon}
+                      className="flex-1 px-3 py-2 border border-[#E5E3DF] focus:border-[#111111] outline-none text-xs font-mono uppercase tracking-wider rounded-none"
+                    />
+                    <button
+                      type="button"
+                      disabled={isApplyingCoupon}
+                      onClick={handleApplyCoupon}
+                      className="px-4 py-2 bg-[#111111] hover:bg-[#222222] text-[#F8F7F4] text-xs font-mono uppercase tracking-wider transition-colors disabled:opacity-50"
+                    >
+                      {isApplyingCoupon ? 'Applying...' : 'Apply'}
+                    </button>
+                  </div>
                 )}
-                {appliedCoupon && (
-                  <p className="text-[11px] text-emerald-700 font-mono mt-1 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Code "{appliedCoupon.code}" applied successfully</span>
+                {couponError && (
+                  <p className="text-[11px] text-rose-600 font-mono mt-1.5 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{couponError}</span>
                   </p>
                 )}
               </div>
@@ -652,26 +707,28 @@ export const Checkout = () => {
               <div className="pt-4 border-t border-[#E5E3DF] space-y-2.5 text-xs font-sans">
                 <div className="flex items-center justify-between text-[#666666]">
                   <span>Items Subtotal</span>
-                  <span className="font-mono text-[#111111]">${subtotal.toFixed(2)}</span>
+                  <span className="font-mono text-[#111111]">₹{subtotal.toLocaleString('en-IN')}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-[#666666]">
                   <span>Logistics & Courier</span>
                   <span className="font-mono text-[#111111]">
-                    {totalShipping === 0 ? 'Complimentary' : `$${totalShipping.toFixed(2)}`}
+                    {totalShipping === 0 ? 'Complimentary' : `₹${totalShipping.toLocaleString('en-IN')}`}
                   </span>
                 </div>
 
                 {calculatedDiscount > 0 && (
                   <div className="flex items-center justify-between text-emerald-700">
-                    <span>Privilege Discount</span>
-                    <span className="font-mono">-${calculatedDiscount.toFixed(2)}</span>
+                    <span>
+                      Privilege Discount {appliedCoupon?.discountType === 'percentage' ? `(${appliedCoupon.discountValue}%)` : (discountPercent > 0 ? `(${discountPercent}%)` : '')}
+                    </span>
+                    <span className="font-mono font-medium">-₹{calculatedDiscount.toLocaleString('en-IN')}</span>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between text-[#666666]">
                   <span>Estimated Tax (5%)</span>
-                  <span className="font-mono text-[#111111]">${taxAmount.toFixed(2)}</span>
+                  <span className="font-mono text-[#111111]">₹{taxAmount.toLocaleString('en-IN')}</span>
                 </div>
 
                 <div className="pt-4 border-t border-[#E5E3DF] flex items-center justify-between">
@@ -679,7 +736,7 @@ export const Checkout = () => {
                     Total Settlement
                   </span>
                   <span className="font-serif text-2xl font-medium text-[#111111]">
-                    ${estimatedTotal.toFixed(2)}
+                    ₹{estimatedTotal.toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>

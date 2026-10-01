@@ -28,6 +28,7 @@ export const OrderDetails = () => {
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [toastMessage, setToastMessage] = useState(null);
 
   // Cancellation modal
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -35,15 +36,19 @@ export const OrderDetails = () => {
   const [cancelling, setCancelling] = useState(false);
 
   const showToast = useCallback((type, text) => {
+    setToastMessage({ type, text });
     triggerToast(text, type);
+    setTimeout(() => setToastMessage(null), 4500);
   }, [triggerToast]);
 
   const fetchOrderDetails = useCallback(async () => {
-    setLoading(true);
     try {
       const response = await orderApi.getOrderById(id);
-      if (response && response.data) {
-        setOrder(response.data);
+      const data = response?.data?.order || response?.data || response?.order || response;
+      if (data && (data._id || data.orderNumber)) {
+        setOrder(data);
+      } else {
+        throw new Error(response?.message || 'Order not found');
       }
     } catch (error) {
       showToast('error', error.message || 'Failed to retrieve order details.');
@@ -53,10 +58,27 @@ export const OrderDetails = () => {
   }, [id, showToast]);
 
   useEffect(() => {
+    let active = true;
     if (id) {
-      fetchOrderDetails();
+      orderApi.getOrderById(id)
+        .then((response) => {
+          if (!active) return;
+          const data = response?.data?.order || response?.data || response?.order || response;
+          if (data && (data._id || data.orderNumber)) {
+            setOrder(data);
+          } else {
+            showToast('error', response?.message || 'Order not found');
+          }
+        })
+        .catch((error) => {
+          if (active) showToast('error', error.message || 'Failed to retrieve order details.');
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
     }
-  }, [id, fetchOrderDetails]);
+    return () => { active = false; };
+  }, [id, showToast]);
 
   const handleCancelOrder = async (e) => {
     e.preventDefault();
@@ -85,9 +107,11 @@ export const OrderDetails = () => {
   };
 
   // Milestone Stepper definition
-  const getMilestoneIndex = (status) => {
-    switch (status) {
+  const getMilestoneIndex = (status = '') => {
+    const s = String(status || '').toLowerCase().trim();
+    switch (s) {
       case 'placed':
+      case 'pending':
         return 0;
       case 'confirmed':
         return 1;
@@ -103,11 +127,11 @@ export const OrderDetails = () => {
   };
 
   const milestones = [
-    { title: 'Order Placed', subtitle: 'Awaiting dispatch verification' },
-    { title: 'Confirmed', subtitle: 'Atelier confirmed receipt' },
+    { title: 'Order Placed', subtitle: 'Awaiting fulfillment confirmation' },
+    { title: 'Confirmed', subtitle: 'Order verified by boutique' },
     { title: 'Processing', subtitle: 'Tailoring & quality inspection' },
-    { title: 'Dispatched', subtitle: 'In transit via courier' },
-    { title: 'Delivered', subtitle: 'Received at destination' }
+    { title: 'Shipped', subtitle: 'In transit via courier' },
+    { title: 'Delivered', subtitle: 'Delivered at destination' }
   ];
 
   if (loading) {
@@ -257,36 +281,74 @@ export const OrderDetails = () => {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
-              {milestones.map((m, idx) => {
-                const isPassed = idx <= currentMilestone;
-                const isCurrent = idx === currentMilestone;
-                return (
-                  <div key={idx} className="flex flex-col items-start md:items-center text-left md:text-center space-y-2">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono border transition-all ${
-                        isPassed
-                          ? 'bg-[#111111] text-[#F8F7F4] border-[#111111]'
-                          : 'bg-[#F8F7F4] text-[#8E877F] border-[#E5E3DF]'
-                      }`}
-                    >
-                      {isPassed ? <CheckCircle2 className="w-4 h-4" /> : idx + 1}
-                    </div>
-                    <div>
-                      <h4
-                        className={`text-xs font-mono uppercase tracking-wider ${
-                          isCurrent ? 'text-[#111111] font-bold' : isPassed ? 'text-[#111111]' : 'text-[#8E877F]'
+            <div className="relative pt-2">
+              {/* Progress bar line connecting milestone nodes on desktop */}
+              <div className="hidden md:block absolute top-6 left-[10%] right-[10%] h-[3px] bg-[#E5E3DF] -z-0">
+                <div
+                  className="h-full bg-[#111111] transition-all duration-700 ease-out"
+                  style={{ width: `${Math.min(100, (currentMilestone / (milestones.length - 1)) * 100)}%` }}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-4 relative z-10">
+                {milestones.map((m, idx) => {
+                  const isPassed = idx <= currentMilestone;
+                  const isCurrent = idx === currentMilestone;
+                  return (
+                    <div key={idx} className="flex md:flex-col items-center md:items-center text-left md:text-center gap-3 md:gap-2">
+                      <div
+                        className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-mono border-2 transition-all shrink-0 bg-white ${
+                          isCurrent
+                            ? 'bg-[#111111] text-[#F8F7F4] border-[#111111] ring-4 ring-slate-200 shadow-sm'
+                            : isPassed
+                            ? 'bg-[#111111] text-[#F8F7F4] border-[#111111]'
+                            : 'bg-[#FAF9F6] text-[#8E877F] border-[#E5E3DF]'
                         }`}
                       >
-                        {m.title}
-                      </h4>
-                      <p className="text-[10px] text-[#8E877F] font-sans mt-0.5 max-w-[140px] hidden md:block">
-                        {m.subtitle}
-                      </p>
+                        {isPassed ? <CheckCircle2 className="w-4 h-4 text-[#F8F7F4]" /> : idx + 1}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5 md:justify-center">
+                          <h4
+                            className={`text-xs font-mono uppercase tracking-wider ${
+                              isCurrent
+                                ? 'text-[#111111] font-bold underline underline-offset-4 decoration-2 decoration-indigo-600'
+                                : isPassed
+                                ? 'text-[#111111] font-semibold'
+                                : 'text-[#8E877F]'
+                            }`}
+                          >
+                            {m.title}
+                          </h4>
+                          {isCurrent && (
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-[10px] text-[#8E877F] font-sans mt-0.5 max-w-[150px]">
+                          {m.subtitle}
+                        </p>
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+
+              {/* Carrier & Tracking details footer */}
+              {order.trackingNumber && (
+                <div className="mt-8 pt-4 border-t border-[#E5E3DF] flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-[#111111]" />
+                    <span className="text-[#666666]">Dispatched via:</span>
+                    <span className="font-semibold text-[#111111]">{order.carrier || 'White-Glove Express'}</span>
                   </div>
-                );
-              })}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#666666]">Consignment Tracking:</span>
+                    <span className="font-bold text-[#111111] bg-[#F4F1EA] px-2.5 py-1 border border-[#E5E3DF] rounded">
+                      {order.trackingNumber}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -332,7 +394,7 @@ export const OrderDetails = () => {
                           </p>
                         )}
                         <p className="text-xs text-[#666666] font-mono">
-                          Quantity: {item.quantity} × ${item.price?.toFixed(2)}
+                          Quantity: {item.quantity} × ₹{Number(item.price || 0).toLocaleString('en-IN')}
                         </p>
                       </div>
                     </div>
@@ -342,7 +404,7 @@ export const OrderDetails = () => {
                         Item Subtotal
                       </span>
                       <span className="font-serif text-lg font-medium text-[#111111]">
-                        ${item.subtotal?.toFixed(2) || (item.price * item.quantity).toFixed(2)}
+                        ₹{Number(item.subtotal || (item.price * item.quantity) || 0).toLocaleString('en-IN')}
                       </span>
                     </div>
                   </div>
@@ -418,26 +480,26 @@ export const OrderDetails = () => {
               <div className="space-y-3 text-xs font-sans">
                 <div className="flex items-center justify-between text-[#666666]">
                   <span>Items Subtotal</span>
-                  <span className="font-mono text-[#111111]">${order.subtotal?.toFixed(2)}</span>
+                  <span className="font-mono text-[#111111]">₹{Number(order.subtotal || 0).toLocaleString('en-IN')}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-[#666666]">
                   <span>Courier & Logistics</span>
                   <span className="font-mono text-[#111111]">
-                    {order.shippingPrice === 0 ? 'Complimentary' : `$${order.shippingPrice?.toFixed(2)}`}
+                    {order.shippingPrice === 0 ? 'Complimentary' : `₹${Number(order.shippingPrice || 0).toLocaleString('en-IN')}`}
                   </span>
                 </div>
 
                 {order.discountAmount > 0 && (
                   <div className="flex items-center justify-between text-emerald-700">
                     <span>Privilege Discount</span>
-                    <span className="font-mono">-${order.discountAmount?.toFixed(2)}</span>
+                    <span className="font-mono">-₹{Number(order.discountAmount || 0).toLocaleString('en-IN')}</span>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between text-[#666666]">
                   <span>Estimated Tax (5%)</span>
-                  <span className="font-mono text-[#111111]">${order.taxPrice?.toFixed(2)}</span>
+                  <span className="font-mono text-[#111111]">₹{Number(order.taxPrice || 0).toLocaleString('en-IN')}</span>
                 </div>
 
                 <div className="pt-4 border-t border-[#E5E3DF] flex items-center justify-between">
@@ -445,7 +507,7 @@ export const OrderDetails = () => {
                     Total Settlement
                   </span>
                   <span className="font-serif text-2xl font-medium text-[#111111]">
-                    ${order.totalPrice?.toFixed(2)}
+                    ₹{Number(order.totalPrice || order.total || 0).toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>

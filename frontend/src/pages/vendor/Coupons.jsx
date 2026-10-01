@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import couponApi from "../../services/couponApi";
+import { useModal } from "../../context/ModalContext";
 import {
   FaTag,
   FaPlus,
@@ -67,6 +68,7 @@ const initialCoupons = [
 ];
 
 export default function VendorCoupons() {
+  const { confirm: modalConfirm } = useModal();
   const [coupons, setCoupons] = useState(initialCoupons);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -137,8 +139,15 @@ export default function VendorCoupons() {
   };
 
   // Delete Coupon
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this coupon?")) {
+  const handleDelete = async (id) => {
+    const ok = await modalConfirm({
+      title: "Delete Coupon Code",
+      message: "Are you sure you want to permanently delete this discount coupon? Active customer shopping carts may be affected.",
+      type: "danger",
+      confirmText: "Delete Coupon",
+      cancelText: "Cancel"
+    });
+    if (ok) {
       setCoupons(coupons.filter((c) => c.id !== id));
     }
   };

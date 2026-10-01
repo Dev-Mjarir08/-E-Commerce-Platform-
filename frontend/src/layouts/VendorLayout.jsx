@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import VendorSidebar from '../components/vendor/VendorSidebar';
@@ -9,6 +9,11 @@ const VendorLayout = () => {
   const dispatch = useDispatch();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch live vendor profile and metrics on layout mount
+  useEffect(() => {
+    dispatch(fetchVendorDashboard());
+  }, [dispatch]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

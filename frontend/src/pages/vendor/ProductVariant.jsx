@@ -10,7 +10,7 @@ import {
   Edit2,
 } from "lucide-react";
 
-export default function ProductVariants({ onVariantsChange }) {
+export default function ProductVariants({ onVariantsChange: _onVariantsChange = null }) {
   const navigate = useNavigate();
 
   const [optionGroups, setOptionGroups] = useState([

@@ -1,489 +1,369 @@
-import React, { useState } from "react";
-import { FaBars, FaTimes } from "react-icons/fa";
-
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
-    LayoutDashboard,
-    Package,
-    ShoppingBag,
-    Users,
-    Star,
-    BarChart3,
-    Settings,
-    Search,
-    Download,
-    Eye,
-    Truck,
-    MessageSquare,
-    Bell,
-    ChevronLeft,
-    ChevronRight,
-    ChevronDown,
-} from "lucide-react";
-import VendorSidebar from "./VendorSlideBar";
+  ShoppingBag,
+  Search,
+  Filter,
+  Eye,
+  RefreshCw,
+  CheckCircle2,
+  Clock,
+  Truck,
+  XCircle,
+  AlertCircle,
+  ChevronRight,
+  Download
+} from 'lucide-react';
+import vendorApi from '../../services/vendorApi';
+
+const initialOrders = [
+  {
+    _id: 'ORD-89234',
+    orderNumber: '89234',
+    createdAt: '2026-03-22T14:30:00.000Z',
+    user: { name: 'Alex Johnson', email: 'alex.j@example.com' },
+    shippingAddress: { city: 'San Francisco', state: 'CA' },
+    items: [
+      { name: 'Wireless Headphones', quantity: 1, price: 199.99 },
+      { name: 'Desktop Stand', quantity: 1, price: 49.50 }
+    ],
+    totalAmount: 249.49,
+    orderStatus: 'Processing',
+    paymentStatus: 'Paid'
+  },
+  {
+    _id: 'ORD-89235',
+    orderNumber: '89235',
+    createdAt: '2026-03-21T09:15:00.000Z',
+    user: { name: 'Sophia Chen', email: 'sophia.c@example.com' },
+    shippingAddress: { city: 'Seattle', state: 'WA' },
+    items: [
+      { name: 'Leather Office Chair', quantity: 1, price: 289.00 }
+    ],
+    totalAmount: 289.00,
+    orderStatus: 'Shipped',
+    paymentStatus: 'Paid'
+  },
+  {
+    _id: 'ORD-89236',
+    orderNumber: '89236',
+    createdAt: '2026-03-20T17:45:00.000Z',
+    user: { name: 'Marcus Miller', email: 'marcus.m@example.com' },
+    shippingAddress: { city: 'Austin', state: 'TX' },
+    items: [
+      { name: 'Smart Fitness Watch', quantity: 2, price: 99.50 }
+    ],
+    totalAmount: 199.00,
+    orderStatus: 'Delivered',
+    paymentStatus: 'Paid'
+  },
+  {
+    _id: 'ORD-89237',
+    orderNumber: '89237',
+    createdAt: '2026-03-19T11:20:00.000Z',
+    user: { name: 'Emma Watson', email: 'emma.w@example.com' },
+    shippingAddress: { city: 'New York', state: 'NY' },
+    items: [
+      { name: 'Water Bottle 1L', quantity: 3, price: 24.99 }
+    ],
+    totalAmount: 74.97,
+    orderStatus: 'Placed',
+    paymentStatus: 'Paid'
+  },
+  {
+    _id: 'ORD-89238',
+    orderNumber: '89238',
+    createdAt: '2026-03-18T13:00:00.000Z',
+    user: { name: 'David Lee', email: 'david.l@example.com' },
+    shippingAddress: { city: 'Chicago', state: 'IL' },
+    items: [
+      { name: 'Wireless Charger', quantity: 1, price: 39.99 }
+    ],
+    totalAmount: 39.99,
+    orderStatus: 'Cancelled',
+    paymentStatus: 'Refunded'
+  }
+];
 
 export default function VendorOrdersPage() {
-    const [activeTab, setActiveTab] = useState("All");
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
-
-    const orders = [
-        {
-            id: "#10042",
-            date: "Sept 15, 2026",
-            customer: "John Wick",
-            items: "2 items",
-            total: "$125.00",
-            status: "Shipped",
-            statusBg: "bg-blue-100 text-blue-700",
-            actions: ["view"],
-        },
-        {
-            id: "#10041",
-            date: "Sept 15, 2026",
-            customer: "Sarah J.",
-            items: "1 item",
-            total: "$89.00",
-            status: "Delivered",
-            statusBg: "bg-emerald-100 text-emerald-700",
-            actions: ["view", "ship"],
-        },
-        {
-            id: "#10040",
-            date: "Sept 14, 2026",
-            customer: "Mike R.",
-            items: "1 item",
-            total: "$45.00",
-            status: "Pending",
-            statusBg: "bg-amber-100 text-amber-700",
-            actions: ["view", "message"],
-        },
-        {
-            id: "#10039",
-            date: "Sept 13, 2026",
-            customer: "Liam N.",
-            items: "2 items",
-            total: "$190.00",
-            status: "Canceled",
-            statusBg: "bg-rose-100 text-rose-700",
-            actions: ["view", "message"],
-        },
-    ];
-
-    // STATUS + SEARCH FILTER
-    const filteredOrders = orders.filter((order) => {
-        const matchesStatus =
-            activeTab === "All" || order.status === activeTab;
-
-        const search = searchTerm.toLowerCase();
-
-        const matchesSearch =
-            order.id.toLowerCase().includes(search) ||
-            order.customer.toLowerCase().includes(search);
-
-        return matchesStatus && matchesSearch;
-    });
-
-    return (
-        <div className="flex h-screen bg-slate-100 text-slate-800 font-sans overflow-hidden">
-
-            {/* ================= vendor slidebar ================= */}
-            <VendorSidebar />
-
-
-            {/* ================= MAIN CONTENT ================= */}
-            <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
-
-                {/* ================= HEADER ================= */}
-                <header
-                    className="bg-white border-b border-slate-200
-                    px-4 sm:px-6 md:px-8 py-3
-                    flex items-center justify-between
-                    sticky top-0 z-30"
-                >
-
-                    {/* BREADCRUMB */}
-                    <div className="text-xs text-slate-400 truncate ml-12 md:ml-0">
-                        craftsman.com / Vendor Portal /
-                        <span className="text-slate-600 font-medium">
-                            {" "}Orders
-                        </span>
-                    </div>
-
-                    {/* RIGHT HEADER */}
-                    <div className="flex items-center gap-2 sm:gap-4">
-
-                        {/* NOTIFICATION */}
-                        <button
-                            className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors relative"
-                            aria-label="Notifications"
-                        >
-                            <Bell size={20} />
-
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full"></span>
-                        </button>
-
-                        {/* PROFILE */}
-                        <div className="flex items-center gap-2 cursor-pointer pl-1 sm:pl-2">
-
-                            <img
-                                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-                                alt="User Avatar"
-                                className="w-8 h-8 rounded-full object-cover"
-                            />
-
-                            <ChevronDown
-                                size={16}
-                                className="text-slate-500 hidden sm:block"
-                            />
-                        </div>
-                    </div>
-                </header>
-
-                {/* ================= BODY ================= */}
-                <main className="p-4 sm:p-6 md:p-8 space-y-6">
-
-                    {/* TITLE + EXPORT */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-
-                        <div>
-                            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
-                                Orders
-                            </h1>
-
-                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-1 text-xs sm:text-sm text-slate-600">
-
-                                <span>
-                                    Last 30 Days:
-                                    {" "}
-                                    <strong className="text-slate-800">
-                                        48 Orders
-                                    </strong>
-                                </span>
-
-                                <span className="text-slate-300 hidden sm:block">
-                                    |
-                                </span>
-
-                                <span>
-                                    Total Revenue:
-                                    {" "}
-                                    <strong className="text-slate-800">
-                                        $18,450.00
-                                    </strong>
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* EXPORT BUTTON */}
-                        <button
-                            className="inline-flex items-center justify-center gap-2
-                            bg-emerald-700 hover:bg-emerald-800
-                            text-white text-sm font-medium
-                            px-4 py-2.5 rounded-lg shadow-sm
-                            transition-colors w-full md:w-auto"
-                        >
-                            <Download size={16} />
-                            Export CSV
-                        </button>
-                    </div>
-
-                    {/* ================= ORDERS CARD ================= */}
-                    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-
-                        {/* ================= FILTER TOOLBAR ================= */}
-                        <div className="p-4 border-b border-slate-200 space-y-4">
-
-                            {/* SEARCH */}
-                            <div className="relative w-full">
-
-                                <Search
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                                    size={18}
-                                />
-
-                                <input
-                                    type="text"
-                                    value={searchTerm}
-                                    onChange={(e) =>
-                                        setSearchTerm(e.target.value)
-                                    }
-                                    placeholder="Search by order ID, customer name..."
-                                    className="w-full pl-10 pr-4 py-2
-                                    border border-slate-200 rounded-lg
-                                    text-slate-800 text-sm
-                                    bg-slate-50
-                                    placeholder:text-slate-400
-                                    focus:bg-white
-                                    focus:outline-none
-                                    focus:ring-2
-                                    focus:ring-emerald-500/20
-                                    focus:border-emerald-500
-                                    transition-all"
-                                />
-                            </div>
-
-                            {/* FILTERS */}
-                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-
-                                {/* STATUS */}
-                                <div className="flex items-center bg-slate-100 p-1 rounded-lg text-sm overflow-x-auto">
-
-                                    <span className="px-3 py-1 text-slate-500 font-medium whitespace-nowrap">
-                                        Status
-                                    </span>
-
-                                    {[
-                                        "All",
-                                        "Pending",
-                                        "Shipped",
-                                        "Delivered",
-                                        "Canceled",
-                                    ].map((status) => (
-                                        <button
-                                            key={status}
-                                            onClick={() => setActiveTab(status)}
-                                            className={`
-                                                px-3 py-1 rounded-md
-                                                text-xs font-medium
-                                                transition-all whitespace-nowrap
-                                                ${activeTab === status
-                                                    ? "bg-white text-slate-800 shadow-sm"
-                                                    : "text-slate-600 hover:text-slate-900"
-                                                }
-                                            `}
-                                        >
-                                            {status}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {/* OTHER FILTERS */}
-                                <div className="flex flex-wrap items-center gap-3">
-
-                                    {/* DATE */}
-                                    <select
-                                        className="border border-slate-200
-                                        rounded-lg px-3 py-2
-                                        text-sm text-slate-600
-                                        bg-white focus:outline-none"
-                                    >
-                                        <option>Date Range</option>
-                                        <option>Last 7 Days</option>
-                                        <option>Last 30 Days</option>
-                                        <option>This Month</option>
-                                    </select>
-
-                                    {/* SHOW */}
-                                    <div className="flex items-center gap-2
-                                        text-sm text-slate-600
-                                        border border-slate-200
-                                        rounded-lg px-3 py-2 bg-white"
-                                    >
-                                        <span>Show</span>
-
-                                        <select
-                                            className="font-semibold text-slate-800 focus:outline-none bg-transparent"
-                                        >
-                                            <option>10</option>
-                                            <option>25</option>
-                                            <option>50</option>
-                                            <option>100</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* ================= TABLE ================= */}
-                        <div className="overflow-x-auto">
-
-                            <table className="w-full text-left text-sm border-collapse min-w-225">
-
-                                <thead>
-                                    <tr className="border-b border-slate-200 bg-slate-50/50 text-slate-700 font-semibold">
-
-                                        <th className="py-3.5 px-6">
-                                            Order ID
-                                        </th>
-
-                                        <th className="py-3.5 px-6">
-                                            Date
-                                        </th>
-
-                                        <th className="py-3.5 px-6">
-                                            Customer
-                                        </th>
-
-                                        <th className="py-3.5 px-6">
-                                            Product(s)
-                                        </th>
-
-                                        <th className="py-3.5 px-6">
-                                            Total
-                                        </th>
-
-                                        <th className="py-3.5 px-6">
-                                            Status
-                                        </th>
-
-                                        <th className="py-3.5 px-6">
-                                            Action
-                                        </th>
-                                    </tr>
-                                </thead>
-
-                                <tbody className="divide-y divide-slate-200 text-slate-700">
-
-                                    {filteredOrders.length > 0 ? (
-                                        filteredOrders.map((order, idx) => (
-
-                                            <tr
-                                                key={idx}
-                                                className="hover:bg-slate-50/70 transition-colors"
-                                            >
-
-                                                <td className="py-4 px-6 font-medium text-slate-900">
-                                                    {order.id}
-                                                </td>
-
-                                                <td className="py-4 px-6 text-slate-600">
-                                                    {order.date}
-                                                </td>
-
-                                                <td className="py-4 px-6 font-medium text-slate-800">
-                                                    {order.customer}
-                                                </td>
-
-                                                <td className="py-4 px-6 text-slate-600">
-                                                    {order.items}
-                                                </td>
-
-                                                <td className="py-4 px-6 font-semibold text-slate-900">
-                                                    {order.total}
-                                                </td>
-
-                                                <td className="py-4 px-6">
-
-                                                    <span
-                                                        className={`
-                                                            inline-block px-3 py-1
-                                                            rounded-full text-xs
-                                                            font-semibold
-                                                            ${order.statusBg}
-                                                        `}
-                                                    >
-                                                        {order.status}
-                                                    </span>
-
-                                                </td>
-
-                                                <td className="py-4 px-6">
-
-                                                    <div className="flex items-center gap-2">
-
-                                                        {/* VIEW */}
-                                                        {order.actions.includes("view") && (
-                                                            <button
-                                                                className="inline-flex items-center gap-1.5
-                                                                px-3 py-1.5
-                                                                border border-slate-200
-                                                                rounded-lg text-xs font-medium
-                                                                text-slate-700
-                                                                hover:bg-slate-100
-                                                                transition-colors"
-                                                            >
-                                                                <Eye size={14} />
-                                                                View
-                                                            </button>
-                                                        )}
-
-                                                        {/* SHIP */}
-                                                        {order.actions.includes("ship") && (
-                                                            <button
-                                                                className="inline-flex items-center gap-1.5
-                                                                px-3 py-1.5
-                                                                border border-slate-200
-                                                                rounded-lg text-xs font-medium
-                                                                text-slate-700
-                                                                hover:bg-slate-100
-                                                                transition-colors"
-                                                            >
-                                                                <Truck size={14} />
-                                                                Ship Order
-                                                            </button>
-                                                        )}
-
-                                                        {/* MESSAGE */}
-                                                        {order.actions.includes("message") && (
-                                                            <button
-                                                                className="inline-flex items-center gap-1.5
-                                                                px-3 py-1.5
-                                                                border border-slate-200
-                                                                rounded-lg text-xs font-medium
-                                                                text-slate-700
-                                                                hover:bg-slate-100
-                                                                transition-colors"
-                                                            >
-                                                                <MessageSquare size={14} />
-                                                                Message
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td
-                                                colSpan="7"
-                                                className="py-10 text-center text-slate-500"
-                                            >
-                                                No orders found.
-                                            </td>
-                                        </tr>
-                                    )}
-
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* ================= PAGINATION ================= */}
-                        <div className="p-4 border-t border-slate-200 flex items-center justify-center gap-4 text-xs text-slate-500">
-
-                            <button
-                                className="p-1 rounded hover:bg-slate-100
-                                text-slate-400 hover:text-slate-600
-                                transition-colors"
-                            >
-                                <ChevronLeft size={18} />
-                            </button>
-
-                            <div className="flex items-center gap-2">
-
-                                <span
-                                    className="w-7 h-7 bg-slate-200
-                                    font-semibold text-slate-800
-                                    rounded flex items-center justify-center"
-                                >
-                                    1
-                                </span>
-
-                                <span>
-                                    1 of 5
-                                </span>
-                            </div>
-
-                            <button
-                                className="p-1 rounded hover:bg-slate-100
-                                text-slate-600 transition-colors"
-                            >
-                                <ChevronRight size={18} />
-                            </button>
-                        </div>
-
-                    </div>
-                </main>
-            </div>
+  const [orders, setOrders] = useState(initialOrders);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('All');
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const fetchOrders = async () => {
+    try {
+      const response = await vendorApi.getOrders();
+      const data = response?.data?.orders || response?.orders || response?.data;
+      if (Array.isArray(data) && data.length > 0) {
+        setOrders(data);
+      }
+    } catch (err) {
+      console.warn('Using fallback order records:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let active = true;
+    vendorApi.getOrders()
+      .then((response) => {
+        if (!active) return;
+        const data = response?.data?.orders || response?.orders || response?.data;
+        if (Array.isArray(data) && data.length > 0) {
+          setOrders(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Using fallback order records:', err);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
+
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      await vendorApi.updateOrderStatus(orderId, newStatus);
+      setOrders((prev) =>
+        prev.map((o) =>
+          o._id === orderId || o.orderNumber === orderId
+            ? { ...o, orderStatus: newStatus }
+            : o
+        )
+      );
+      setToastMessage(`Order status updated to ${newStatus}.`);
+    } catch {
+      setOrders((prev) =>
+        prev.map((o) =>
+          o._id === orderId || o.orderNumber === orderId
+            ? { ...o, orderStatus: newStatus }
+            : o
+        )
+      );
+      setToastMessage(`Order status updated to ${newStatus} (local).`);
+    } finally {
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+  };
+
+  const getStatusBadge = (status = '') => {
+    const s = status.toLowerCase();
+    switch (s) {
+      case 'delivered':
+      case 'completed':
+        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'shipped':
+      case 'in transit':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'processing':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'placed':
+      case 'pending':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'cancelled':
+      case 'failed':
+        return 'bg-rose-100 text-rose-800 border-rose-200';
+      default:
+        return 'bg-slate-100 text-slate-800 border-slate-200';
+    }
+  };
+
+  const filteredOrders = orders.filter((order) => {
+    const status = order.orderStatus?.toLowerCase() || '';
+    const tabMatch =
+      activeTab === 'All' ||
+      status === activeTab.toLowerCase() ||
+      (activeTab === 'Pending' && status === 'placed');
+
+    const q = searchTerm.toLowerCase();
+    const id = (order.orderNumber || order._id || '').toLowerCase();
+    const custName = (
+      order.user?.name ||
+      order.shippingAddress?.recipientName ||
+      ''
+    ).toLowerCase();
+
+    return tabMatch && (id.includes(q) || custName.includes(q));
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Toast */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-xl text-xs font-mono flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 size={16} className="text-emerald-400" />
+          <span>{toastMessage}</span>
         </div>
-    );
+      )}
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Order Fulfillment
+          </h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Manage incoming customer purchases, dispatch packages, and update delivery statuses.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={fetchOrders}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg shadow-xs transition-colors"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin text-emerald-600' : ''} />
+            <span>Sync Orders</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        {['All', 'Placed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map(
+          (tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors shrink-0 ${
+                activeTab === tab
+                  ? 'bg-slate-900 text-white font-semibold shadow-xs'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              {tab}
+            </button>
+          )
+        )}
+      </div>
+
+      {/* Search Bar */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
+        <Search size={16} className="text-slate-400" />
+        <input
+          type="text"
+          placeholder="Filter by Order # or Customer Name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full bg-transparent text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none"
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm('')}
+            className="text-xs text-slate-400 hover:text-slate-600 font-mono"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* Orders Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono uppercase text-[11px]">
+                <th className="py-3.5 px-4 font-semibold">Order ID</th>
+                <th className="py-3.5 px-4 font-semibold">Date</th>
+                <th className="py-3.5 px-4 font-semibold">Customer</th>
+                <th className="py-3.5 px-4 font-semibold">Destination</th>
+                <th className="py-3.5 px-4 font-semibold">Items</th>
+                <th className="py-3.5 px-4 font-semibold">Total</th>
+                <th className="py-3.5 px-4 font-semibold">Status</th>
+                <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700">
+              {filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <ShoppingBag size={32} className="mx-auto text-slate-300 mb-2" />
+                    <p className="text-xs font-semibold text-slate-600">No orders found</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Try selecting a different status filter or keyword.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filteredOrders.map((order) => {
+                  const id = order.orderNumber || order._id;
+                  const total = order.totalAmount || order.totalPrice || 0;
+                  const itemCount =
+                    order.items?.reduce((acc, i) => acc + (i.quantity || 1), 0) || 1;
+
+                  return (
+                    <tr
+                      key={order._id}
+                      className="hover:bg-slate-50/80 transition-colors group"
+                    >
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                        <Link
+                          to={`/vendor/orders/${order._id}`}
+                          className="hover:text-emerald-600 hover:underline"
+                        >
+                          #{id?.slice(-8) || id}
+                        </Link>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px] whitespace-nowrap">
+                        {order.createdAt
+                          ? new Date(order.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })
+                          : 'Recent'}
+                      </td>
+                      <td className="py-3.5 px-4 font-medium text-slate-800">
+                        {order.user?.name || order.shippingAddress?.recipientName || 'Client'}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-500">
+                        {order.shippingAddress?.city
+                          ? `${order.shippingAddress.city}, ${order.shippingAddress.state || ''}`
+                          : 'Domestic'}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-600 font-mono">
+                        {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                      </td>
+                      <td className="py-3.5 px-4 font-bold font-mono text-slate-900">
+                        ${total.toFixed(2)}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <select
+                          value={order.orderStatus || 'Placed'}
+                          onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                          className={`text-[11px] font-mono uppercase font-bold py-1 px-2 rounded-full border cursor-pointer focus:outline-none ${getStatusBadge(
+                            order.orderStatus
+                          )}`}
+                        >
+                          <option value="Placed">Placed</option>
+                          <option value="Processing">Processing</option>
+                          <option value="Shipped">Shipped</option>
+                          <option value="Delivered">Delivered</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <Link
+                          to={`/vendor/orders/${order._id}`}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 rounded-lg text-xs font-medium transition-colors"
+                        >
+                          <Eye size={13} />
+                          <span>View</span>
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
 }

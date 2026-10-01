@@ -4,7 +4,6 @@ import {
   getProductById,
   createProduct,
   createBulkProducts,
-  seedFiftyProducts,
   updateProduct,
   deleteProduct,
   deleteMultipleProducts,
@@ -26,11 +25,10 @@ import { uploadProductMedia } from '../middlewares/upload.middleware.js';
 const productRouter = Router();
 
 // Bulk & Maintenance Endpoints
-productRouter.post('/bulk', createBulkProducts);
-productRouter.post('/seed-50', seedFiftyProducts);
-productRouter.post('/delete-many', deleteMultipleProducts);
-productRouter.delete('/bulk', deleteMultipleProducts);
-productRouter.delete('/clear-all', clearAllProducts);
+productRouter.post('/bulk', optionalAuth, createBulkProducts);
+productRouter.post('/delete-many', optionalAuth, deleteMultipleProducts);
+productRouter.delete('/bulk', optionalAuth, deleteMultipleProducts);
+productRouter.delete('/clear-all', protect, authorize('admin'), clearAllProducts);
 
 // Vendor-specific Products Endpoint (Must be declared before `/:id`)
 productRouter.get('/my-products', protect, authorize('vendor', 'seller', 'admin'), getMyProducts);

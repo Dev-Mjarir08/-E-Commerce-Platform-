@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import categoryService from '../../services/categoryService';
+import { getCategoryImageUrl } from '../../utils/imageUrl';
 
 // ============================================
 // BACKEND CATEGORY -> FRONTEND CATEGORY
@@ -13,9 +14,7 @@ export const mapBackendCategoryToItem = (category) => {
     name: category.name || '',
     slug: category.slug || '',
     tagline: category.description || '',
-    image:
-      category.image?.url ||
-      (typeof category.image === 'string' ? category.image : ''),
+    image: getCategoryImageUrl(category),
     isActive: Boolean(category.isActive),
     displayOrder: category.displayOrder ?? 0,
     itemCount: Number(category.productsCount ?? 0),
@@ -169,6 +168,26 @@ export const deleteCategory = createAsyncThunk(
 );
 
 // ============================================
+// BULK DELETE CATEGORIES
+// ============================================
+
+export const bulkDeleteCategories = createAsyncThunk(
+  'categories/bulkDeleteCategories',
+  async (ids, { rejectWithValue }) => {
+    try {
+      await categoryService.bulkDeleteCategories(ids);
+      return ids;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to bulk delete categories'
+      );
+    }
+  }
+);
+
+// ============================================
 // TOGGLE ACTIVE / HIDDEN
 // ============================================
 
@@ -188,7 +207,7 @@ export const toggleCategoryStatus = createAsyncThunk(
         );
 
       const nextIsActive =
-        !Boolean(category?.isActive);
+        !category?.isActive;
 
       const response =
         await categoryService.updateCategoryStatus(
@@ -331,6 +350,20 @@ const categorySlice = createSlice({
               (category) =>
                 category.id !== action.payload
             );
+        }
+      )
+
+      // -----------------------------
+      // BULK DELETE
+      // -----------------------------
+
+      .addCase(
+        bulkDeleteCategories.fulfilled,
+        (state, action) => {
+          const idsToDelete = new Set(action.payload);
+          state.items = state.items.filter(
+            (category) => !idsToDelete.has(category.id)
+          );
         }
       )
 

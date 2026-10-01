@@ -1,6 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-
+import React, { useState, useEffect, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   FaUser,
   FaStore,
@@ -16,557 +15,739 @@ import {
   FaShieldAlt,
   FaTag,
   FaGlobe,
-  FaArrowLeft,
+  FaSpinner,
+  FaExclamationCircle,
+  FaStar,
 } from "react-icons/fa";
+import { fetchVendorDashboard, updateVendorProfile } from "../../redux/slices/vendorSlice";
+import { updateUser } from "../../redux/slices/authSlice";
+import vendorApi from "../../services/vendorApi";
+import storeApi from "../../services/storeApi";
+import { getImageUrl, DEFAULT_COVER_FALLBACK } from "../../utils/imageUrl";
 
-const Profile = () => {
-  const navigate = useNavigate();
+export default function Profile() {
+  const dispatch = useDispatch();
+  const { user: vendorUser, store: vendorStore } = useSelector(
+    (state) => state.vendor
+  );
+  const { user: authUser } = useSelector((state) => state.auth);
 
-  const [isSaved, setIsSaved] = useState(false);
+  const [activeTab, setActiveTab] = useState("general");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [toastMessage, setToastMessage] = useState({ type: "", text: "" });
 
   const [formData, setFormData] = useState({
-    fullName: "Jane Doe",
-    email: "jane@example.com",
-    phone: "+91 98765 43210",
-    storeName: "Acme Goods",
-    category: "Handmade Products",
+    fullName: "",
+    email: "",
+    phone: "",
+    storeName: "",
+    storeDescription: "",
+    category: "",
     taxId: "",
     website: "",
     address: "",
-    city: "Bhatkal",
-    state: "Karnataka",
+    city: "",
+    state: "",
     postalCode: "",
+    country: "India",
     currentPassword: "",
     newPassword: "",
+    confirmPassword: "",
   });
 
-  const [avatar, setAvatar] = useState(null);
-  const [cover, setCover] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState(null);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  // Sync state with registered Vendor & Store data
+  const populateFromData = useCallback((user, store) => {
+    const activeUser = user || authUser || {};
+    const activeStore = store || {};
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      fullName: activeUser.name || "",
+      email: activeUser.email || "",
+      phone: activeUser.phone || activeStore.phone || "",
+      storeName: activeStore.name || "",
+      storeDescription: activeStore.description || "",
+      category: activeStore.category || "Lifestyle & Ergonomics",
+      taxId: activeStore.settings?.taxId || "",
+      website: activeStore.website || "",
+      address: activeStore.address?.street || "",
+      city: activeStore.address?.city || "",
+      state: activeStore.address?.state || "",
+      postalCode: activeStore.address?.postalCode || "",
+      country: activeStore.address?.country || "United States",
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     }));
+
+    if (activeUser.avatar) {
+      const av = typeof activeUser.avatar === "object" ? activeUser.avatar.url : activeUser.avatar;
+      setAvatarPreview(getImageUrl(av));
+    }
+    if (activeStore.banner) {
+      const bn = typeof activeStore.banner === "object" ? activeStore.banner.url : activeStore.banner;
+      setBannerPreview(getImageUrl(bn, DEFAULT_COVER_FALLBACK));
+    }
+  }, [authUser]);
+
+  // Fetch real registered store & vendor profile from backend
+  useEffect(() => {
+    let active = true;
+    const loadProfile = async () => {
+      setIsLoading(true);
+      try {
+        const response = await vendorApi.getProfile();
+        const profileData = response?.data || response;
+        if (profileData && active) {
+          populateFromData(profileData.user, profileData.store);
+          dispatch(fetchVendorDashboard());
+        }
+      } catch (error) {
+        console.warn("Using redux fallback vendor state:", error);
+        if (active) populateFromData(vendorUser, vendorStore);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+
+    loadProfile();
+    return () => { active = false; };
+  }, [dispatch, populateFromData, vendorUser, vendorStore]);
+
+  const showToast = (type, text) => {
+    setToastMessage({ type, text });
+    setTimeout(() => setToastMessage({ type: "", text: "" }), 4000);
   };
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle Avatar Upload
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Show temporary preview
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview(previewUrl);
+
+    // Upload to server
+    const data = new FormData();
+    data.append("avatar", file);
+
+    setIsUploadingAvatar(true);
+    try {
+      const res = await vendorApi.uploadAvatar(data);
+      const newAvatarUrl = res?.data?.avatar?.url || res?.avatar?.url;
+      if (newAvatarUrl) {
+        setAvatarPreview(getImageUrl(newAvatarUrl));
+        dispatch(updateUser({ avatar: res.data?.avatar || { url: newAvatarUrl } }));
+      }
+      dispatch(fetchVendorDashboard());
+      showToast("success", "Profile avatar updated successfully!");
+    } catch (err) {
+      console.error("Avatar upload error:", err);
+      showToast("error", err.response?.data?.message || "Failed to upload avatar image.");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  // Handle Cover Banner Upload
+  const handleCoverChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const previewUrl = URL.createObjectURL(file);
+    setBannerPreview(previewUrl);
+
+    const data = new FormData();
+    data.append("banner", file);
+    data.append("image", file);
+
+    try {
+      const res = await storeApi.updateStoreBanner(data);
+      const newBannerUrl = res?.data?.url || res?.url;
+      if (newBannerUrl) {
+        setBannerPreview(getImageUrl(newBannerUrl));
+      }
+      dispatch(fetchVendorDashboard());
+      showToast("success", "Storefront cover banner updated successfully!");
+    } catch (err) {
+      console.error("Cover banner upload error:", err);
+      showToast("error", err?.response?.data?.message || err?.message || "Failed to upload cover banner.");
+    }
+  };
+
+  // Submit Profile & Store Settings
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSaving(true);
 
-    setIsSaved(true);
+    try {
+      const payload = {
+        name: formData.fullName.trim(),
+        phone: formData.phone.trim(),
+        storeName: formData.storeName.trim(),
+        storeDescription: formData.storeDescription.trim(),
+        storePhone: formData.phone.trim(),
+        category: formData.category.trim(),
+        website: formData.website.trim(),
+        taxId: formData.taxId.trim(),
+        street: formData.address.trim(),
+        city: formData.city.trim(),
+        state: formData.state.trim(),
+        postalCode: formData.postalCode.trim(),
+        country: formData.country.trim(),
+      };
 
-    setTimeout(() => {
-      setIsSaved(false);
-    }, 3000);
-  };
-
-  const handleAvatarChange = (e) => {
-    const file = e.target.files?.[0];
-
-    if (file) {
-      setAvatar(URL.createObjectURL(file));
+      await dispatch(updateVendorProfile(payload)).unwrap();
+      dispatch(fetchVendorDashboard());
+      showToast("success", "Vendor profile and store details saved successfully!");
+    } catch (error) {
+      showToast("error", typeof error === "string" ? error : "Failed to update profile.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleCoverChange = (e) => {
-    const file = e.target.files?.[0];
+  // Change Password Handler
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.currentPassword || !formData.newPassword) {
+      showToast("error", "Please provide current and new password.");
+      return;
+    }
 
-    if (file) {
-      setCover(URL.createObjectURL(file));
+    if (formData.newPassword.length < 6) {
+      showToast("error", "New password must be at least 6 characters.");
+      return;
+    }
+
+    if (formData.newPassword !== formData.confirmPassword) {
+      showToast("error", "New password and confirmation do not match.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await vendorApi.changePassword({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+      });
+      setFormData((prev) => ({
+        ...prev,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      }));
+      showToast("success", "Account password updated successfully!");
+    } catch (error) {
+      showToast(
+        "error",
+        error.response?.data?.message || "Failed to update password. Verify current password."
+      );
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
-  const handleBack = () => {
-    navigate("/pages/vendor/dashboard");
-  };
+  if (isLoading && !formData.fullName) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-8 text-neutral-800">
+        <FaSpinner className="w-8 h-8 animate-spin text-neutral-900 mb-3" />
+        <p className="text-xs font-mono uppercase tracking-widest text-neutral-500">
+          Loading Registered Store Profile...
+        </p>
+      </div>
+    );
+  }
+
+  const activeStoreName = formData.storeName || vendorStore?.name || "Registered Atelier Store";
+  const activeRating = vendorStore?.ratingAverage || 5.0;
+  const isVerifiedStore = vendorStore?.isVerified ?? true;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#FAF9F6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8 font-sans selection:bg-[#111111] selection:text-[#FAF9F6]">
+      <div className="max-w-5xl mx-auto space-y-6">
 
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-
-          <div className="flex items-center gap-3">
-
-            <button
-              type="button"
-              onClick={handleBack}
-              className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
+        {/* TOP BANNER & PROFILE CARD */}
+        <div className="bg-white rounded-2xl border border-[#E5E3DF] shadow-sm overflow-hidden">
+          {/* Cover Photo */}
+          <div className="relative h-44 sm:h-56 bg-neutral-900 overflow-hidden">
+            {bannerPreview ? (
+              <img
+                src={getImageUrl(bannerPreview, DEFAULT_COVER_FALLBACK)}
+                alt="Cover"
+                className="w-full h-full object-cover opacity-90"
+                onError={() => setBannerPreview(null)}
+              />
+            ) : (
+              <div className="w-full h-full bg-linear-to-r from-neutral-950 via-neutral-900 to-neutral-800 flex items-center justify-center">
+                <span className="text-xs font-mono uppercase tracking-[0.3em] text-neutral-400">
+                  {activeStoreName} • BRAND ATELIER
+                </span>
+              </div>
+            )}
+            <label
+              htmlFor="cover-input"
+              className="absolute top-4 right-4 bg-neutral-900/70 hover:bg-neutral-900 backdrop-blur-md text-white text-xs font-mono uppercase tracking-wider px-3.5 py-2 rounded-lg cursor-pointer transition-all flex items-center gap-2 border border-white/20 shadow-sm"
             >
-              <FaArrowLeft />
-            </button>
+              <FaCamera className="text-xs" /> Edit Cover
+              <input
+                id="cover-input"
+                type="file"
+                accept="image/*"
+                onChange={handleCoverChange}
+                className="hidden"
+              />
+            </label>
+          </div>
 
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">
-                Profile
-              </h1>
+          {/* Profile Header Details */}
+          <div className="px-6 pb-6 pt-0 relative flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 -mt-16 sm:-mt-20">
+              {/* Avatar Upload */}
+              <div className="relative group">
+                <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-neutral-900 text-white flex items-center justify-center text-4xl font-semibold overflow-hidden border-4 border-white shadow-xl ring-1 ring-neutral-200">
+                  {avatarPreview ? (
+                    <img
+                      src={getImageUrl(avatarPreview)}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      onError={() => setAvatarPreview(null)}
+                    />
+                  ) : (
+                    <span className="font-serif uppercase text-3xl font-light">
+                      {formData.fullName?.charAt(0) || "V"}
+                    </span>
+                  )}
+                </div>
+                <label
+                  htmlFor="avatar-input"
+                  className="absolute bottom-1 right-1 bg-neutral-900 hover:bg-neutral-800 text-white p-2.5 rounded-xl shadow-lg cursor-pointer transition-all hover:scale-105 border-2 border-white"
+                  title="Upload Photo"
+                >
+                  {isUploadingAvatar ? (
+                    <FaSpinner className="text-xs animate-spin" />
+                  ) : (
+                    <FaCamera className="text-xs" />
+                  )}
+                  <input
+                    id="avatar-input"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                    disabled={isUploadingAvatar}
+                  />
+                </label>
+              </div>
 
-              <p className="text-sm text-slate-500">
-                Manage your vendor profile
-              </p>
+              {/* Title Info */}
+              <div className="text-center sm:text-left space-y-1 mb-1">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                  <h1 className="text-2xl font-serif font-normal text-neutral-900 uppercase tracking-tight relative top-4">
+                    {activeStoreName}
+                  </h1>
+                  {isVerifiedStore && (
+                    <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 text-[10px] font-mono uppercase tracking-wider font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200 relative top-4">
+                      <FaCheckCircle className="text-emerald-600 text-[10px]" /> Verified Merchant
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 text-[10px] font-mono uppercase tracking-wider font-semibold px-2.5 py-0.5 rounded-full border border-amber-200 relative top-4">
+                    <FaStar className="text-amber-500 text-[10px]" /> {activeRating} Rating
+                  </span>
+                </div>
+                <p className="text-xs font-mono text-neutral-500 relative top-4">
+                  {formData.fullName || "Partner Merchant"} •{" "}
+                  <span className="text-neutral-400">{formData.email}</span>
+                </p>
+              </div>
             </div>
 
+            {/* Notification Toast */}
+            {toastMessage.text && (
+              <div
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono uppercase tracking-wider shadow-sm transition-all ${
+                  toastMessage.type === "success"
+                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    : "bg-red-50 text-red-800 border border-red-200"
+                }`}
+              >
+                {toastMessage.type === "success" ? (
+                  <FaCheckCircle className="text-emerald-600 shrink-0" />
+                ) : (
+                  <FaExclamationCircle className="text-red-600 shrink-0" />
+                )}
+                <span>{toastMessage.text}</span>
+              </div>
+            )}
           </div>
 
+          {/* TABS NAVIGATION */}
+          <div className="flex border-t border-[#E5E3DF] px-6 gap-8 overflow-x-auto bg-[#FAF9F6]/50">
+            {[
+              { id: "general", label: "General & Contact", icon: FaUser },
+              { id: "business", label: "Registered Store & Address", icon: FaStore },
+              { id: "security", label: "Security & Credentials", icon: FaLock },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 py-3.5 text-xs font-mono uppercase tracking-wider border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+                    isActive
+                      ? "border-[#111111] text-[#111111] font-bold"
+                      : "border-transparent text-neutral-500 hover:text-neutral-900"
+                  }`}
+                >
+                  <Icon className={isActive ? "text-[#111111]" : "text-neutral-400"} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </header>
 
-      {/* Content */}
-      <main className="max-w-7xl mx-auto p-4 sm:p-6">
+        {/* TAB 1: GENERAL & CONTACT */}
+        {activeTab === "general" && (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E3DF] shadow-sm space-y-6">
+              <div>
+                <h3 className="text-base font-serif uppercase tracking-tight text-neutral-900 font-semibold">
+                  Personal & Operational Identity
+                </h3>
+                <p className="text-xs text-neutral-500 font-sans mt-0.5">
+                  Your registered vendor partner contact details fetched directly from database.
+                </p>
+              </div>
 
-        {isSaved && (
-          <div className="mb-6 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-green-700">
-            <FaCheckCircle />
-            <span>Changes updated successfully!</span>
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    Full Name *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-[#E5E3DF] pl-10 pr-4 py-3 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
+                      required
+                    />
+                    <FaUser className="absolute left-3.5 top-3.5 text-neutral-400 text-xs" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    Registered Email (Read-Only)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      readOnly
+                      className="w-full rounded-xl border border-[#E5E3DF] pl-10 pr-4 py-3 text-xs font-sans text-neutral-500 bg-neutral-100 cursor-not-allowed"
+                    />
+                    <FaEnvelope className="absolute left-3.5 top-3.5 text-neutral-400 text-xs" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    Phone Number
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="+1 (555) 000-0000"
+                      className="w-full rounded-xl border border-[#E5E3DF] pl-10 pr-4 py-3 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
+                    />
+                    <FaPhone className="absolute left-3.5 top-3.5 text-neutral-400 text-xs" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    Official Website
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="website"
+                      value={formData.website}
+                      onChange={handleChange}
+                      placeholder="https://yourstore.com"
+                      className="w-full rounded-xl border border-[#E5E3DF] pl-10 pr-4 py-3 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
+                    />
+                    <FaGlobe className="absolute left-3.5 top-3.5 text-neutral-400 text-xs" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 px-7 py-3 text-xs font-mono uppercase tracking-widest text-white shadow-sm active:scale-95 transition-all cursor-pointer disabled:opacity-60"
+              >
+                {isSaving ? <FaSpinner className="animate-spin text-xs" /> : <FaSave className="text-xs" />}
+                <span>Save General Profile</span>
+              </button>
+            </div>
+          </form>
         )}
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6"
-        >
+        {/* TAB 2: STORE & ADDRESS */}
+        {activeTab === "business" && (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E3DF] shadow-sm space-y-6">
+              <div>
+                <h3 className="text-base font-serif uppercase tracking-tight text-neutral-900 font-semibold">
+                  Registered Store Information
+                </h3>
+                <p className="text-xs text-neutral-500 font-sans mt-0.5">
+                  Public storefront credentials, commercial category, and operating address.
+                </p>
+              </div>
 
-          {/* Cover */}
-          <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-
-            <div
-              className="h-40 bg-slate-200 relative"
-              style={{
-                backgroundImage: cover
-                  ? `url(${cover})`
-                  : undefined,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            >
-
-              {!cover && (
-                <div className="w-full h-full flex items-center justify-center text-slate-400">
-                  Cover Image
-                </div>
-              )}
-
-              <label className="absolute right-4 bottom-4 cursor-pointer">
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleCoverChange}
-                />
-
-                <span className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow text-sm font-medium">
-                  <FaCamera />
-                  Change Cover
-                </span>
-
-              </label>
-
-            </div>
-
-            {/* Profile */}
-            <div className="px-6 pb-6">
-
-              <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12">
-
-                <div className="relative">
-
-                  <div className="w-24 h-24 rounded-full border-4 border-white bg-slate-200 overflow-hidden">
-
-                    {avatar ? (
-                      <img
-                        src={avatar}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-400">
-                        <FaUser className="text-3xl" />
-                      </div>
-                    )}
-
-                  </div>
-
-                  <label className="absolute bottom-0 right-0 cursor-pointer">
-
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleAvatarChange}
-                    />
-
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-teal-600 text-white border-2 border-white">
-                      <FaCamera className="text-xs" />
-                    </span>
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    Storefront Trade Name *
                   </label>
-
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="storeName"
+                      value={formData.storeName}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-[#E5E3DF] pl-10 pr-4 py-3 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
+                      required
+                    />
+                    <FaBuilding className="absolute left-3.5 top-3.5 text-neutral-400 text-xs" />
+                  </div>
                 </div>
 
-                <div className="pb-1">
-
-                  <h2 className="text-xl font-bold text-slate-900">
-                    {formData.fullName}
-                  </h2>
-
-                  <p className="text-sm text-slate-500">
-                    Vendor
-                  </p>
-
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    Primary Product Category
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      placeholder="e.g. Ergonomics, Audio, Fashion"
+                      className="w-full rounded-xl border border-[#E5E3DF] pl-10 pr-4 py-3 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
+                    />
+                    <FaTag className="absolute left-3.5 top-3.5 text-neutral-400 text-xs" />
+                  </div>
                 </div>
 
-              </div>
-
-            </div>
-
-          </section>
-
-          {/* Personal Information */}
-          <section className="bg-white rounded-xl border border-slate-200 p-6">
-
-            <div className="flex items-center gap-3 mb-6">
-
-              <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600">
-                <FaUser />
-              </div>
-
-              <div>
-                <h2 className="font-bold text-slate-900">
-                  Personal Information
-                </h2>
-
-                <p className="text-sm text-slate-500">
-                  Update your personal details
-                </p>
-              </div>
-
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Full Name
-                </label>
-
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-teal-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Email
-                </label>
-
-                <div className="relative">
-
-                  <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    Store Bio & Narrative
+                  </label>
+                  <textarea
+                    name="storeDescription"
+                    rows={3}
+                    value={formData.storeDescription}
                     onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-teal-500"
+                    placeholder="Describe your atelier's design ethos, craftsmanship, and products..."
+                    className="w-full rounded-xl border border-[#E5E3DF] p-3.5 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
                   />
-
                 </div>
 
-              </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    Tax ID / Business Registration (GSTIN / EIN)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="taxId"
+                      value={formData.taxId}
+                      onChange={handleChange}
+                      placeholder="e.g. GSTIN29ABCDE1234F / EIN-12345678"
+                      className="w-full rounded-xl border border-[#E5E3DF] pl-10 pr-4 py-3 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
+                    />
+                    <FaReceipt className="absolute left-3.5 top-3.5 text-neutral-400 text-xs" />
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Phone
-                </label>
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    Registered Street Address
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      placeholder="e.g. 742 Evergreen Terrace, Suite 100"
+                      className="w-full rounded-xl border border-[#E5E3DF] pl-10 pr-4 py-3 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
+                    />
+                    <FaMapMarkerAlt className="absolute left-3.5 top-3.5 text-neutral-400 text-xs" />
+                  </div>
+                </div>
 
-                <div className="relative">
-
-                  <FaPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    City
+                  </label>
                   <input
                     type="text"
-                    name="phone"
-                    value={formData.phone}
+                    name="city"
+                    value={formData.city}
                     onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-teal-500"
+                    placeholder="City"
+                    className="w-full rounded-xl border border-[#E5E3DF] px-4 py-3 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
                   />
-
                 </div>
 
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    State & Postal Code
+                  </label>
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      name="state"
+                      value={formData.state}
+                      onChange={handleChange}
+                      placeholder="State / Province"
+                      className="w-1/2 rounded-xl border border-[#E5E3DF] px-4 py-3 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
+                    />
+                    <input
+                      type="text"
+                      name="postalCode"
+                      value={formData.postalCode}
+                      onChange={handleChange}
+                      placeholder="Postal Code"
+                      className="w-1/2 rounded-xl border border-[#E5E3DF] px-4 py-3 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 px-7 py-3 text-xs font-mono uppercase tracking-widest text-white shadow-sm active:scale-95 transition-all cursor-pointer disabled:opacity-60"
+              >
+                {isSaving ? <FaSpinner className="animate-spin text-xs" /> : <FaSave className="text-xs" />}
+                <span>Save Storefront Details</span>
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* TAB 3: SECURITY */}
+        {activeTab === "security" && (
+          <form onSubmit={handlePasswordSubmit} className="space-y-6">
+            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E3DF] shadow-sm space-y-6">
+              <div>
+                <h3 className="text-base font-serif uppercase tracking-tight text-neutral-900 font-semibold">
+                  Account Password & Authentication
+                </h3>
+                <p className="text-xs text-neutral-500 font-sans mt-0.5">
+                  Update your account access password and secure your vendor dashboard session.
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Website
-                </label>
-
-                <div className="relative">
-
-                  <FaGlobe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-
-                  <input
-                    type="text"
-                    name="website"
-                    value={formData.website}
-                    onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-teal-500"
-                  />
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    Current Password *
+                  </label>
+                  <div className="relative max-w-md">
+                    <input
+                      type="password"
+                      name="currentPassword"
+                      value={formData.currentPassword}
+                      onChange={handleChange}
+                      placeholder="••••••••"
+                      className="w-full rounded-xl border border-[#E5E3DF] pl-10 pr-4 py-3 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
+                      required
+                    />
+                    <FaLock className="absolute left-3.5 top-3.5 text-neutral-400 text-xs" />
+                  </div>
                 </div>
 
-              </div>
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    New Password *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="password"
+                      name="newPassword"
+                      value={formData.newPassword}
+                      onChange={handleChange}
+                      placeholder="••••••••"
+                      className="w-full rounded-xl border border-[#E5E3DF] pl-10 pr-4 py-3 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
+                      required
+                    />
+                    <FaShieldAlt className="absolute left-3.5 top-3.5 text-neutral-400 text-xs" />
+                  </div>
+                </div>
 
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-600 mb-2">
+                    Confirm New Password *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="••••••••"
+                      className="w-full rounded-xl border border-[#E5E3DF] pl-10 pr-4 py-3 text-xs font-sans text-neutral-900 bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-neutral-900 transition-all"
+                      required
+                    />
+                    <FaShieldAlt className="absolute left-3.5 top-3.5 text-neutral-400 text-xs" />
+                  </div>
+                </div>
+              </div>
             </div>
 
-          </section>
-
-          {/* Store Information */}
-          <section className="bg-white rounded-xl border border-slate-200 p-6">
-
-            <div className="flex items-center gap-3 mb-6">
-
-              <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600">
-                <FaStore />
-              </div>
-
-              <div>
-                <h2 className="font-bold text-slate-900">
-                  Store Information
-                </h2>
-
-                <p className="text-sm text-slate-500">
-                  Manage your store details
-                </p>
-              </div>
-
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={isChangingPassword}
+                className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 px-7 py-3 text-xs font-mono uppercase tracking-widest text-white shadow-sm active:scale-95 transition-all cursor-pointer disabled:opacity-60"
+              >
+                {isChangingPassword ? <FaSpinner className="animate-spin text-xs" /> : <FaLock className="text-xs" />}
+                <span>Update Account Password</span>
+              </button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Store Name
-                </label>
-
-                <input
-                  type="text"
-                  name="storeName"
-                  value={formData.storeName}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-teal-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Category
-                </label>
-
-                <input
-                  type="text"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-teal-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Tax ID
-                </label>
-
-                <input
-                  type="text"
-                  name="taxId"
-                  value={formData.taxId}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-teal-500"
-                />
-              </div>
-
-            </div>
-
-          </section>
-
-          {/* Address */}
-          <section className="bg-white rounded-xl border border-slate-200 p-6">
-
-            <div className="flex items-center gap-3 mb-6">
-
-              <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600">
-                <FaMapMarkerAlt />
-              </div>
-
-              <div>
-                <h2 className="font-bold text-slate-900">
-                  Address
-                </h2>
-
-                <p className="text-sm text-slate-500">
-                  Store address information
-                </p>
-              </div>
-
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-              <div className="md:col-span-2">
-
-                <label className="block text-sm font-medium mb-2">
-                  Address
-                </label>
-
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-teal-500"
-                />
-
-              </div>
-
-              <div>
-
-                <label className="block text-sm font-medium mb-2">
-                  City
-                </label>
-
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-teal-500"
-                />
-
-              </div>
-
-              <div>
-
-                <label className="block text-sm font-medium mb-2">
-                  State
-                </label>
-
-                <input
-                  type="text"
-                  name="state"
-                  value={formData.state}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-teal-500"
-                />
-
-              </div>
-
-              <div>
-
-                <label className="block text-sm font-medium mb-2">
-                  Postal Code
-                </label>
-
-                <input
-                  type="text"
-                  name="postalCode"
-                  value={formData.postalCode}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-teal-500"
-                />
-
-              </div>
-
-            </div>
-
-          </section>
-
-          {/* Password */}
-          <section className="bg-white rounded-xl border border-slate-200 p-6">
-
-            <div className="flex items-center gap-3 mb-6">
-
-              <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600">
-                <FaLock />
-              </div>
-
-              <div>
-                <h2 className="font-bold text-slate-900">
-                  Password
-                </h2>
-
-                <p className="text-sm text-slate-500">
-                  Change your account password
-                </p>
-              </div>
-
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-              <div>
-
-                <label className="block text-sm font-medium mb-2">
-                  Current Password
-                </label>
-
-                <input
-                  type="password"
-                  name="currentPassword"
-                  value={formData.currentPassword}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-teal-500"
-                />
-
-              </div>
-
-              <div>
-
-                <label className="block text-sm font-medium mb-2">
-                  New Password
-                </label>
-
-                <input
-                  type="password"
-                  name="newPassword"
-                  value={formData.newPassword}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-teal-500"
-                />
-
-              </div>
-
-            </div>
-
-          </section>
-
-          {/* Save */}
-          <div className="flex justify-end">
-
-            <button
-              type="submit"
-              className="flex items-center gap-2 px-6 py-3 rounded-lg bg-teal-600 text-white font-semibold hover:bg-teal-700 transition"
-            >
-              <FaSave />
-              Save Changes
-            </button>
-
-          </div>
-
-        </form>
-
-      </main>
-
+          </form>
+        )}
+      </div>
     </div>
   );
-};
-
-export default Profile;
+}

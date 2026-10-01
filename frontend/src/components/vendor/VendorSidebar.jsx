@@ -21,10 +21,10 @@ import {
 
 const VendorSidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
-  const { user, store } = useSelector((state) => state.vendor || {});
+  const { user, store, metrics } = useSelector((state) => state.vendor || {});
   const { user: authUser } = useSelector((state) => state.auth || {});
 
-  const storeName = store?.name || 'Atelier Store';
+  const storeName = store?.name || 'OmniKart Merchant Store';
   const vendorName = user?.name || authUser?.name || 'Vendor Partner';
 
   const isActive = (path) => {
@@ -41,35 +41,72 @@ const VendorSidebar = ({ isOpen, onClose }) => {
         : 'text-slate-300 hover:bg-slate-800 hover:text-white'
     }`;
 
+  // Navigation structure with real-time dynamic badges connected to MongoDB data
   const navGroups = [
     {
       group: 'Operations',
       links: [
         { label: 'Overview', to: '/vendor/dashboard', icon: LayoutDashboard },
-        { label: 'Orders', to: '/vendor/orders', icon: ShoppingBag },
+        {
+          label: 'Orders',
+          to: '/vendor/orders',
+          icon: ShoppingBag,
+          badge: metrics?.totalOrders !== undefined && metrics?.totalOrders !== null ? metrics.totalOrders : null,
+          badgeColor: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+        },
       ]
     },
     {
       group: 'Catalog & Stock',
       links: [
-        { label: 'All Products', to: '/vendor/products', icon: Package },
+        {
+          label: 'All Products',
+          to: '/vendor/products',
+          icon: Package,
+          badge: metrics?.totalProducts !== undefined && metrics?.totalProducts !== null ? metrics.totalProducts : null,
+          badgeColor: 'bg-slate-800 text-slate-300 border border-slate-700'
+        },
         { label: 'Add Product', to: '/vendor/products/create', icon: PlusCircle },
-        { label: 'Inventory Control', to: '/vendor/inventory', icon: Boxes },
+        {
+          label: 'Inventory Control',
+          to: '/vendor/inventory',
+          icon: Boxes,
+          badge: metrics?.lowStockCount > 0 ? `${metrics.lowStockCount} Low` : null,
+          badgeColor: 'bg-amber-500/20 text-amber-400 border border-amber-500/30 font-semibold'
+        },
       ]
     },
     {
       group: 'Customers & Growth',
       links: [
-        { label: 'Customers', to: '/vendor/customers', icon: Users },
+        {
+          label: 'Customers',
+          to: '/vendor/customers',
+          icon: Users,
+          badge: metrics?.totalCustomers !== undefined && metrics?.totalCustomers !== null ? metrics.totalCustomers : null,
+          badgeColor: 'bg-slate-800 text-slate-300 border border-slate-700'
+        },
         { label: 'Coupons & Deals', to: '/vendor/coupons', icon: Tag },
-        { label: 'Reviews & Feedback', to: '/vendor/reviews', icon: Star },
+        {
+          label: 'Reviews & Feedback',
+          to: '/vendor/reviews',
+          icon: Star,
+          badge: metrics?.totalReviews !== undefined && metrics?.totalReviews !== null ? metrics.totalReviews : null,
+          badgeColor: 'bg-slate-800 text-slate-300 border border-slate-700'
+        },
         { label: 'Analytics & Reports', to: '/vendor/analytics', icon: BarChart3 },
       ]
     },
     {
       group: 'Communications',
       links: [
-        { label: 'Notifications', to: '/vendor/notifications', icon: Bell },
+        {
+          label: 'Notifications',
+          to: '/vendor/notifications',
+          icon: Bell,
+          badge: metrics?.unreadNotifications > 0 ? metrics.unreadNotifications : null,
+          badgeColor: 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+        },
       ]
     },
     {
@@ -141,7 +178,16 @@ const VendorSidebar = ({ isOpen, onClose }) => {
                         className={linkClass(link.to)}
                       >
                         <Icon size={16} className="shrink-0" />
-                        <span className="truncate">{link.label}</span>
+                        <span className="truncate flex-1">{link.label}</span>
+                        {link.badge !== null && link.badge !== undefined && (
+                          <span
+                            className={`ml-auto px-2 py-0.5 text-[10px] font-mono leading-none rounded-full shrink-0 ${
+                              link.badgeColor || 'bg-slate-800 text-slate-300 border border-slate-700'
+                            }`}
+                          >
+                            {link.badge}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}

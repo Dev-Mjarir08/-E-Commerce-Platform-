@@ -16,6 +16,8 @@ import uploadRouter from "./upload.route.js";
 import notificationRouter from "./notification.route.js";
 import paymentRouter from "./payment.route.js";
 import reviewRouter from "./review.route.js";
+import bannerRouter from "./banner.route.js";
+import brandRouter from "./brand.route.js";
 
 const router = Router();
 
@@ -38,5 +40,9 @@ router.use('/api/customer', customerRouter);
 router.use('/api/payment', paymentRouter);
 router.use('/api/payments', paymentRouter);
 router.use("/api/reviews", reviewRouter);
+router.use("/api/banners", bannerRouter);
+router.use("/api/admin/banners", bannerRouter);
+router.use("/api/brands", brandRouter);
+router.use("/api/admin/brands", brandRouter);
 
 export default router;

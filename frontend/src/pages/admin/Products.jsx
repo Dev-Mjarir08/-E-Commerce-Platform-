@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import {
@@ -34,7 +34,7 @@ import {
   updateProduct as updateProductRedux,
   deleteProduct as deleteProductRedux,
 } from "../../redux/slices/productSlice";
-import { categories } from "../../data/categories";
+import categoryService from "../../services/categoryService";
 import adminApi from "../../services/adminApi";
 import { useConfirm } from "../../context/ModalContext";
 
@@ -62,7 +62,7 @@ const Products = () => {
 
   // State
   const [productList, setProductList] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiNotice, setApiNotice] = useState(null); // { type: 'success' | 'error', text: '' }
 
@@ -71,11 +71,32 @@ const Products = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState(null);
-  const [editingProduct, setEditingProduct] = useState(null);
   const [activeFormTab, setActiveFormTab] = useState("general");
 
-  // Bulk 50+ Products Import & Seed States
-  const [isSeeding, setIsSeeding] = useState(false);
+  const [categories, setCategories] = useState([
+    { id: "clothing", slug: "clothing", name: "Clothing" },
+    { id: "shoes", slug: "shoes", name: "Shoes" },
+    { id: "accessories", slug: "accessories", name: "Accessories" },
+    { id: "outerwear", slug: "outerwear", name: "Outerwear" },
+    { id: "bags", slug: "bags", name: "Bags" },
+    { id: "jewelry", slug: "jewelry", name: "Jewelry" }
+  ]);
+
+  useEffect(() => {
+    categoryService.getCategories().then((res) => {
+      const list = Array.isArray(res) ? res : (res?.data || res?.categories || []);
+      if (Array.isArray(list) && list.length > 0) {
+        setCategories(list.map((c) => ({
+          ...c,
+          id: c._id || c.id || c.slug,
+          slug: c.slug || c.id,
+          name: c.name
+        })));
+      }
+    }).catch(() => {});
+  }, []);
+
+  // Bulk Products Import States
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [bulkJsonInput, setBulkJsonInput] = useState("");
   const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
@@ -112,14 +133,14 @@ const Products = () => {
   };
 
   const [formData, setFormData] = useState(initialFormState);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [newTagInput, setNewTagInput] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
   const [selectedImageFiles, setSelectedImageFiles] = useState([]); // Raw files for multer
   const [formErrors, setFormErrors] = useState({});
 
   // Fetch products from backend API (requests up to 100 items for catalog)
-  const fetchProducts = async () => {
-    setIsLoading(true);
+  const fetchProducts = useCallback(async () => {
     try {
       const res = await adminApi.getProducts({ limit: 100 });
       const items = Array.isArray(res?.data)
@@ -140,17 +161,26 @@ const Products = () => {
     } catch (err) {
       console.warn("Backend products fetch notice:", err.message);
       // Fallback to local Redux items if server is offline
-      if (reduxProducts.length > 0 && productList.length === 0) {
+      if (reduxProducts.length > 0) {
         setProductList(reduxProducts);
       }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dispatch, reduxProducts]);
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    let ignore = false;
+    async function load() {
+      if (!ignore) {
+        await fetchProducts();
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, [fetchProducts]);
 
   // Filtered Products
   const filteredProducts = useMemo(() => {
@@ -508,47 +538,6 @@ const Products = () => {
     });
   };
 
-  // 1-Click Seed 50+ Products into MongoDB
-  const handleSeedFiftyProducts = async () => {
-    const ok = await confirm({
-      title: "Seed Curated Database Catalog",
-      message:
-        "This will seed/upsert 50+ curated luxury products with high-resolution imagery into your MongoDB database. Continue?",
-      confirmText: "Seed Catalog",
-      cancelText: "Cancel",
-      type: "database",
-    });
-    if (!ok) return;
-    setIsSeeding(true);
-    setApiNotice(null);
-    try {
-      const res = await adminApi.seedFiftyProducts();
-      const count =
-        res?.count || (Array.isArray(res?.data) ? res.data.length : null) || 54;
-      const msg =
-        res?.message ||
-        res?.data?.message ||
-        `Successfully seeded ${count} products into MongoDB database!`;
-      setApiNotice({
-        type: "success",
-        text: msg,
-      });
-      await fetchProducts();
-    } catch (err) {
-      console.error("Seed 50 error:", err);
-      setApiNotice({
-        type: "error",
-        text:
-          err?.response?.data?.message ||
-          err?.message ||
-          "Failed to seed 50+ products.",
-      });
-    } finally {
-      setIsSeeding(false);
-      setTimeout(() => setApiNotice(null), 6000);
-    }
-  };
-
   // Submit Bulk JSON Import
   const handleBulkSubmit = async () => {
     if (!bulkJsonInput.trim()) {
@@ -562,7 +551,7 @@ const Products = () => {
     let parsed;
     try {
       parsed = JSON.parse(bulkJsonInput);
-    } catch (e) {
+    } catch {
       modalAlert({
         title: "Invalid JSON Format",
         message: "Please verify valid JSON syntax before proceeding.",
@@ -643,7 +632,7 @@ const Products = () => {
           type: "info",
           text: `Loaded file "${file.name}" with ${count} product(s).`,
         });
-      } catch (err) {
+      } catch {
         modalAlert({
           title: "File Upload Error",
           message: "Uploaded file is not valid JSON syntax.",
@@ -756,11 +745,15 @@ const Products = () => {
       return;
     }
 
-    const confirmPrompt = window.prompt(
-      `DANGER: This will permanently delete ALL ${productList.length} products in the database and clean up images.\n\nTo confirm, type "DELETE" below:`,
-    );
+    const confirmed = await confirm({
+      title: "Permanent Catalog Deletion",
+      message: `DANGER: This will permanently delete ALL ${productList.length} products in the database and clean up images. Are you absolutely certain you want to proceed?`,
+      confirmText: "Delete All Products",
+      cancelText: "Cancel",
+      type: "danger"
+    });
 
-    if (confirmPrompt !== "DELETE") {
+    if (!confirmed) {
       return;
     }
 
@@ -868,20 +861,19 @@ const Products = () => {
         data.append("images", file);
       });
 
-      let res;
       // Only call update if editingProduct has a valid MongoDB _id
       const hasMongoId =
         editingProduct &&
         editingProduct._id &&
         String(editingProduct._id).length === 24;
       if (hasMongoId) {
-        res = await adminApi.updateProduct(editingProduct._id, data);
+        await adminApi.updateProduct(editingProduct._id, data);
         setApiNotice({
           type: "success",
           text: "Product updated successfully in MongoDB!",
         });
       } else {
-        res = await adminApi.createProduct(data);
+        await adminApi.createProduct(data);
         setApiNotice({
           type: "success",
           text: "Product created and media uploaded successfully!",
@@ -998,18 +990,6 @@ const Products = () => {
             <ExternalLink size={14} />
             <span>Full Page Add</span>
           </Link>
-
-          {/* 1-Click Seed 50+ Luxury Products into MongoDB */}
-          <button
-            type="button"
-            onClick={handleSeedFiftyProducts}
-            disabled={isSeeding || isLoading}
-            title="Populate/Sync 50+ curated luxury products directly into MongoDB"
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg text-xs font-bold shadow-sm transition-all duration-150 disabled:opacity-60"
-          >
-            <Sparkles size={14} className={isSeeding ? "animate-spin" : ""} />
-            <span>{isSeeding ? "Seeding 50+..." : "Seed 50+ Products"}</span>
-          </button>
 
           {/* Bulk Import JSON (50+ products) */}
           <button

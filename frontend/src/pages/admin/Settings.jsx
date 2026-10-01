@@ -32,7 +32,6 @@ const Settings = () => {
   });
 
   const fetchAdmins = async () => {
-    setLoadingAdmins(true);
     try {
       const res = await adminApi.getAllAdmins();
       if (res?.data) {
@@ -46,7 +45,18 @@ const Settings = () => {
   };
 
   useEffect(() => {
-    fetchAdmins();
+    let active = true;
+    adminApi.getAllAdmins()
+      .then((res) => {
+        if (active && res?.data) setAdmins(res.data);
+      })
+      .catch((err) => {
+        console.warn('Failed to load admin list:', err.message);
+      })
+      .finally(() => {
+        if (active) setLoadingAdmins(false);
+      });
+    return () => { active = false; };
   }, []);
 
   const handleCreateSubmit = async (e) => {

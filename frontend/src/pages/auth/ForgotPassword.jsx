@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Mail, ShieldCheck, AlertCircle, CheckCircle2, KeyRound } from 'lucide-react';
 import authApi from '../../services/authApi';
+import { useToast } from '../../context/ToastContext';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,10 +16,12 @@ const ForgotPassword = () => {
   const validate = () => {
     if (!email.trim()) {
       setFormError('Email address is required.');
+      showToast('Please enter your account email address.', 'warning');
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setFormError('Please enter a valid email address.');
+      showToast('Please enter a valid email address.', 'warning');
       return false;
     }
     setFormError('');
@@ -35,14 +39,17 @@ const ForgotPassword = () => {
     try {
       const res = await authApi.forgotPassword(email.trim());
       const payload = res.data || res;
+      const msg = payload.message || 'If an account exists with this email, a verification code has been dispatched.';
       setSuccessData({
-        message: payload.message || 'If an account exists with this email, a verification code has been dispatched.',
+        message: msg,
         devOtp: payload.devOtp || null,
         devToken: payload.devResetToken || null
       });
+      showToast(msg, 'success');
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.message || 'Unable to process request. Please try again.';
       setFormError(errorMsg);
+      showToast(errorMsg, 'error');
     } finally {
       setLoading(false);
     }
@@ -67,10 +74,10 @@ const ForgotPassword = () => {
 
           <Link to="/" className="text-center group">
             <h1 className="font-serif text-2xl sm:text-3xl tracking-[0.2em] uppercase text-[#111111] font-normal leading-none">
-              ATELIER
+              OMNIKART
             </h1>
             <span className="block text-[8px] font-mono tracking-[0.35em] text-[#8E877F] uppercase mt-1">
-              INDEPENDENT FASHION SAAS
+              MULTI-VENDOR MARKETPLACE
             </span>
           </Link>
 
@@ -100,7 +107,7 @@ const ForgotPassword = () => {
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 bg-[#FFFFFF]/15 backdrop-blur-md border border-white/20 px-3 py-1.5 text-[9px] font-mono uppercase tracking-[0.25em] text-[#F8F7F4]">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>ATELIER CIPHER RECOVERY</span>
+                <span>OMNIKART SECURITY RECOVERY</span>
               </div>
               <h2 className="font-serif text-4xl xl:text-5xl font-normal tracking-tight uppercase leading-tight text-[#FFFFFF]">
                 Protected & <br />
@@ -111,7 +118,7 @@ const ForgotPassword = () => {
             {/* Privileges Note */}
             <div className="bg-[#111111]/60 backdrop-blur-md border border-white/10 p-6 space-y-4 my-8">
               <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#D4CEC5] block">
-                ATELIER SECURITY PROTOCOL
+                OMNIKART SECURITY PROTOCOL
               </span>
               <p className="text-xs text-[#E5E3DF] leading-relaxed font-sans font-light">
                 Your credentials and personalized curation preferences are encrypted using SHA-256 luxury standard cipher security.
@@ -266,7 +273,7 @@ const ForgotPassword = () => {
 
       {/* Subtle Footer Note */}
       <footer className="border-t border-[#E5E3DF] py-4 px-4 text-center text-[10px] font-mono uppercase tracking-widest text-[#8E877F] bg-[#FAF9F6]">
-        SECURE 256-BIT ENCRYPTION • ATELIER GLOBAL CONCIERGE
+        SECURE 256-BIT ENCRYPTION • OMNIKART GLOBAL SUPPORT
       </footer>
     </div>
   );

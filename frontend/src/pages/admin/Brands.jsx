@@ -1,4 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import brandApi from "../../services/brandApi";
+import { useModal } from "../../context/ModalContext";
 import {
   Search,
   Plus,
@@ -108,6 +110,7 @@ const initialBrands = [
 ];
 
 const Brands = () => {
+  const { confirm: modalConfirm, alert: modalAlert } = useModal();
   const [brands, setBrands] = useState(initialBrands);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -115,6 +118,36 @@ const Brands = () => {
   const [selectedBrand, setSelectedBrand] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingBrand, setEditingBrand] = useState(null);
+
+  useEffect(() => {
+    let ignore = false;
+    async function load() {
+      try {
+        const res = await brandApi.getBrands();
+        const list = res?.data || res;
+        if (!ignore && Array.isArray(list) && list.length > 0) {
+          setBrands(list.map((b) => ({
+            ...b,
+            id: b._id || b.id,
+            name: b.name,
+            slug: b.slug,
+            category: b.category || "General",
+            products: b.productCount || b.products || 0,
+            status: b.isActive === false || b.status === "inactive" ? "inactive" : "active",
+            featured: Boolean(b.isFeatured ?? b.featured),
+            description: b.description || "",
+            logo: b.logo || b.name?.charAt(0)?.toUpperCase() || "B"
+          })));
+        }
+      } catch {
+        // Keep initial brands fallback
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const [form, setForm] = useState({
     name: "",
@@ -133,7 +166,7 @@ const Brands = () => {
       total: brands.length,
       active: brands.filter((brand) => brand.status === "active").length,
       featured: brands.filter((brand) => brand.featured).length,
-      products: brands.reduce((sum, brand) => sum + brand.products, 0),
+      products: brands.reduce((sum, brand) => sum + (Number(brand.products) || 0), 0),
     }),
     [brands]
   );
@@ -183,86 +216,114 @@ const Brands = () => {
     setShowForm(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const payload = {
+      name: form.name,
+      slug: form.name.toLowerCase().trim().replace(/\s+/g, "-"),
+      category: form.category,
+      description: form.description,
+      featured: form.featured,
+      isFeatured: form.featured,
+      logo: form.name.charAt(0).toUpperCase(),
+    };
+
     if (editingBrand) {
+      try {
+        await brandApi.updateBrand(editingBrand._id || editingBrand.id, payload);
+      } catch (err) {
+        console.warn("Brand update fallback:", err.message);
+      }
       setBrands((current) =>
         current.map((brand) =>
           brand.id === editingBrand.id
-            ? {
-                ...brand,
-                name: form.name,
-                slug: form.name
-                  .toLowerCase()
-                  .trim()
-                  .replace(/\s+/g, "-"),
-                category: form.category,
-                description: form.description,
-                featured: form.featured,
-              }
+            ? { ...brand, ...payload }
             : brand
         )
       );
+      modalAlert({
+        title: "Brand Updated",
+        message: `Brand "${form.name}" has been updated.`,
+        type: "success"
+      });
     } else {
+      let createdId = Date.now();
+      try {
+        const res = await brandApi.createBrand(payload);
+        if (res?.data?._id) createdId = res.data._id;
+      } catch (err) {
+        console.warn("Brand create fallback:", err.message);
+      }
       const newBrand = {
-        id: Date.now(),
-        name: form.name,
-        slug: form.name
-          .toLowerCase()
-          .trim()
-          .replace(/\s+/g, "-"),
-        category: form.category,
+        id: createdId,
+        _id: createdId,
+        ...payload,
         products: 0,
         status: "active",
-        featured: form.featured,
-        description: form.description,
-        logo: form.name.charAt(0).toUpperCase(),
       };
 
       setBrands((current) => [...current, newBrand]);
+      modalAlert({
+        title: "Brand Created",
+        message: `New brand "${form.name}" has been added to catalog.`,
+        type: "success"
+      });
     }
 
     setShowForm(false);
     setEditingBrand(null);
   };
 
-  const toggleStatus = (id) => {
+  const toggleStatus = async (id) => {
+    const brand = brands.find((b) => b.id === id);
+    const nextStatus = brand?.status === "active" ? "inactive" : "active";
+    try {
+      await brandApi.updateBrand(id, { status: nextStatus, isActive: nextStatus === "active" });
+    } catch {
+      // Ignore update error and proceed with local update
+    }
     setBrands((current) =>
-      current.map((brand) =>
-        brand.id === id
-          ? {
-              ...brand,
-              status: brand.status === "active" ? "inactive" : "active",
-            }
-          : brand
+      current.map((b) =>
+        b.id === id ? { ...b, status: nextStatus } : b
       )
     );
   };
 
-  const toggleFeatured = (id) => {
+  const toggleFeatured = async (id) => {
+    const brand = brands.find((b) => b.id === id);
+    const nextFeatured = !brand?.featured;
+    try {
+      await brandApi.updateBrand(id, { featured: nextFeatured, isFeatured: nextFeatured });
+    } catch {
+      // Ignore update error and proceed with local update
+    }
     setBrands((current) =>
-      current.map((brand) =>
-        brand.id === id
-          ? { ...brand, featured: !brand.featured }
-          : brand
+      current.map((b) =>
+        b.id === id ? { ...b, featured: nextFeatured } : b
       )
     );
   };
 
-  const deleteBrand = (id) => {
+  const deleteBrand = async (id) => {
     const brand = brands.find((item) => item.id === id);
-
     if (!brand) return;
 
-    if (
-      !window.confirm(
-        `Delete "${brand.name}"? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
+    const ok = await modalConfirm({
+      title: "Delete Brand",
+      message: `Are you sure you want to permanently delete brand "${brand.name}"? Products under this brand will lose their brand association.`,
+      type: "danger",
+      confirmText: "Delete Brand",
+      cancelText: "Cancel"
+    });
 
+    if (!ok) return;
+
+    try {
+      await brandApi.deleteBrand(id);
+    } catch {
+      // Ignore delete error and proceed with local delete
+    }
     setBrands((current) => current.filter((item) => item.id !== id));
   };
 

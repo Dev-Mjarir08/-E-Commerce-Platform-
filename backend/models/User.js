@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema(
       public_id: { type: String, default: null },
       url: { type: String, default: 'https://placehold.co/150' }
     },
+    coverImage: {
+      public_id: { type: String, default: null },
+      url: { type: String, default: null }
+    },
     isVerified: {
       type: Boolean,
       default: false

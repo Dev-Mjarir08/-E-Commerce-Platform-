@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { paymentApi } from '../../services/paymentApi';
 import {
   CreditCard,
   DollarSign,
@@ -236,6 +237,41 @@ const Payment = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
+  const fetchLiveTransactions = async () => {
+    setIsRefreshing(true);
+    try {
+      const res = await paymentApi.getTransactions({ limit: 50 });
+      const raw = res?.data?.transactions || res?.transactions || res?.data;
+      if (Array.isArray(raw) && raw.length > 0) {
+        setTransactions(raw);
+        showToast('Ledger refreshed from live MongoDB');
+      }
+    } catch {
+      showToast('Offline mode: Using cached transactions');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    let ignore = false;
+    async function load() {
+      try {
+        const res = await paymentApi.getTransactions({ limit: 50 });
+        const raw = res?.data?.transactions || res?.transactions || res?.data;
+        if (!ignore && Array.isArray(raw) && raw.length > 0) {
+          setTransactions(raw);
+        }
+      } catch {
+        // Keep initial transactions fallback if offline
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   // Gateway toggle states for Admin preview
   const [gatewayConfigs, setGatewayConfigs] = useState({
     stripe: { active: true, mode: 'Live Production', fee: '2.9% + ₹30' },
@@ -256,12 +292,11 @@ const Payment = () => {
     setTimeout(() => setCopiedId(''), 2000);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      showToast('Payment records and gateway telemetry refreshed');
-    }, 600);
+    await fetchLiveTransactions();
+    setIsRefreshing(false);
+    showToast('Payment records and gateway telemetry refreshed');
   };
 
   const toggleGateway = (key) => {
@@ -353,21 +388,19 @@ const Payment = () => {
   };
 
   // Filtered transactions
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((t) => {
-      const matchSearch =
-        t.id.toLowerCase().includes(search.toLowerCase()) ||
-        t.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
-        t.customer.name.toLowerCase().includes(search.toLowerCase()) ||
-        t.customer.email.toLowerCase().includes(search.toLowerCase()) ||
-        t.boutique.toLowerCase().includes(search.toLowerCase());
+  const filteredTransactions = transactions.filter((t) => {
+    const matchSearch =
+      (t.id || '').toLowerCase().includes(search.toLowerCase()) ||
+      (t.orderNumber || '').toLowerCase().includes(search.toLowerCase()) ||
+      (t.customer?.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (t.customer?.email || '').toLowerCase().includes(search.toLowerCase()) ||
+      (t.boutique || '').toLowerCase().includes(search.toLowerCase());
 
-      const matchStatus = statusFilter === 'all' || t.status === statusFilter;
-      const matchMethod = methodFilter === 'all' || t.method === methodFilter;
+    const matchStatus = statusFilter === 'all' || t.status === statusFilter;
+    const matchMethod = methodFilter === 'all' || t.method === methodFilter;
 
-      return matchSearch && matchStatus && matchMethod;
-    });
-  }, [transactions, search, statusFilter, methodFilter]);
+    return matchSearch && matchStatus && matchMethod;
+  });
 
   // Aggregate Metrics
   const metrics = useMemo(() => {

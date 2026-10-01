@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -27,7 +27,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const stores = useSelector((state) => state.stores?.items || []);
-  const coupons = useSelector((state) => state.coupons?.items || []);
   const reduxProducts = useSelector((state) => state.products?.items || []);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -52,8 +51,7 @@ const Dashboard = () => {
     recentVendors: []
   });
 
-  const fetchDashboardData = async () => {
-    setIsLoading(true);
+  const fetchDashboardData = useCallback(async () => {
     try {
       const statsRes = await adminApi.getDashboardStats();
       const statsData = statsRes?.data || statsRes;
@@ -124,13 +122,22 @@ const Dashboard = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dispatch, reduxProducts, stores.length]);
 
   useEffect(() => {
-    fetchDashboardData();
+    let ignore = false;
+    async function load() {
+      if (!ignore) {
+        await fetchDashboardData();
+      }
+    }
+    load();
     const interval = setInterval(fetchDashboardData, 15000);
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      ignore = true;
+      clearInterval(interval);
+    };
+  }, [fetchDashboardData]);
 
   return (
     <div className="space-y-6">
@@ -155,6 +162,16 @@ const Dashboard = () => {
               Updated: {lastUpdated}
             </span>
           )}
+
+          <Link
+            to="/"
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold border border-slate-200 shadow-xs transition-colors group"
+            title="Go to Customer Storefront / Page"
+          >
+            <ShoppingBag size={14} className="text-indigo-600 group-hover:scale-110 transition-transform" />
+            <span>Customer Page</span>
+            <ExternalLink size={12} className="text-slate-400 group-hover:text-slate-600 transition-colors hidden sm:inline" />
+          </Link>
 
           <button
             type="button"

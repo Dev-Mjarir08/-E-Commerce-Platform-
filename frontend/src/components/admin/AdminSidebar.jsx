@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
@@ -22,7 +22,10 @@ import {
   Tags,
   Truck,
   Bell,
+  ExternalLink,
+  FolderTree,
 } from "lucide-react";
+import adminApi from "../../services/adminApi";
 
 const AdminSidebar = ({
   isCollapsed,
@@ -30,14 +33,63 @@ const AdminSidebar = ({
   isMobileOpen,
   setIsMobileOpen,
 }) => {
-  const user = useSelector((state) => state.auth.user);
-  const totalProducts = useSelector((state) => state.products.items.length);
+  const user = useSelector((state) => state.auth?.user);
+  const totalProducts = useSelector((state) => state.products?.items?.length || 0);
+  const totalCategoriesRedux = useSelector((state) => state.categories?.items?.length || 0);
+  const totalStores = useSelector((state) => state.stores?.items?.length || 0);
+  const totalCoupons = useSelector((state) => state.coupons?.items?.length || 0);
+  const totalOrdersRedux = useSelector((state) => state.orders?.items?.length || 0);
+  const totalCustomersRedux = useSelector((state) => state.customers?.items?.length || 0);
 
-  const totalStores = useSelector((state) => state.stores.items.length);
-  const totalCoupons = useSelector((state) => state.coupons.items.length);
   const [productsOpen, setProductsOpen] = useState(false);
   const [vendorsOpen, setVendorsOpen] = useState(false);
-  const [ordersOpen, setOrdersOpen] = useState(false);
+
+  // Live real-time statistics fetched from MongoDB
+  const [liveStats, setLiveStats] = useState({
+    totalProducts: 0,
+    totalStores: 0,
+    totalOrders: 0,
+    totalCustomers: 0,
+    totalVendors: 0,
+    totalCoupons: 0,
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchLiveStats = async () => {
+      try {
+        const res = await adminApi.getDashboardStats();
+        const data = res?.data || res;
+        if (isMounted && data) {
+          setLiveStats({
+            totalProducts: Number(data.totalProducts ?? 0),
+            totalStores: Number(data.totalStores ?? 0),
+            totalOrders: Number(data.totalOrders ?? 0),
+            totalCustomers: Number(data.totalCustomers ?? 0),
+            totalVendors: Number(data.totalVendors ?? 0),
+            totalCoupons: Number(data.totalCoupons ?? 0),
+          });
+        }
+      } catch (err) {
+        console.warn("Admin sidebar live stats sync:", err);
+      }
+    };
+
+    fetchLiveStats();
+    const interval = setInterval(fetchLiveStats, 20000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Compute highest accurate count between Redux cache and MongoDB live query
+  const displayProducts = Math.max(liveStats.totalProducts, totalProducts);
+  const displayStores = Math.max(liveStats.totalStores, totalStores);
+  const displayOrders = Math.max(liveStats.totalOrders, totalOrdersRedux);
+  const displayCustomers = Math.max(liveStats.totalCustomers, totalCustomersRedux);
+  const displayVendors = liveStats.totalVendors;
+  const displayCoupons = Math.max(liveStats.totalCoupons, totalCoupons);
 
   const mainNavItems = [
     {
@@ -46,34 +98,39 @@ const AdminSidebar = ({
       icon: LayoutDashboard,
     },
     {
+      name: "Categories",
+      path: "/admin/categories",
+      icon: FolderTree,
+      badge: `${totalCategoriesRedux || 0}`,
+    },
+    {
       name: "Stores",
       path: "/admin/stores",
       icon: Store,
-      badge: `${totalStores}`,
+      badge: `${displayStores}`,
     },
     {
       name: "Coupons",
       path: "/admin/coupons",
       icon: TicketPercent,
-      badge: `${totalCoupons}`,
+      badge: `${displayCoupons}`,
     },
     {
       name: "Orders",
       path: "/admin/orders",
       icon: ShoppingBag,
-      badge: "5",
+      badge: `${displayOrders}`,
     },
     {
       name: "Payments",
       path: "/admin/payments",
       icon: CreditCard,
-      badge: "8",
     },
     {
       name: "Customers",
       path: "/admin/customers",
       icon: Users,
-      badge: "4",
+      badge: `${displayCustomers}`,
     },
     {
       name: "Analytics",
@@ -128,15 +185,15 @@ const AdminSidebar = ({
       <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="w-10 h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-sm">
-            M4
+            OK
           </div>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0">
               <span className="font-bold text-white tracking-wide text-sm truncate">
-                M4M PLATFORM
+                OMNIKART
               </span>
               <span className="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">
-                Admin Portal
+                Admin Suite
               </span>
             </div>
           )}
@@ -217,7 +274,7 @@ const AdminSidebar = ({
                 </span>
 
                 <span className="shrink-0 px-2 py-0.5 text-[10px] leading-3 font-bold rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                  {totalProducts}
+                  {displayProducts}
                 </span>
 
                 <ChevronDown
@@ -263,7 +320,7 @@ const AdminSidebar = ({
               </NavLink>
 
               <NavLink
-                to="/admin/products/categories"
+                to="/admin/categories"
                 onClick={() => setIsMobileOpen && setIsMobileOpen(false)}
                 className={({ isActive }) =>
                   `block px-3 py-2 rounded-lg text-xs transition-colors ${
@@ -310,6 +367,10 @@ const AdminSidebar = ({
               <>
                 <span className="truncate flex-1 text-left text-xs font-medium leading-4">
                   Vendors
+                </span>
+
+                <span className="shrink-0 px-2 py-0.5 text-[10px] leading-3 font-bold rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                  {displayVendors}
                 </span>
 
                 <ChevronDown
@@ -377,6 +438,23 @@ const AdminSidebar = ({
               </NavLink>
             );
           })}
+        {/* Go to Customer Page Link */}
+        <div className="pt-2 mt-2 border-t border-slate-850">
+          <NavLink
+            to="/"
+            onClick={() => setIsMobileOpen && setIsMobileOpen(false)}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-indigo-300 hover:text-white bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-800/40 transition-all shadow-xs group"
+            title={isCollapsed ? "Customer Page" : undefined}
+          >
+            <ShoppingBag size={18} className="text-indigo-400 group-hover:scale-110 transition-transform shrink-0" />
+            {!isCollapsed && (
+              <div className="flex items-center justify-between flex-1 min-w-0">
+                <span className="truncate">Customer Page</span>
+                <ExternalLink size={12} className="text-indigo-400 opacity-60 group-hover:opacity-100 shrink-0 ml-1" />
+              </div>
+            )}
+          </NavLink>
+        </div>
       </div>
 
       {/* Footer Info */}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -28,13 +28,10 @@ const ReviewDetails = () => {
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchReview = async () => {
+  const fetchReview = useCallback(async () => {
     try {
-      setLoading(true);
       setError("");
-
       const response = await adminApi.getAdminReviewById(id);
-
       setReview(response?.data?.data || null);
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to load review.");
@@ -42,10 +39,24 @@ const ReviewDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
-    fetchReview();
+    let active = true;
+    adminApi.getAdminReviewById(id)
+      .then((response) => {
+        if (active) setReview(response?.data?.data || null);
+      })
+      .catch((err) => {
+        if (active) {
+          setError(err?.response?.data?.message || "Failed to load review.");
+          setReview(null);
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
   }, [id]);
 
   const updateStatus = async (status) => {

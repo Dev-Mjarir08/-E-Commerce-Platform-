@@ -11,6 +11,11 @@ export const couponApi = {
     return api.get(`/coupons/${id}`);
   },
 
+  // POST /api/coupons/validate - Validate coupon code with subtotal
+  async validateCoupon({ code, subtotal = 0 } = {}) {
+    return api.post('/coupons/validate', { code, subtotal });
+  },
+
   // POST /api/coupons - Create coupon
   async createCoupon(couponData) {
     return api.post('/coupons', couponData);

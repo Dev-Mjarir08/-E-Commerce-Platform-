@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -15,7 +15,16 @@ import {
   Info
 } from 'lucide-react';
 import { addProduct } from '../../../redux/slices/productSlice';
-import { categories } from '../../../data/categories';
+import categoryService from '../../../services/categoryService';
+
+const DEFAULT_CATEGORIES = [
+  { id: 'outerwear', name: 'Outerwear' },
+  { id: 'tailoring', name: 'Tailoring' },
+  { id: 'knitwear', name: 'Knitwear' },
+  { id: 'footwear', name: 'Footwear' },
+  { id: 'leather-goods', name: 'Leather Goods' },
+  { id: 'accessories', name: 'Accessories' }
+];
 
 const slugify = (text) => {
   return (text || '')
@@ -33,15 +42,30 @@ const AddProduct = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const storeList = useSelector((state) => state.stores?.items || []);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
 
-  const [formData, setFormData] = useState({
+  useEffect(() => {
+    categoryService.getCategories()
+      .then((res) => {
+        const raw = res?.data?.data || res?.data || [];
+        if (Array.isArray(raw) && raw.length > 0) {
+          setCategories(raw.map((c) => ({
+            id: c._id || c.slug || c.id,
+            name: c.name
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const [formData, setFormData] = useState(() => ({
     title: '',
     slug: '',
     description: '',
     brand: '',
     sku: `SKU-${Math.floor(100000 + Math.random() * 900000)}`,
-    category: categories[0]?.id || 'outerwear',
-    categoryName: categories[0]?.name || 'Outerwear',
+    category: 'outerwear',
+    categoryName: 'Outerwear',
     store: storeList[0]?.name || 'Atelier Flagship Store',
     basePrice: '',
     discountPrice: '',
@@ -61,7 +85,7 @@ const AddProduct = () => {
     tags: ['luxury', 'new-arrival'],
     isFeatured: false,
     isActive: true
-  });
+  }));
 
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newTagInput, setNewTagInput] = useState('');

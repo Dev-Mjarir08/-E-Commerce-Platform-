@@ -13,9 +13,11 @@ import {
 } from "lucide-react";
 import { updateProduct } from "../../../redux/slices/productSlice";
 import adminApi from "../../../services/adminApi";
+import { useModal } from "../../../context/ModalContext";
 
 const Inventory = () => {
   const dispatch = useDispatch();
+  const { alert: modalAlert } = useModal();
   const products = useSelector((state) => state.products.items);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -83,7 +85,11 @@ const Inventory = () => {
       setEditingId(null);
     } catch (error) {
       console.error("Failed to update stock:", error);
-      alert(error?.response?.data?.message || "Failed to update stock");
+      modalAlert({
+        title: "Stock Update Failed",
+        message: error?.response?.data?.message || error.message || "Failed to update stock in database.",
+        type: "danger"
+      });
     }
   };
 

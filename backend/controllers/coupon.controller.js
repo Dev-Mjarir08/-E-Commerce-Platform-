@@ -228,3 +228,83 @@ export const deleteCoupon = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to delete coupon.', error: error.message });
   }
 };
+
+/**
+ * @desc    Validate and calculate coupon discount for checkout/cart
+ * @route   POST /api/coupons/validate
+ * @access  Public / OptionalAuth
+ */
+export const validateCoupon = async (req, res) => {
+  try {
+    const { code, subtotal = 0 } = req.body;
+    if (!code || !code.trim()) {
+      return res.status(400).json({ success: false, message: 'Please provide a coupon code.' });
+    }
+
+    const formattedCode = code.trim().toUpperCase();
+    const coupon = await Coupon.findOne({ code: formattedCode });
+    if (!coupon) {
+      return res.status(404).json({ success: false, message: `Coupon '${formattedCode}' is invalid.` });
+    }
+
+    if (!coupon.isActive) {
+      return res.status(400).json({ success: false, message: `Coupon '${formattedCode}' is no longer active.` });
+    }
+
+    const now = new Date();
+    if (coupon.startDate && now < new Date(coupon.startDate)) {
+      return res.status(400).json({ success: false, message: `Coupon '${formattedCode}' is not active yet.` });
+    }
+
+    const expiry = new Date(coupon.expiryDate);
+    expiry.setHours(23, 59, 59, 999);
+    if (now > expiry) {
+      return res.status(400).json({ success: false, message: `Coupon '${formattedCode}' has expired.` });
+    }
+
+    if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+      return res.status(400).json({ success: false, message: `Coupon '${formattedCode}' has reached its maximum usage limit.` });
+    }
+
+    const orderSubtotal = Number(subtotal) || 0;
+    if (coupon.minOrderAmount && orderSubtotal > 0 && orderSubtotal < coupon.minOrderAmount) {
+      return res.status(400).json({
+        success: false,
+        message: `Order subtotal must be at least ₹${coupon.minOrderAmount} to redeem '${formattedCode}'.`
+      });
+    }
+
+    let discountAmount = 0;
+    if (coupon.discountType === 'percentage') {
+      discountAmount = (orderSubtotal * coupon.discountValue) / 100;
+      if (coupon.maxDiscountAmount && discountAmount > coupon.maxDiscountAmount) {
+        discountAmount = coupon.maxDiscountAmount;
+      }
+    } else {
+      discountAmount = Math.min(coupon.discountValue, orderSubtotal || coupon.discountValue);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Coupon '${coupon.code}' applied successfully!`,
+      data: {
+        coupon: {
+          _id: coupon._id,
+          id: coupon._id,
+          code: coupon.code,
+          discountType: coupon.discountType,
+          discountValue: coupon.discountValue,
+          minOrderAmount: coupon.minOrderAmount,
+          maxDiscountAmount: coupon.maxDiscountAmount,
+          expiryDate: coupon.expiryDate,
+          isActive: coupon.isActive
+        },
+        discountAmount: Math.round(discountAmount * 100) / 100,
+        discountPercent: coupon.discountType === 'percentage' ? coupon.discountValue : 0
+      }
+    });
+  } catch (error) {
+    console.error('validateCoupon error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to validate coupon.', error: error.message });
+  }
+};

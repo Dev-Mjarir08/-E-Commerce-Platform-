@@ -72,12 +72,29 @@ export const getVendorProfile = async (req, res) => {
         images: p.images
       }));
 
+      // Additional real-time dynamic counts for sidebar badges
+      const [lowStockCount, productIdsList, unreadNotifications] = await Promise.all([
+        Product.countDocuments({ store: store._id, stock: { $lte: 8 } }),
+        Product.find({ store: store._id }).select('_id'),
+        user ? Notification.countDocuments({ recipient: user._id, isRead: false }) : 0
+      ]);
+
+      const storeProductIds = productIdsList.map(p => p._id);
+      const [totalReviews, uniqueCustomersCount] = await Promise.all([
+        storeProductIds.length > 0 ? Review.countDocuments({ product: { $in: storeProductIds } }) : 0,
+        orderIds.length > 0 ? Order.distinct('user', { _id: { $in: orderIds } }).then(c => c.length) : 0
+      ]);
+
       metrics = {
         totalSales,
         totalOrders,
         averageOrderValue: Math.round(averageOrderValue * 100) / 100,
         activeProducts,
-        totalProducts
+        totalProducts,
+        lowStockCount,
+        unreadNotifications,
+        totalCustomers: uniqueCustomersCount,
+        totalReviews
       };
     }
 
@@ -545,8 +562,9 @@ export const updateVendorOrderStatus = async (req, res) => {
     const { id } = req.params;
     const { status, trackingNumber } = req.body;
 
-    const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'];
-    if (!status || !validStatuses.includes(status)) {
+    const normalizedStatus = String(status || '').toLowerCase().trim();
+    const validStatuses = ['placed', 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'];
+    if (!normalizedStatus || !validStatuses.includes(normalizedStatus)) {
       return res.status(400).json({
         success: false,
         message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`

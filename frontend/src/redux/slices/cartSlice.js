@@ -22,7 +22,8 @@ const initialState = {
   isOpen: false,
   currency: 'INR',
   promoCode: null,
-  discountPercent: 0
+  discountPercent: 0,
+  appliedCoupon: null
 };
 
 const cartSlice = createSlice({
@@ -30,34 +31,42 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action) => {
-      const { product, size, color, quantity = 1 } = action.payload;
+      const { product, size, color, quantity = 1, openDrawer = true } = action.payload;
+      const prodId = product.id || product._id || product.slug;
+      const prodName = product.name || product.title || 'Curated Atelier Piece';
+      const prodPrice = Number(product.price ?? product.basePrice ?? product.discountPrice ?? 0);
       const selectedSize = size || (product.sizes && product.sizes[0]) || 'Standard';
       const selectedColor =
         (typeof color === 'string' ? color : color?.name) ||
         (product.colors && product.colors[0]?.name) ||
         'Classic';
       const selectedImage =
-        (color && color.image) || (product.images && product.images[0]) || product.image;
+        (color && color.image) ||
+        (product.images && (typeof product.images[0] === 'string' ? product.images[0] : product.images[0]?.url)) ||
+        product.image ||
+        '';
 
       const existingIndex = state.items.findIndex(
-        (item) => item.id === product.id && item.size === selectedSize && item.color === selectedColor
+        (item) => item.id === prodId && item.size === selectedSize && item.color === selectedColor
       );
 
       if (existingIndex > -1) {
         state.items[existingIndex].quantity += quantity;
       } else {
         state.items.push({
-          id: product.id,
-          name: product.name,
+          id: prodId,
+          name: prodName,
           subtitle: `${selectedColor} / ${selectedSize}`,
-          price: product.price,
+          price: prodPrice,
           image: selectedImage,
           size: selectedSize,
           color: selectedColor,
           quantity: quantity
         });
       }
-      state.isOpen = true;
+      if (openDrawer !== false && action.payload?.openDrawer !== false) {
+        state.isOpen = true;
+      }
       saveCartToStorage(state.items);
     },
     removeFromCart: (state, action) => {
@@ -97,27 +106,59 @@ const cartSlice = createSlice({
       state.isOpen = false;
     },
     applyPromo: (state, action) => {
-      const code = action.payload.trim().toUpperCase();
-      if (code === 'M4M10' || code === 'WELCOME10' || code === 'ATELIER10') {
-        state.promoCode = code;
-        state.discountPercent = 10;
-      } else if (code === 'PRIVILEGE20' || code === 'VIP20') {
-        state.promoCode = code;
-        state.discountPercent = 20;
-      } else {
+      if (!action.payload) {
         state.promoCode = null;
         state.discountPercent = 0;
+        state.appliedCoupon = null;
+        return;
       }
+      if (typeof action.payload === 'object') {
+        const c = action.payload.coupon || action.payload;
+        state.appliedCoupon = c;
+        state.promoCode = (c.code || '').trim().toUpperCase();
+        state.discountPercent = c.discountType === 'percentage' ? Number(c.discountValue || 0) : 0;
+        return;
+      }
+      const code = String(action.payload).trim().toUpperCase();
+      if (code === 'M4M10' || code === 'WELCOME10' || code === 'ATELIER10' || code === 'OMNIKART10' || code === 'OMNI10') {
+        state.promoCode = code;
+        state.discountPercent = 10;
+        state.appliedCoupon = { code, discountType: 'percentage', discountValue: 10 };
+      } else if (code === 'PRIVILEGE20' || code === 'VIP20' || code === 'OMNIKART20' || code === 'OMNI20') {
+        state.promoCode = code;
+        state.discountPercent = 20;
+        state.appliedCoupon = { code, discountType: 'percentage', discountValue: 20 };
+      } else {
+        state.promoCode = code;
+        state.discountPercent = 0;
+        state.appliedCoupon = { code, discountType: 'percentage', discountValue: 0 };
+      }
+    },
+    setAppliedCoupon: (state, action) => {
+      const coupon = action.payload?.coupon || action.payload;
+      if (!coupon) {
+        state.appliedCoupon = null;
+        state.promoCode = null;
+        state.discountPercent = 0;
+        return;
+      }
+      state.appliedCoupon = coupon;
+      state.promoCode = coupon.code ? coupon.code.toUpperCase() : null;
+      state.discountPercent = coupon.discountType === 'percentage' ? Number(coupon.discountValue || 0) : 0;
     },
     removePromo: (state) => {
       state.promoCode = null;
       state.discountPercent = 0;
+      state.appliedCoupon = null;
     },
     setCurrency: (state, action) => {
       state.currency = action.payload;
     },
     clearCart: (state) => {
       state.items = [];
+      state.appliedCoupon = null;
+      state.promoCode = null;
+      state.discountPercent = 0;
       saveCartToStorage([]);
     }
   }
@@ -131,6 +172,7 @@ export const {
   openCart,
   closeCart,
   applyPromo,
+  setAppliedCoupon,
   removePromo,
   setCurrency,
   clearCart

@@ -21,7 +21,24 @@ export const QuickViewModal = ({ product, isOpen, onClose, onShowToast }) => {
     setQuantity(1);
   }
 
-  const selectedImage = selectedImageOverride || (product?.images ? product.images[0] : '');
+  const getImgUrl = (img) => {
+    if (!img) return '';
+    if (typeof img === 'string') return img;
+    return img.url || '';
+  };
+
+  const imagesList = Array.isArray(product?.images) && product.images.length > 0
+    ? product.images.map(getImgUrl).filter(Boolean)
+    : [product?.image || 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=80'];
+
+  const prodId = product?.id || product?._id || product?.slug;
+  const prodName = product?.name || product?.title || 'Curated Atelier Piece';
+  const prodPrice = Number(product?.price ?? product?.basePrice ?? 0);
+  const prodOriginalPrice = product?.originalPrice ?? product?.compareAtPrice ?? null;
+  const prodStoreName = product?.storeName || product?.store?.name || product?.brand || 'Atelier Studio';
+  const prodStoreSlug = product?.storeSlug || product?.store?.slug || 'flagship';
+
+  const selectedImage = selectedImageOverride || imagesList[0];
   const selectedColor = selectedColorOverride !== null ? selectedColorOverride : (product?.colors ? product.colors[0] : null);
   const selectedSize = selectedSizeOverride || (product?.sizes ? product.sizes[0] : 'M');
 
@@ -30,14 +47,24 @@ export const QuickViewModal = ({ product, isOpen, onClose, onShowToast }) => {
   const handleAddToCart = () => {
     dispatch(
       addToCart({
-        product,
+        product: {
+          ...product,
+          id: prodId,
+          _id: prodId,
+          name: prodName,
+          title: prodName,
+          price: prodPrice,
+          basePrice: prodPrice,
+          images: imagesList,
+          image: imagesList[0]
+        },
         size: selectedSize,
         color: selectedColor?.name || 'Standard',
         quantity
       })
     );
     if (onShowToast) {
-      onShowToast(`Added ${quantity}x ${product.name} (${selectedSize}) to bag.`);
+      onShowToast(`Added ${quantity}x ${prodName} (${selectedSize}) to bag.`);
     }
     onClose();
   };
@@ -68,7 +95,7 @@ export const QuickViewModal = ({ product, isOpen, onClose, onShowToast }) => {
             <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#F2EFE9] mb-4">
               <img
                 src={selectedImage}
-                alt={product.name}
+                alt={prodName}
                 className="w-full h-full object-cover transition-opacity duration-300"
               />
               {product.badge && (
@@ -78,9 +105,9 @@ export const QuickViewModal = ({ product, isOpen, onClose, onShowToast }) => {
               )}
             </div>
 
-            {product.images && product.images.length > 1 && (
+            {imagesList.length > 1 && (
               <div className="flex gap-2 justify-center">
-                {product.images.map((img, idx) => (
+                {imagesList.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImageOverride(img)}
@@ -102,35 +129,35 @@ export const QuickViewModal = ({ product, isOpen, onClose, onShowToast }) => {
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <Link
-                  to={`/store/${product.storeSlug}`}
+                  to={`/store/${prodStoreSlug}`}
                   onClick={onClose}
                   className="text-[10px] font-mono uppercase tracking-[0.25em] text-m4m-accent hover:text-[#111111] underline"
                 >
-                  {product.storeName}
+                  {prodStoreName}
                 </Link>
                 <span className="text-[#D4CEC5]">•</span>
                 <div className="flex items-center text-[#111111] text-xs font-mono">
                   <Star className="w-3.5 h-3.5 fill-[#111111] text-[#111111] mr-1" />
-                  <span>{product.rating}</span>
-                  <span className="text-[#888888] ml-1">({product.reviewsCount})</span>
+                  <span>{product.rating || product.ratingsAverage || 4.9}</span>
+                  <span className="text-[#888888] ml-1">({product.reviewsCount || product.ratingsQuantity || 12})</span>
                 </div>
               </div>
 
               <h2 className="font-serif text-2xl lg:text-3xl text-[#111111] mb-2 leading-tight">
-                {product.name}
+                {prodName}
               </h2>
 
               <p className="text-xs text-m4m-secondary font-sans mb-4">
-                {product.fabric}
+                {product.fabric || product.description || 'Curated Atelier piece'}
               </p>
 
               <div className="flex items-baseline gap-3 mb-6 pb-6 border-b border-m4m-border">
                 <span className="text-2xl font-mono font-medium text-[#111111]">
-                  ₹{product.price.toLocaleString('en-IN')}
+                  ₹{prodPrice.toLocaleString('en-IN')}
                 </span>
-                {product.originalPrice && (
+                {prodOriginalPrice && (
                   <span className="text-sm font-mono text-m4m-accent line-through">
-                    ₹{product.originalPrice.toLocaleString('en-IN')}
+                    ₹{prodOriginalPrice.toLocaleString('en-IN')}
                   </span>
                 )}
                 {product.discount && (
@@ -234,7 +261,7 @@ export const QuickViewModal = ({ product, isOpen, onClose, onShowToast }) => {
                   className="flex-1 bg-[#111111] text-m4m-bg text-xs font-mono uppercase tracking-[0.2em] py-3.5 hover:bg-[#2B2B2B] transition-all flex items-center justify-center gap-2"
                 >
                   <ShoppingBag className="w-4 h-4" />
-                  <span>ADD TO BAG • ₹{(product.price * quantity).toLocaleString('en-IN')}</span>
+                  <span>ADD TO BAG • ₹{(prodPrice * quantity).toLocaleString('en-IN')}</span>
                 </button>
               </div>
 

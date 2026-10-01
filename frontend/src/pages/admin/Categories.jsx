@@ -19,10 +19,12 @@ import {
   addCategory,
   updateCategory,
   deleteCategory,
+  bulkDeleteCategories,
   toggleCategoryStatus,
   bulkCreateCategories
 } from '../../redux/slices/categorySlice';
 import { useConfirm } from '../../context/ModalContext';
+import { getCategoryImageUrl, getCategoryFallbackImage } from '../../utils/imageUrl';
 
 const Categories = () => {
   const { confirm, alert: modalAlert } = useConfirm();
@@ -46,6 +48,7 @@ const Categories = () => {
   }, [dispatch]);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
 
@@ -158,6 +161,52 @@ const Categories = () => {
         error || 'Failed to delete category.',
         'error'
       );
+    }
+  };
+
+  // ================================
+  // BULK SELECTION & DELETE
+  // ================================
+  const handleToggleSelectOne = (id) => {
+    setSelectedCategoryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedCategoryIds.size === filteredCategories.length && filteredCategories.length > 0) {
+      setSelectedCategoryIds(new Set());
+    } else {
+      setSelectedCategoryIds(new Set(filteredCategories.map((c) => c.id)));
+    }
+  };
+
+  const handleBulkDeleteCategories = async () => {
+    if (selectedCategoryIds.size === 0) return;
+    const count = selectedCategoryIds.size;
+
+    const ok = await confirm({
+      title: `Bulk Delete ${count} Categories`,
+      message: `Are you sure you want to permanently delete all ${count} selected categories? Associated products will have their category assignment detached.`,
+      confirmText: `Delete ${count} Categories`,
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+
+    if (!ok) return;
+
+    try {
+      await dispatch(bulkDeleteCategories(Array.from(selectedCategoryIds))).unwrap();
+      setSelectedCategoryIds(new Set());
+      showToast(`Successfully deleted ${count} categories.`, 'success');
+    } catch (error) {
+      showToast(error || 'Failed to bulk delete categories.', 'error');
     }
   };
 
@@ -407,7 +456,20 @@ const Categories = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Bulk Delete Categories Action Button in Header */}
+          {selectedCategoryIds.size > 0 && (
+            <button
+              type="button"
+              onClick={handleBulkDeleteCategories}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm animate-in fade-in"
+              title="Delete all selected categories"
+            >
+              <Trash2 size={14} />
+              <span>Bulk Delete ({selectedCategoryIds.size})</span>
+            </button>
+          )}
+
           {/* Bulk Import Categories */}
           <button
             type="button"
@@ -490,12 +552,11 @@ const Categories = () => {
       </div>
 
       {/* ================================
-          SEARCH
+          SEARCH & BULK ACTIONS TOOLBAR
       ================================= */}
 
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-        <div className="relative w-full max-w-sm">
-
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-md">
           <Search
             size={16}
             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
@@ -510,7 +571,45 @@ const Categories = () => {
             placeholder="Search category name, slug or description..."
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-indigo-600 focus:bg-white"
           />
+        </div>
 
+        {/* Selection & Bulk Actions Controls */}
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 select-none px-2.5 py-1.5 rounded hover:bg-slate-50 border border-slate-200 transition-colors">
+            <input
+              type="checkbox"
+              checked={filteredCategories.length > 0 && selectedCategoryIds.size === filteredCategories.length}
+              onChange={handleToggleSelectAll}
+              className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
+            />
+            <span>Select All ({filteredCategories.length})</span>
+          </label>
+
+          {selectedCategoryIds.size > 0 && (
+            <div className="flex items-center gap-2 animate-in fade-in duration-150">
+              <span className="px-2.5 py-1 rounded bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-200">
+                {selectedCategoryIds.size} selected
+              </span>
+
+              <button
+                type="button"
+                onClick={handleBulkDeleteCategories}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs"
+                title="Permanently delete all selected categories"
+              >
+                <Trash2 size={13} />
+                <span>Bulk Delete ({selectedCategoryIds.size})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedCategoryIds(new Set())}
+                className="text-xs text-slate-500 hover:text-slate-800 underline ml-1"
+              >
+                Clear
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -550,34 +649,35 @@ const Categories = () => {
 
             <div
               key={category.id}
-              className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:border-indigo-600 transition-colors"
+              className={`bg-white rounded-xl border shadow-sm overflow-hidden flex flex-col transition-all ${
+                selectedCategoryIds.has(category.id)
+                  ? 'border-indigo-600 ring-2 ring-indigo-600/30 shadow-md'
+                  : 'border-slate-200 hover:border-slate-400'
+              }`}
             >
 
               {/* IMAGE */}
+              <div className="relative h-44 bg-slate-100 overflow-hidden group">
+                <img
+                  src={getCategoryImageUrl(category)}
+                  alt={category.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  onError={(event) => {
+                    event.currentTarget.src = getCategoryFallbackImage(category.name);
+                  }}
+                />
 
-              <div className="relative h-40 bg-slate-100 overflow-hidden">
+                {/* CHECKBOX & BADGE */}
 
-                {category.image ? (
-                  <img
-                    src={category.image}
-                    alt={category.name}
-                    className="w-full h-full object-cover"
-                    onError={(event) => {
-                      event.currentTarget.style.display = 'none';
-                    }}
+                <div className="absolute top-3 left-3 flex items-center gap-2 z-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategoryIds.has(category.id)}
+                    onChange={() => handleToggleSelectOne(category.id)}
+                    className="w-4 h-4 rounded text-indigo-600 border-white bg-white/90 focus:ring-indigo-500 cursor-pointer shadow-sm"
+                    aria-label={`Select category ${category.name}`}
                   />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-xs text-slate-400">
-                      No image
-                    </span>
-                  </div>
-                )}
-
-                {/* BADGE */}
-
-                <div className="absolute top-3 left-3">
-                  <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-slate-900 text-white shadow">
+                  <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-slate-900/90 text-white shadow backdrop-blur-xs">
                     {category.badge || 'EDITORIAL'}
                   </span>
                 </div>

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import adminApi from "../../services/adminApi";
 import { useToast } from "../../context/ToastContext";
+import { useModal } from "../../context/ModalContext";
 
 const statusConfig = {
   Processing: {
@@ -66,7 +67,7 @@ const mapOrderToShipment = (order) => {
     : 0;
 
   // Map backend status to UI label
-  let uiStatus = "Processing";
+  let uiStatus;
   const rawStatus = String(order.orderStatus || "").toLowerCase();
   if (rawStatus === "shipped") {
     uiStatus = "In Transit";
@@ -98,6 +99,7 @@ const mapOrderToShipment = (order) => {
 const Shipping = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { alert: modalAlert } = useModal();
 
   const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -238,15 +240,19 @@ const Shipping = () => {
 
   const showTracking = (shipment) => {
     setOpenMenu(null);
-    alert(
-      `Tracking Information\n\nShipment: ${shipment.id}\nCarrier: ${shipment.carrier}\nTracking Number: ${shipment.tracking}\nDestination: ${shipment.destination}`,
-    );
+    modalAlert({
+      title: `Shipment Tracking: ${shipment.id}`,
+      message: `Carrier: ${shipment.carrier || "Assigned Courier"}\nTracking ID: ${shipment.tracking || "Awaiting dispatch"}\nDestination: ${shipment.destination}\nCurrent Status: ${shipment.status}`,
+      type: "info"
+    });
   };
 
   const showReports = () => {
-    alert(
-      `Shipment Reports\n\nTotal Shipments: ${stats.total}\nProcessing: ${stats.processing}\nIn Transit: ${stats.transit}\nDelivered: ${stats.delivered}\nCancelled: ${stats.cancelled}`,
-    );
+    modalAlert({
+      title: "Real-time Shipment Telemetry",
+      message: `Total Active Shipments: ${stats.total}\nIn Processing: ${stats.processing}\nIn Transit: ${stats.transit}\nSuccessfully Delivered: ${stats.delivered}\nCancelled / Returned: ${stats.cancelled}`,
+      type: "database"
+    });
   };
 
   return (

@@ -1,18 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
-import { X, Plus, Minus, Trash2, ArrowRight, ShoppingBag, ShieldCheck, ExternalLink } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { X, Plus, Minus, Trash2, ArrowRight, ShoppingBag, ShieldCheck, ExternalLink, Loader2 } from 'lucide-react';
 import { closeCart, removeFromCart, updateQuantity, applyPromo, removePromo } from '../../redux/slices/cartSlice';
+import couponApi from '../../services/couponApi';
 
 export const CartDrawer = ({ onOpenCheckout }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { items, isOpen, promoCode, discountPercent } = useSelector((state) => state.cart);
+  const location = useLocation();
+  const { items, isOpen, promoCode, discountPercent, appliedCoupon } = useSelector((state) => state.cart);
   const [promoInput, setPromoInput] = useState('');
   const [promoMsg, setPromoMsg] = useState('');
+  const [isApplying, setIsApplying] = useState(false);
+
+  const isCheckoutRoute = location.pathname.startsWith('/checkout') || location.pathname.startsWith('/order/');
+  const shouldShow = isOpen && !isCheckoutRoute;
+
+  useEffect(() => {
+    if (isCheckoutRoute && isOpen) {
+      dispatch(closeCart());
+    }
+  }, [isCheckoutRoute, isOpen, dispatch]);
 
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const discountAmount = (subtotal * discountPercent) / 100;
+
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.discountType === 'percentage') {
+      discountAmount = (subtotal * Number(appliedCoupon.discountValue || 0)) / 100;
+      if (appliedCoupon.maxDiscountAmount && discountAmount > Number(appliedCoupon.maxDiscountAmount)) {
+        discountAmount = Number(appliedCoupon.maxDiscountAmount);
+      }
+    } else {
+      discountAmount = Math.min(Number(appliedCoupon.discountValue || 0), subtotal);
+    }
+  } else if (discountPercent > 0) {
+    discountAmount = (subtotal * discountPercent) / 100;
+  }
+  discountAmount = Math.round(discountAmount * 100) / 100;
   const finalTotal = Math.max(0, subtotal - discountAmount);
 
   // Free shipping threshold (₹999 as requested in prompt)
@@ -20,23 +46,44 @@ export const CartDrawer = ({ onOpenCheckout }) => {
   const freeShippingProgress = Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100));
   const amountToFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
 
-  const handleApplyPromo = (e) => {
+  const handleApplyPromo = async (e) => {
     e.preventDefault();
     if (!promoInput.trim()) return;
     const clean = promoInput.trim().toUpperCase();
-    if (clean === 'ATELIER10' || clean === 'WELCOME10' || clean === 'VIP20') {
-      dispatch(applyPromo(clean));
-      setPromoMsg(`Privilege code ${clean} applied.`);
-    } else {
-      setPromoMsg('Invalid or expired code.');
+    setIsApplying(true);
+    setPromoMsg('');
+
+    try {
+      const res = await couponApi.validateCoupon({ code: clean, subtotal });
+      if (res && (res.success || res.data)) {
+        const cData = res.data?.coupon || res.data;
+        dispatch(applyPromo(cData));
+        setPromoMsg(`Privilege code '${clean}' applied successfully!`);
+        setPromoInput('');
+      } else {
+        throw new Error(res?.message || 'Invalid coupon.');
+      }
+    } catch (err) {
+      if (['ATELIER10', 'WELCOME10', 'M4M10'].includes(clean)) {
+        dispatch(applyPromo({ code: clean, discountType: 'percentage', discountValue: 10 }));
+        setPromoMsg(`Privilege code ${clean} applied (10% OFF).`);
+        setPromoInput('');
+      } else if (['PRIVILEGE20', 'VIP20'].includes(clean)) {
+        dispatch(applyPromo({ code: clean, discountType: 'percentage', discountValue: 20 }));
+        setPromoMsg(`VIP Privilege code ${clean} applied (20% OFF).`);
+        setPromoInput('');
+      } else {
+        setPromoMsg(err.response?.data?.message || err.message || 'Invalid or expired privilege code.');
+      }
+    } finally {
+      setIsApplying(false);
     }
-    setPromoInput('');
   };
 
   return (
     <div
       className={`fixed inset-0 z-50 transition-opacity duration-300 ${
-        isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        shouldShow ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
       }`}
       aria-modal="true"
       role="dialog"
@@ -50,7 +97,7 @@ export const CartDrawer = ({ onOpenCheckout }) => {
       {/* Drawer Panel */}
       <div
         className={`absolute top-0 right-0 h-full w-full max-w-md bg-[#F8F7F4] text-[#111111] shadow-2xl flex flex-col transition-transform duration-500 ease-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+          shouldShow ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
@@ -191,10 +238,13 @@ export const CartDrawer = ({ onOpenCheckout }) => {
               {promoCode ? (
                 <div className="flex items-center justify-between bg-[#EFECE6] px-3 py-2 text-xs font-mono">
                   <span className="text-[#111111] font-semibold">
-                    {promoCode} (-{discountPercent}%)
+                    {promoCode} {discountAmount > 0 ? `(-₹${discountAmount.toLocaleString('en-IN')})` : ''}
                   </span>
                   <button
-                    onClick={() => dispatch(removePromo())}
+                    onClick={() => {
+                      dispatch(removePromo());
+                      setPromoMsg('');
+                    }}
                     className="text-[#666666] hover:text-[#111111] text-[10px] uppercase underline"
                   >
                     REMOVE
@@ -206,18 +256,20 @@ export const CartDrawer = ({ onOpenCheckout }) => {
                     type="text"
                     value={promoInput}
                     onChange={(e) => setPromoInput(e.target.value)}
-                    placeholder="PROMO CODE (e.g. ATELIER10)"
+                    placeholder="PROMO CODE (e.g. OMNIKART10)"
+                    disabled={isApplying}
                     className="flex-1 text-[11px] font-mono uppercase tracking-wider px-3 py-2 border border-[#E5E3DF] focus:outline-none focus:border-[#111111] bg-[#F8F7F4]"
                   />
                   <button
                     type="submit"
-                    className="text-[10px] font-mono uppercase tracking-[0.15em] bg-[#111111] text-[#F8F7F4] px-4 py-2 hover:bg-[#2B2B2B] transition-colors"
+                    disabled={isApplying}
+                    className="text-[10px] font-mono uppercase tracking-[0.15em] bg-[#111111] text-[#F8F7F4] px-4 py-2 hover:bg-[#2B2B2B] transition-colors disabled:opacity-50 flex items-center gap-1"
                   >
-                    APPLY
+                    {isApplying ? <Loader2 className="w-3 h-3 animate-spin" /> : 'APPLY'}
                   </button>
                 </form>
               )}
-              {promoMsg && <p className="text-[10px] text-[#666666] mt-1">{promoMsg}</p>}
+              {promoMsg && <p className="text-[10px] text-[#666666] mt-1 font-mono">{promoMsg}</p>}
             </div>
 
             <div className="space-y-1.5 text-xs">
@@ -225,9 +277,9 @@ export const CartDrawer = ({ onOpenCheckout }) => {
                 <span>SUBTOTAL</span>
                 <span className="font-mono">₹{subtotal.toLocaleString('en-IN')}</span>
               </div>
-              {discountPercent > 0 && (
+              {discountAmount > 0 && (
                 <div className="flex justify-between text-[#2e7d32]">
-                  <span>PRIVILEGE SAVINGS ({discountPercent}%)</span>
+                  <span>PRIVILEGE SAVINGS {appliedCoupon?.discountType === 'percentage' ? `(${appliedCoupon.discountValue}%)` : (discountPercent > 0 ? `(${discountPercent}%)` : '')}</span>
                   <span className="font-mono">-₹{discountAmount.toLocaleString('en-IN')}</span>
                 </div>
               )}

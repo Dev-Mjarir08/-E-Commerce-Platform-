@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaStore,
   FaImage,
@@ -15,17 +15,18 @@ import {
   FaExternalLinkAlt,
   FaTruck,
   FaUndo,
-  FaArrowLeft,
+  FaSpinner
 } from "react-icons/fa";
+import vendorApi from "../../services/vendorApi";
 
 // Initial Mock Vendor Store Data
 const initialStoreSettings = {
-  storeName: "Aura Tech & Lifestyle",
-  tagline: "Premium Audio & Daily Ergonomic Essentials",
+  storeName: "Aura Tech & Lifestyle Atelier",
+  tagline: "Curated ergonomic accessories, workspace essentials, and acoustic audio products.",
   slug: "aura-tech-lifestyle",
   email: "support@auratech.com",
   phone: "+1 (555) 019-2834",
-  address: "742 Evergreen Terrace, Suite 100, Austin, TX 78701",
+  address: "742 Evergreen Terrace, Suite 100, San Francisco, CA 94107",
   website: "https://auratech.example.com",
   description:
     "We design and curate top-tier personal audio equipment and everyday ergonomic workspace accessories. Dedicated to sustainable packaging and lifetime support.",
@@ -44,23 +45,46 @@ const initialStoreSettings = {
     warranty: "1-Year limited manufacturer warranty on all electronics.",
   },
   rating: 4.9,
-  totalReviews: 328,
+  totalReviews: 18,
 };
 
-export default function VendorStore({ onBack }) {
+export default function VendorStore() {
   const [store, setStore] = useState(initialStoreSettings);
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Handle Back Button Click
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else if (typeof window !== "undefined" && window.history.length > 1) {
-      window.history.back();
-    } else {
-      console.log("Navigate back");
-    }
-  };
+  // Fetch real registered store from backend
+  useEffect(() => {
+    const fetchRegisteredStore = async () => {
+      try {
+        const response = await vendorApi.getProfile();
+        const data = response?.data || response;
+        if (data?.store) {
+          const s = data.store;
+          setStore((prev) => ({
+            ...prev,
+            storeName: s.name || prev.storeName,
+            tagline: s.description ? s.description.slice(0, 70) + "..." : prev.tagline,
+            slug: s.slug || prev.slug,
+            email: s.email || prev.email,
+            phone: s.phone || prev.phone,
+            address: s.address?.street
+              ? `${s.address.street}, ${s.address.city || ""}, ${s.address.state || ""} ${s.address.postalCode || ""}`
+              : prev.address,
+            website: s.website || prev.website,
+            description: s.description || prev.description,
+            bannerUrl: s.banner?.url || prev.bannerUrl,
+            logoUrl: s.logo?.url || prev.logoUrl,
+            rating: s.ratingAverage || prev.rating,
+            totalReviews: s.ratingCount || prev.totalReviews,
+          }));
+        }
+      } catch (err) {
+        console.warn("Could not fetch remote store, using defaults:", err);
+      }
+    };
+    fetchRegisteredStore();
+  }, []);
 
   // Handle Input Changes
   const handleChange = (field, value) => {
@@ -74,7 +98,7 @@ export default function VendorStore({ onBack }) {
     }));
   };
 
-  // Image Upload Simulation
+  // Image Upload
   const handleImageUpload = (field, event) => {
     const file = event.target.files[0];
     if (file) {
@@ -83,29 +107,32 @@ export default function VendorStore({ onBack }) {
     }
   };
 
-  // Save Settings Form
-  const handleSave = (e) => {
-    e.preventDefault();
-    console.log("Saving Store Settings Payload:", store);
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+  // Save Settings to Backend API
+  const handleSave = async (e) => {
+    if (e) e.preventDefault();
+    setIsSaving(true);
+    try {
+      await vendorApi.updateProfile({
+        storeName: store.storeName,
+        storeDescription: store.description,
+        storeEmail: store.email,
+        storePhone: store.phone,
+        website: store.website,
+        logo: { url: store.logoUrl },
+        banner: { url: store.bannerUrl }
+      });
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (err) {
+      console.error("Save error:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
-
-        {/* BACK BUTTON */}
-        <div>
-          <button
-            type="button"
-            onClick={handleBack}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors cursor-pointer group"
-          >
-            <FaArrowLeft className="text-slate-400 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Back</span>
-          </button>
-        </div>
 
         {/* TOP BAR / HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
@@ -123,15 +150,16 @@ export default function VendorStore({ onBack }) {
               href={`https://marketplace.com/store/${store.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 transition shadow-xs"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 transition shadow-sm"
             >
               <FaExternalLinkAlt className="text-xs text-slate-400" /> View Live Store
             </a>
             <button
               onClick={handleSave}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all cursor-pointer"
+              disabled={isSaving}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all cursor-pointer disabled:opacity-60"
             >
-              <FaSave className="text-xs" /> Save Profile
+              <FaSave className="text-xs" /> {isSaving ? "Saving..." : "Save Profile"}
             </button>
           </div>
         </div>
@@ -140,7 +168,7 @@ export default function VendorStore({ onBack }) {
         {isSaved && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl text-xs font-semibold flex items-center justify-between animate-fade-in">
             <span>Store settings and storefront branding have been updated successfully!</span>
-            <button onClick={() => setIsSaved(false)} className="text-emerald-600 hover:text-emerald-900 cursor-pointer">
+            <button onClick={() => setIsSaved(false)} className="text-emerald-600 hover:text-emerald-900">
               <FaTimes />
             </button>
           </div>
@@ -149,7 +177,7 @@ export default function VendorStore({ onBack }) {
         <form onSubmit={handleSave} className="space-y-6">
 
           {/* STORE BANNER & LOGO PREVIEW HEADER */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
             {/* Banner Area */}
             <div className="relative h-48 sm:h-64 bg-slate-100 overflow-hidden group">
               <img
@@ -211,7 +239,7 @@ export default function VendorStore({ onBack }) {
             <div className="lg:col-span-2 space-y-6">
 
               {/* General Store Details */}
-              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <FaStore className="text-teal-700" /> Store Profile & Bio
                 </h3>
@@ -225,7 +253,7 @@ export default function VendorStore({ onBack }) {
                     required
                     value={store.storeName}
                     onChange={(e) => handleChange("storeName", e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700 focus:ring-2 focus:ring-teal-700/20"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/20"
                   />
                 </div>
 
@@ -238,7 +266,7 @@ export default function VendorStore({ onBack }) {
                     value={store.tagline}
                     onChange={(e) => handleChange("tagline", e.target.value)}
                     placeholder="Short summary displayed under your store name"
-                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
                   />
                 </div>
 
@@ -250,13 +278,13 @@ export default function VendorStore({ onBack }) {
                     rows="4"
                     value={store.description}
                     onChange={(e) => handleChange("description", e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 p-4 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
+                    className="w-full rounded-xl border border-slate-200 p-4 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
                   />
                 </div>
               </div>
 
               {/* Contact Information */}
-              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <FaEnvelope className="text-teal-700" /> Public Contact Details
                 </h3>
@@ -271,7 +299,7 @@ export default function VendorStore({ onBack }) {
                         type="email"
                         value={store.email}
                         onChange={(e) => handleChange("email", e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
+                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
                       />
                       <FaEnvelope className="absolute left-3.5 top-3.5 text-slate-400 text-sm" />
                     </div>
@@ -286,7 +314,7 @@ export default function VendorStore({ onBack }) {
                         type="text"
                         value={store.phone}
                         onChange={(e) => handleChange("phone", e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
+                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
                       />
                       <FaPhone className="absolute left-3.5 top-3.5 text-slate-400 text-sm" />
                     </div>
@@ -303,7 +331,7 @@ export default function VendorStore({ onBack }) {
                         type="text"
                         value={store.address}
                         onChange={(e) => handleChange("address", e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
+                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
                       />
                       <FaMapMarkerAlt className="absolute left-3.5 top-3.5 text-slate-400 text-sm" />
                     </div>
@@ -318,7 +346,7 @@ export default function VendorStore({ onBack }) {
                         type="url"
                         value={store.website}
                         onChange={(e) => handleChange("website", e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
+                        className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
                       />
                       <FaGlobe className="absolute left-3.5 top-3.5 text-slate-400 text-sm" />
                     </div>
@@ -327,7 +355,7 @@ export default function VendorStore({ onBack }) {
               </div>
 
               {/* Vendor Policies */}
-              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <FaShieldAlt className="text-teal-700" /> Store Terms & Terms
                 </h3>
@@ -342,7 +370,7 @@ export default function VendorStore({ onBack }) {
                     onChange={(e) =>
                       handleNestedChange("policies", "shippingPolicy", e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
+                    className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
                   />
                 </div>
 
@@ -356,7 +384,7 @@ export default function VendorStore({ onBack }) {
                     onChange={(e) =>
                       handleNestedChange("policies", "returnPolicy", e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
+                    className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
                   />
                 </div>
               </div>
@@ -367,7 +395,7 @@ export default function VendorStore({ onBack }) {
             <div className="space-y-6">
 
               {/* Store Permalink */}
-              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-3">
                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Store Slug / URL
                 </h4>
@@ -379,13 +407,13 @@ export default function VendorStore({ onBack }) {
                     type="text"
                     value={store.slug}
                     onChange={(e) => handleChange("slug", e.target.value)}
-                    className="w-full bg-transparent px-3 py-2 text-xs font-mono text-slate-800 focus:outline-hidden"
+                    className="w-full bg-transparent px-3 py-2 text-xs font-mono text-slate-800 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Support Operating Hours */}
-              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-4">
                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                   <FaClock className="text-slate-400" /> Customer Support Schedule
                 </h4>
@@ -401,7 +429,7 @@ export default function VendorStore({ onBack }) {
                       onChange={(e) =>
                         handleNestedChange("hours", "monday", e.target.value)
                       }
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
                     />
                   </div>
 
@@ -415,7 +443,7 @@ export default function VendorStore({ onBack }) {
                       onChange={(e) =>
                         handleNestedChange("hours", "saturday", e.target.value)
                       }
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
                     />
                   </div>
 
@@ -429,7 +457,7 @@ export default function VendorStore({ onBack }) {
                       onChange={(e) =>
                         handleNestedChange("hours", "sunday", e.target.value)
                       }
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:border-teal-700"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-700"
                     />
                   </div>
                 </div>

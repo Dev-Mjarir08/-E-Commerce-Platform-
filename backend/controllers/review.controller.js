@@ -328,3 +328,36 @@ export const updateAdminReviewStatus = async (req, res) => {
     });
   }
 };
+
+export const getPublicReviews = async (req, res) => {
+  try {
+    const { productId, limit = 10 } = req.query;
+    const query = { moderationStatus: 'approved' };
+    if (productId && mongoose.Types.ObjectId.isValid(productId)) {
+      query.product = productId;
+    }
+
+    const reviews = await Review.find(query)
+      .populate('user', 'name firstName lastName')
+      .populate('product', 'title')
+      .sort({ createdAt: -1 })
+      .limit(Number(limit));
+
+    const mapped = reviews.map((r) => ({
+      id: r._id,
+      name: buildCustomerName(r.user),
+      comment: r.comment || r.title || 'Exceptional craftsmanship and bespoke finishing.',
+      rating: r.rating || 5,
+      role: 'Verified Atelier Client',
+      itemBought: r.product?.title || 'Consignment Luxury Edit'
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: mapped
+    });
+  } catch (error) {
+    console.error("getPublicReviews error:", error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch reviews' });
+  }
+};

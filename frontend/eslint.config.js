@@ -26,6 +26,13 @@ export default defineConfig([
           ignoreRestSiblings: true,
         },
       ],
+      'react-refresh/only-export-components': [
+        'warn',
+        {
+          allowConstantExport: true,
+          allowExportNames: ['useModal', 'useConfirm', 'useQuickView', 'useShopData', 'useToast'],
+        },
+      ],
     },
   },
 ])
