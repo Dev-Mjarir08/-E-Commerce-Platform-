@@ -91,7 +91,6 @@ const ShipmentDetails = () => {
   // Fetch real order details from API
   const fetchOrderDetails = useCallback(async () => {
     if (!id) return;
-    setLoading(true);
     setError(null);
     try {
       const response = await adminApi.getOrderById(id);
@@ -110,8 +109,30 @@ const ShipmentDetails = () => {
   }, [id]);
 
   useEffect(() => {
-    fetchOrderDetails();
-  }, [fetchOrderDetails]);
+    let active = true;
+    if (id) {
+      adminApi.getOrderById(id)
+        .then((response) => {
+          if (!active) return;
+          const data = response?.data || response;
+          if (data && (data._id || data.orderNumber)) {
+            setOrder(data);
+          } else {
+            setError("Order record not found.");
+          }
+        })
+        .catch((err) => {
+          if (active) {
+            console.error("Failed to load order details:", err);
+            setError(err.message || "Failed to load order details.");
+          }
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    return () => { active = false; };
+  }, [id]);
 
   // Status update
   const handleUpdateStatus = async (newUiStatus) => {

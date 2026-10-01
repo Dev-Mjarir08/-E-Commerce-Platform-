@@ -93,7 +93,6 @@ export default function VendorOrdersPage() {
   const [toastMessage, setToastMessage] = useState(null);
 
   const fetchOrders = async () => {
-    setLoading(true);
     try {
       const response = await vendorApi.getOrders();
       const data = response?.data?.orders || response?.orders || response?.data;
@@ -108,7 +107,22 @@ export default function VendorOrdersPage() {
   };
 
   useEffect(() => {
-    fetchOrders();
+    let active = true;
+    vendorApi.getOrders()
+      .then((response) => {
+        if (!active) return;
+        const data = response?.data?.orders || response?.orders || response?.data;
+        if (Array.isArray(data) && data.length > 0) {
+          setOrders(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Using fallback order records:', err);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
   }, []);
 
   const handleStatusChange = async (orderId, newStatus) => {
@@ -122,7 +136,7 @@ export default function VendorOrdersPage() {
         )
       );
       setToastMessage(`Order status updated to ${newStatus}.`);
-    } catch (err) {
+    } catch {
       setOrders((prev) =>
         prev.map((o) =>
           o._id === orderId || o.orderNumber === orderId

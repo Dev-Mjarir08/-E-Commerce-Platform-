@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   FaUser,
@@ -27,7 +27,7 @@ import { getImageUrl, DEFAULT_COVER_FALLBACK } from "../../utils/imageUrl";
 
 export default function Profile() {
   const dispatch = useDispatch();
-  const { user: vendorUser, store: vendorStore, loading: reduxLoading } = useSelector(
+  const { user: vendorUser, store: vendorStore } = useSelector(
     (state) => state.vendor
   );
   const { user: authUser } = useSelector((state) => state.auth);
@@ -62,7 +62,7 @@ export default function Profile() {
   const [bannerPreview, setBannerPreview] = useState(null);
 
   // Sync state with registered Vendor & Store data
-  const populateFromData = (user, store) => {
+  const populateFromData = useCallback((user, store) => {
     const activeUser = user || authUser || {};
     const activeStore = store || {};
 
@@ -94,36 +94,31 @@ export default function Profile() {
       const bn = typeof activeStore.banner === "object" ? activeStore.banner.url : activeStore.banner;
       setBannerPreview(getImageUrl(bn, DEFAULT_COVER_FALLBACK));
     }
-  };
+  }, [authUser]);
 
   // Fetch real registered store & vendor profile from backend
   useEffect(() => {
+    let active = true;
     const loadProfile = async () => {
       setIsLoading(true);
       try {
         const response = await vendorApi.getProfile();
         const profileData = response?.data || response;
-        if (profileData) {
+        if (profileData && active) {
           populateFromData(profileData.user, profileData.store);
           dispatch(fetchVendorDashboard());
         }
       } catch (error) {
         console.warn("Using redux fallback vendor state:", error);
-        populateFromData(vendorUser, vendorStore);
+        if (active) populateFromData(vendorUser, vendorStore);
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     };
 
     loadProfile();
-  }, [dispatch]);
-
-  // Keep in sync if redux store updates
-  useEffect(() => {
-    if (vendorUser || vendorStore) {
-      populateFromData(vendorUser, vendorStore);
-    }
-  }, [vendorUser, vendorStore]);
+    return () => { active = false; };
+  }, [dispatch, populateFromData, vendorUser, vendorStore]);
 
   const showToast = (type, text) => {
     setToastMessage({ type, text });

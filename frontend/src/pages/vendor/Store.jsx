@@ -156,9 +156,10 @@ export default function VendorStore() {
             </a>
             <button
               onClick={handleSave}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all cursor-pointer"
+              disabled={isSaving}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all cursor-pointer disabled:opacity-60"
             >
-              <FaSave className="text-xs" /> Save Profile
+              <FaSave className="text-xs" /> {isSaving ? "Saving..." : "Save Profile"}
             </button>
           </div>
         </div>

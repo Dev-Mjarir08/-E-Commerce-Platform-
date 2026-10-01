@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import inventoryApi from "../../services/inventoryApi";
 import { useModal } from "../../context/ModalContext";
 import {
@@ -92,33 +92,31 @@ export default function LowStock() {
     },
   ]);
 
-  const fetchLowStock = useCallback(async () => {
-    try {
-      const res = await inventoryApi.getLowStock();
-      const list = res?.data?.products || res?.products || res?.data;
-      if (Array.isArray(list) && list.length > 0) {
-        setProducts(list.map((p) => ({
-          id: p._id || p.id,
-          name: p.title || p.name,
-          sku: p.sku || `SKU-${p._id?.slice(-4)}`,
-          category: p.category?.name || p.category || "General",
-          currentStock: p.stock ?? p.stockCount ?? 0,
-          minThreshold: 10,
-          reorderPoint: 15,
-          unitCost: `₹${p.basePrice || p.price || 0}`,
-          supplier: p.brand || "Atelier Supplier",
-          status: (p.stock ?? 0) <= 3 ? "Critical" : "Warning",
-          image: p.images?.[0]?.url || p.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&auto=format&fit=crop&q=80"
-        })));
-      }
-    } catch {
-      // Keep initial fallback
-    }
-  }, []);
-
   useEffect(() => {
-    fetchLowStock();
-  }, [fetchLowStock]);
+    let active = true;
+    inventoryApi.getLowStock()
+      .then((res) => {
+        if (!active) return;
+        const list = res?.data?.products || res?.products || res?.data;
+        if (Array.isArray(list) && list.length > 0) {
+          setProducts(list.map((p) => ({
+            id: p._id || p.id,
+            name: p.title || p.name,
+            sku: p.sku || `SKU-${p._id?.slice(-4)}`,
+            category: p.category?.name || p.category || "General",
+            currentStock: p.stock ?? p.stockCount ?? 0,
+            minThreshold: 10,
+            reorderPoint: 15,
+            unitCost: `₹${p.basePrice || p.price || 0}`,
+            supplier: p.brand || "Atelier Supplier",
+            status: (p.stock ?? 0) <= 3 ? "Critical" : "Warning",
+            image: p.images?.[0]?.url || p.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&auto=format&fit=crop&q=80"
+          })));
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   // Metrics calculation
   const totalOut = products.filter((p) => p.currentStock === 0).length;
@@ -185,7 +183,9 @@ export default function LowStock() {
             quantity: qty,
             reason: "Bulk vendor stock replenishment"
           });
-        } catch {}
+        } catch {
+          // Continue restock of remaining products
+        }
       }
       setProducts((prev) =>
         prev.map((p) =>

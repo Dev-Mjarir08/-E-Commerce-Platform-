@@ -11,12 +11,12 @@ import Payment from '../models/Payment.js';
 
 /**
  * Helper: Generate unique order number
- * Format: ATL-YYYYMMDD-XXXX (e.g. ATL-20260918-7F3A)
+ * Format: OMNI-YYYYMMDD-XXXX (e.g. OMNI-20260918-7F3A)
  */
 const generateOrderNumber = () => {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const randomHex = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `ATL-${dateStr}-${randomHex}`;
+  return `OMNI-${dateStr}-${randomHex}`;
 };
 
 /**

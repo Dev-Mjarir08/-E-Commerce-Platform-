@@ -34,15 +34,14 @@ export default defineConfig({
           if (id.includes('node_modules/@reduxjs') || id.includes('node_modules/react-redux')) {
             return 'vendor-redux';
           }
-          if (id.includes('node_modules/gsap') || id.includes('node_modules/lenis')) {
-            return 'vendor-motion';
-          }
-          if (id.includes('node_modules/lucide-react')) {
+          if (id.includes('node_modules/lucide-react') || id.includes('node_modules/react-icons')) {
             return 'vendor-icons';
+          }
+          if (id.includes('node_modules/axios')) {
+            return 'vendor-axios';
           }
         }
       }
     }
   }
 });
-

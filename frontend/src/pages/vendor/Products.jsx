@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Plus,
   Search,
@@ -68,7 +68,6 @@ const initialProducts = [
 ];
 
 export default function VendorProducts() {
-  const navigate = useNavigate();
   const { confirm: modalConfirm, alert: modalAlert } = useModal();
   const [products, setProducts] = useState(initialProducts);
   const [categories, setCategories] = useState([]);
@@ -88,20 +87,8 @@ export default function VendorProducts() {
   const [selectedProductIds, setSelectedProductIds] = useState(new Set());
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
-  const fetchCategories = async () => {
-    try {
-      const res = await categoryService.getCategories();
-      const list = Array.isArray(res) ? res : (res?.data?.categories || res?.data || res?.categories || []);
-      if (Array.isArray(list) && list.length > 0) {
-        setCategories(list);
-      }
-    } catch (err) {
-      console.warn("Categories fetch fallback:", err);
-    }
-  };
 
   const fetchMyProducts = async () => {
-    setLoading(true);
     try {
       const response = await productApi.getMyProducts();
       const list = response?.data?.products || response?.products || response?.data;
@@ -134,8 +121,53 @@ export default function VendorProducts() {
   };
 
   useEffect(() => {
-    fetchMyProducts();
-    fetchCategories();
+    let active = true;
+    productApi.getMyProducts()
+      .then((response) => {
+        if (!active) return;
+        const list = response?.data?.products || response?.products || response?.data;
+        if (Array.isArray(list) && list.length > 0) {
+          setProducts(
+            list.map((p) => ({
+              ...p,
+              id: p._id || p.id,
+              image:
+                p.images?.[0]?.url ||
+                p.image ||
+                "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=150",
+              category: p.category?.name || p.category || "General",
+              status:
+                p.stock === 0
+                  ? "Out of Stock"
+                  : p.stock < 10
+                  ? "Low Stock"
+                  : p.status === "active" || p.status === "Active"
+                  ? "Active"
+                  : "Inactive",
+            }))
+          );
+        }
+      })
+      .catch((err) => {
+        console.warn("Using local product catalog fallback:", err);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    categoryService.getCategories()
+      .then((res) => {
+        if (!active) return;
+        const list = Array.isArray(res) ? res : (res?.data?.categories || res?.data || res?.categories || []);
+        if (Array.isArray(list) && list.length > 0) {
+          setCategories(list);
+        }
+      })
+      .catch((err) => {
+        console.warn("Categories fetch fallback:", err);
+      });
+
+    return () => { active = false; };
   }, []);
 
   // Generate realistic products template using active categories
@@ -324,7 +356,7 @@ export default function VendorProducts() {
       await productApi.deleteProduct(id);
       setProducts((prev) => prev.filter((item) => (item._id || item.id) !== id));
       setToastMessage("Product listing removed.");
-    } catch (err) {
+    } catch {
       setProducts((prev) => prev.filter((item) => (item._id || item.id) !== id));
       setToastMessage("Product listing removed (local).");
     } finally {
@@ -412,7 +444,7 @@ export default function VendorProducts() {
         )
       );
       setToastMessage(`Product marked as ${nextStatus}.`);
-    } catch (err) {
+    } catch {
       setProducts((prev) =>
         prev.map((item) =>
           (item._id || item.id) === (product._id || product.id)

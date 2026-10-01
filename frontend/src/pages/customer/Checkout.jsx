@@ -63,13 +63,6 @@ export const Checkout = () => {
     dispatch(closeCart());
   }, [dispatch]);
 
-  // Sync with redux appliedCoupon
-  useEffect(() => {
-    if (reduxAppliedCoupon && !appliedCoupon) {
-      setAppliedCoupon(reduxAppliedCoupon);
-      setCouponInput(reduxAppliedCoupon.code || '');
-    }
-  }, [reduxAppliedCoupon]);
 
   // UI state
   const [loadingAddresses, setLoadingAddresses] = useState(true);
@@ -688,7 +681,7 @@ export const Checkout = () => {
                       type="text"
                       value={couponInput}
                       onChange={(e) => setCouponInput(e.target.value)}
-                      placeholder="PRIVILEGE CODE (e.g. ZALIMA789)"
+                      placeholder="PROMO CODE (e.g. OMNIKART10)"
                       disabled={isApplyingCoupon}
                       className="flex-1 px-3 py-2 border border-[#E5E3DF] focus:border-[#111111] outline-none text-xs font-mono uppercase tracking-wider rounded-none"
                     />

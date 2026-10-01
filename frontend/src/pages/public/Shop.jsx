@@ -54,34 +54,18 @@ export const Shop = () => {
   const { products: cachedProducts, categories: contextCategories, loading: initialLoading } = useShopData();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // URL state synchronization
-  const categoryParam = searchParams.get('category') || 'all';
-  const filterParam = searchParams.get('filter') || 'all';
-  const sortParam = searchParams.get('sort') || 'featured';
-  const priceParam = searchParams.get('price') || 'all';
-  const searchParam = searchParams.get('search') || '';
+  // URL state derived directly to eliminate cascading renders
+  const selectedCategory = searchParams.get('category') || 'all';
+  const selectedFilter = searchParams.get('filter') || 'all';
+  const selectedSort = searchParams.get('sort') || 'featured';
+  const selectedPrice = searchParams.get('price') || 'all';
+  const searchQuery = searchParams.get('search') || '';
 
   const [products, setProducts] = useState(cachedProducts.length > 0 ? cachedProducts : []);
   const [loading, setLoading] = useState(cachedProducts.length === 0 && initialLoading);
-  const [selectedCategory, setSelectedCategory] = useState(categoryParam);
-  const [selectedFilter, setSelectedFilter] = useState(filterParam);
-  const [selectedSort, setSelectedSort] = useState(sortParam);
-  const [selectedPrice, setSelectedPrice] = useState(priceParam);
-  const [searchQuery, setSearchQuery] = useState(searchParam);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-
-  // Sync state whenever URL query params change
-  useEffect(() => {
-    setSelectedCategory(searchParams.get('category') || 'all');
-    setSelectedFilter(searchParams.get('filter') || 'all');
-    setSelectedSort(searchParams.get('sort') || 'featured');
-    setSelectedPrice(searchParams.get('price') || 'all');
-    if (searchParams.get('search')) {
-      setSearchQuery(searchParams.get('search'));
-    }
-  }, [searchParams]);
 
   // Update query params helper
   const updateQueryParam = (key, value) => {
@@ -94,6 +78,12 @@ export const Shop = () => {
     setSearchParams(nextParams);
     setVisibleCount(ITEMS_PER_PAGE); // Reset pagination on filter change
   };
+
+  const setSelectedCategory = (val) => updateQueryParam('category', typeof val === 'function' ? val(selectedCategory) : val);
+  const setSelectedFilter = (val) => updateQueryParam('filter', typeof val === 'function' ? val(selectedFilter) : val);
+  const setSelectedSort = (val) => updateQueryParam('sort', typeof val === 'function' ? val(selectedSort) : val);
+  const setSelectedPrice = (val) => updateQueryParam('price', typeof val === 'function' ? val(selectedPrice) : val);
+  const setSearchQuery = (val) => updateQueryParam('search', typeof val === 'function' ? val(searchQuery) : val);
 
   // Build categories list with fallbacks
   const categories = useMemo(() => {
@@ -174,77 +164,71 @@ export const Shop = () => {
   }, [products]);
 
   // Multi-faceted filtering and sorting
-  const filteredProducts = useMemo(() => {
-    let result = [...products];
+  let filteredProducts = [...products];
 
-    // 1. Category Filter
-    if (selectedCategory !== 'all') {
-      const targetCat = selectedCategory.toLowerCase();
-      result = result.filter((p) => {
-        const catName = (typeof p.category === 'object' ? p.category?.name : p.category) || '';
-        const catSlug = (typeof p.category === 'object' ? p.category?.slug : p.category) || '';
-        const catId = (typeof p.category === 'object' ? p.category?._id : '') || '';
-        const combined = `${catName} ${catSlug} ${catId}`.toLowerCase();
-        return combined.includes(targetCat) || targetCat.includes(catSlug.toLowerCase());
+  // 1. Category Filter
+  if (selectedCategory !== 'all') {
+    const targetCat = selectedCategory.toLowerCase();
+    filteredProducts = filteredProducts.filter((p) => {
+      const catName = (typeof p.category === 'object' ? p.category?.name : p.category) || '';
+      const catSlug = (typeof p.category === 'object' ? p.category?.slug : p.category) || '';
+      const catId = (typeof p.category === 'object' ? p.category?._id : '') || '';
+      const combined = `${catName} ${catSlug} ${catId}`.toLowerCase();
+      return combined.includes(targetCat) || targetCat.includes(catSlug.toLowerCase());
+    });
+  }
+
+  // 2. Collection Filter (featured, new-arrivals, best-sellers, sale)
+  if (selectedFilter === 'featured') {
+    filteredProducts = filteredProducts.filter((p) => p.isFeatured || p.rating >= 4.5 || (p.reviewsCount && p.reviewsCount > 5));
+  } else if (selectedFilter === 'new-arrivals' || selectedFilter === 'recently-added') {
+    // Show newest items or items marked new
+    filteredProducts.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  } else if (selectedFilter === 'best-sellers') {
+    filteredProducts = filteredProducts.filter(
+      (p) => (p.soldCount && p.soldCount > 0) || (p.rating && p.rating >= 4.0) || p.isBestSeller
+    );
+  } else if (selectedFilter === 'sale') {
+    filteredProducts = filteredProducts.filter(
+      (p) => Boolean(p.discountPrice) || (p.originalPrice && p.originalPrice > (p.price || p.basePrice))
+    );
+  }
+
+  // 3. Price Filter
+  if (selectedPrice !== 'all') {
+    const activeRange = PRICE_RANGES.find((r) => r.id === selectedPrice);
+    if (activeRange) {
+      filteredProducts = filteredProducts.filter((p) => {
+        const price = Number(p.price ?? p.basePrice ?? p.discountPrice ?? 0);
+        return price >= activeRange.min && price <= activeRange.max;
       });
     }
+  }
 
-    // 2. Collection Filter (featured, new-arrivals, best-sellers, sale)
-    if (selectedFilter === 'featured') {
-      result = result.filter((p) => p.isFeatured || p.rating >= 4.5 || (p.reviewsCount && p.reviewsCount > 5));
-    } else if (selectedFilter === 'new-arrivals' || selectedFilter === 'recently-added') {
-      // Show newest items or items marked new
-      result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-    } else if (selectedFilter === 'best-sellers') {
-      result = result.filter(
-        (p) => (p.soldCount && p.soldCount > 0) || (p.rating && p.rating >= 4.0) || p.isBestSeller
-      );
-    } else if (selectedFilter === 'sale') {
-      result = result.filter(
-        (p) => Boolean(p.discountPrice) || (p.originalPrice && p.originalPrice > (p.price || p.basePrice))
-      );
-    }
+  // 4. Search Filter
+  if (searchQuery.trim()) {
+    const q = searchQuery.toLowerCase().trim();
+    filteredProducts = filteredProducts.filter((p) => {
+      const title = (p.title || p.name || '').toLowerCase();
+      const desc = (p.description || '').toLowerCase();
+      const brand = (p.brand || p.store?.name || p.storeName || '').toLowerCase();
+      return title.includes(q) || desc.includes(q) || brand.includes(q);
+    });
+  }
 
-    // 3. Price Filter
-    if (selectedPrice !== 'all') {
-      const activeRange = PRICE_RANGES.find((r) => r.id === selectedPrice);
-      if (activeRange) {
-        result = result.filter((p) => {
-          const price = Number(p.price ?? p.basePrice ?? p.discountPrice ?? 0);
-          return price >= activeRange.min && price <= activeRange.max;
-        });
-      }
-    }
-
-    // 4. Search Filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter((p) => {
-        const title = (p.title || p.name || '').toLowerCase();
-        const desc = (p.description || '').toLowerCase();
-        const brand = (p.brand || p.store?.name || p.storeName || '').toLowerCase();
-        return title.includes(q) || desc.includes(q) || brand.includes(q);
-      });
-    }
-
-    // 5. Client Sorting
-    if (selectedSort === 'price-low') {
-      result.sort((a, b) => (a.price || a.basePrice || 0) - (b.price || b.basePrice || 0));
-    } else if (selectedSort === 'price-high') {
-      result.sort((a, b) => (b.price || b.basePrice || 0) - (a.price || a.basePrice || 0));
-    } else if (selectedSort === 'rating') {
-      result.sort((a, b) => (b.rating || b.ratingsAverage || 0) - (a.rating || a.ratingsAverage || 0));
-    } else if (selectedSort === 'newest') {
-      result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-    }
-
-    return result;
-  }, [products, selectedCategory, selectedFilter, selectedPrice, searchQuery, selectedSort]);
+  // 5. Client Sorting
+  if (selectedSort === 'price-low') {
+    filteredProducts.sort((a, b) => (a.price || a.basePrice || 0) - (b.price || b.basePrice || 0));
+  } else if (selectedSort === 'price-high') {
+    filteredProducts.sort((a, b) => (b.price || b.basePrice || 0) - (a.price || a.basePrice || 0));
+  } else if (selectedSort === 'rating') {
+    filteredProducts.sort((a, b) => (b.rating || b.ratingsAverage || 0) - (a.rating || a.ratingsAverage || 0));
+  } else if (selectedSort === 'newest') {
+    filteredProducts.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  }
 
   // Paginated visible slice
-  const visibleProducts = useMemo(() => {
-    return filteredProducts.slice(0, visibleCount);
-  }, [filteredProducts, visibleCount]);
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
 
   const hasMore = visibleCount < filteredProducts.length;
 
@@ -444,7 +428,7 @@ export const Shop = () => {
       {/* Trust & Guarantee Pill */}
       <div className="bg-[#FAF9F6] p-3.5 border border-[#E5E3DF] space-y-1.5 rounded-sm">
         <span className="text-[9px] font-mono uppercase tracking-widest text-[#8E877F] font-bold block">
-          ATELIER ASSURANCE
+          OMNIKART ASSURANCE
         </span>
         <p className="text-[11px] font-sans text-[#666666] leading-relaxed">
           100% verified merchant credentials, authenticity guarantees, and worldwide insured transit.
@@ -464,7 +448,7 @@ export const Shop = () => {
           <div className="inline-flex items-center gap-2">
             <span className="w-4 h-[1px] bg-[#A39E93]" />
             <span className="text-[10px] font-mono uppercase tracking-[0.35em] text-[#A39E93]">
-              {selectedFilter !== 'all' ? selectedFilter.toUpperCase() : 'ATELIER CURATED CATALOGUE'}
+              {selectedFilter !== 'all' ? selectedFilter.toUpperCase() : 'OMNIKART CURATED CATALOGUE'}
             </span>
             <span className="w-4 h-[1px] bg-[#A39E93]" />
           </div>
@@ -495,7 +479,7 @@ export const Shop = () => {
             </button>
 
             <span className="text-[11px] font-mono uppercase tracking-[0.18em] text-[#8E877F]">
-              {loading ? 'Refreshing Catalog...' : `${filteredProducts.length} Atelier Masterpieces`}
+              {loading ? 'Refreshing Catalog...' : `${filteredProducts.length} Verified Products`}
             </span>
           </div>
 
@@ -745,7 +729,7 @@ export const Shop = () => {
                   </button>
                 ) : (
                   <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#8E877F]">
-                    All {filteredProducts.length} Atelier Creations Displayed
+                    All {filteredProducts.length} Products Displayed
                   </p>
                 )}
               </div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { adminApi } from '../../services/adminApi';
 import {
   Bell,
@@ -16,72 +16,6 @@ import {
   Filter,
   Info
 } from 'lucide-react';
-
-const initialNotifications = [
-  {
-    id: 1,
-    type: 'order',
-    title: 'New order received',
-    message: 'Order #ORD-4821 has been placed by Aarav Mehta.',
-    time: '2 minutes ago',
-    date: new Date(),
-    read: false
-  },
-  {
-    id: 2,
-    type: 'customer',
-    title: 'New customer registered',
-    message: 'Diya Shah created a new customer account.',
-    time: '12 minutes ago',
-    date: new Date(),
-    read: false
-  },
-  {
-    id: 3,
-    type: 'inventory',
-    title: 'Low stock warning',
-    message: 'Luxury Leather Handbag has only 5 units remaining.',
-    time: '28 minutes ago',
-    date: new Date(),
-    read: false
-  },
-  {
-    id: 4,
-    type: 'vendor',
-    title: 'Vendor approval required',
-    message: 'A new boutique vendor is waiting for onboarding review.',
-    time: '1 hour ago',
-    date: new Date(),
-    read: true
-  },
-  {
-    id: 5,
-    type: 'shipping',
-    title: 'Shipment delivered',
-    message: 'Shipment SHP-10020 was successfully delivered.',
-    time: '2 hours ago',
-    date: new Date(),
-    read: true
-  },
-  {
-    id: 6,
-    type: 'revenue',
-    title: 'Payment received',
-    message: '₹24,500 payment received for order #ORD-4817.',
-    time: '3 hours ago',
-    date: new Date(),
-    read: true
-  },
-  {
-    id: 7,
-    type: 'system',
-    title: 'Dashboard synchronization complete',
-    message: 'Latest MongoDB metrics have been synchronized.',
-    time: '5 hours ago',
-    date: new Date(),
-    read: true
-  }
-];
 
 const notificationConfig = {
   order: {
@@ -128,23 +62,29 @@ const Notifications = () => {
   const [search, setSearch] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
-      setIsLoading(true);
-
       const response = await adminApi.getNotifications();
-
       setNotifications(response.notifications || []);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    let ignore = false;
+    async function load() {
+      if (!ignore) {
+        await fetchNotifications();
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, [fetchNotifications]);
 
   const unreadCount = notifications.filter(
     (notification) => !notification.read
@@ -408,7 +348,14 @@ const Notifications = () => {
 
         {/* Notification List */}
         <div className="divide-y divide-slate-100">
-          {filteredNotifications.length === 0 ? (
+          {isLoading ? (
+            <div className="p-14 text-center">
+              <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin mx-auto mb-3" />
+              <p className="font-semibold text-slate-600 text-sm">
+                Loading Notifications...
+              </p>
+            </div>
+          ) : filteredNotifications.length === 0 ? (
             <div className="p-14 text-center">
               <Bell className="w-9 h-9 text-slate-300 mx-auto mb-3" />
               <p className="font-semibold text-slate-600 text-sm">

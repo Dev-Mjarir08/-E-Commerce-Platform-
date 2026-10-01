@@ -24,7 +24,7 @@ const VendorSidebar = ({ isOpen, onClose }) => {
   const { user, store, metrics } = useSelector((state) => state.vendor || {});
   const { user: authUser } = useSelector((state) => state.auth || {});
 
-  const storeName = store?.name || 'Atelier Store';
+  const storeName = store?.name || 'OmniKart Merchant Store';
   const vendorName = user?.name || authUser?.name || 'Vendor Partner';
 
   const isActive = (path) => {

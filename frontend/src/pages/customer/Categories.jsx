@@ -64,12 +64,15 @@ const getProducts = (adminProducts, shopProducts = []) => {
 
 export const Categories = () => {
   const navigate = useNavigate();
-  const { products: shopProducts, categories: shopCategories = [] } = useShopData();
+  const {
+    products: shopProducts,
+    categories: shopCategories = [],
+    loading: isLoading,
+    error: loadError,
+  } = useShopData();
   const adminProducts = useSelector((state) => state.products?.items || []);
   const [searchTerm, setSearchTerm] = useState("");
   const [priceRange, setPriceRange] = useState("all");
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadError, setLoadError] = useState("");
   const [toast, setToast] = useState("");
 
   const products = useMemo(() => getProducts(adminProducts, shopProducts), [adminProducts, shopProducts]);

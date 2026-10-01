@@ -115,7 +115,7 @@ export default function VendorOrderDetails() {
     try {
       await vendorApi.updateOrderStatus(order._id || id, newStatus);
       setOrder((prev) => ({ ...prev, orderStatus: newStatus }));
-    } catch (err) {
+    } catch {
       setOrder((prev) => ({ ...prev, orderStatus: newStatus }));
     } finally {
       setUpdating(false);

@@ -67,7 +67,7 @@ const mapOrderToShipment = (order) => {
     : 0;
 
   // Map backend status to UI label
-  let uiStatus = "Processing";
+  let uiStatus;
   const rawStatus = String(order.orderStatus || "").toLowerCase();
   if (rawStatus === "shipped") {
     uiStatus = "In Transit";

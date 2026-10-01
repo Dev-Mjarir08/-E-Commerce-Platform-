@@ -137,7 +137,7 @@ export const toggleCouponStatus = createAsyncThunk(
         return rejectWithValue('Coupon not found.');
       }
 
-      const nextIsActive = !Boolean(coupon.isActive);
+      const nextIsActive = !coupon.isActive;
 
       const response = await couponApi.updateCoupon(id, {
         isActive: nextIsActive

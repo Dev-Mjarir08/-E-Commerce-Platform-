@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import {
@@ -62,7 +62,7 @@ const Products = () => {
 
   // State
   const [productList, setProductList] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiNotice, setApiNotice] = useState(null); // { type: 'success' | 'error', text: '' }
 
@@ -133,14 +133,14 @@ const Products = () => {
   };
 
   const [formData, setFormData] = useState(initialFormState);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [newTagInput, setNewTagInput] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
   const [selectedImageFiles, setSelectedImageFiles] = useState([]); // Raw files for multer
   const [formErrors, setFormErrors] = useState({});
 
   // Fetch products from backend API (requests up to 100 items for catalog)
-  const fetchProducts = async () => {
-    setIsLoading(true);
+  const fetchProducts = useCallback(async () => {
     try {
       const res = await adminApi.getProducts({ limit: 100 });
       const items = Array.isArray(res?.data)
@@ -161,17 +161,26 @@ const Products = () => {
     } catch (err) {
       console.warn("Backend products fetch notice:", err.message);
       // Fallback to local Redux items if server is offline
-      if (reduxProducts.length > 0 && productList.length === 0) {
+      if (reduxProducts.length > 0) {
         setProductList(reduxProducts);
       }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dispatch, reduxProducts]);
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    let ignore = false;
+    async function load() {
+      if (!ignore) {
+        await fetchProducts();
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, [fetchProducts]);
 
   // Filtered Products
   const filteredProducts = useMemo(() => {
@@ -542,7 +551,7 @@ const Products = () => {
     let parsed;
     try {
       parsed = JSON.parse(bulkJsonInput);
-    } catch (e) {
+    } catch {
       modalAlert({
         title: "Invalid JSON Format",
         message: "Please verify valid JSON syntax before proceeding.",
@@ -623,7 +632,7 @@ const Products = () => {
           type: "info",
           text: `Loaded file "${file.name}" with ${count} product(s).`,
         });
-      } catch (err) {
+      } catch {
         modalAlert({
           title: "File Upload Error",
           message: "Uploaded file is not valid JSON syntax.",
@@ -852,20 +861,19 @@ const Products = () => {
         data.append("images", file);
       });
 
-      let res;
       // Only call update if editingProduct has a valid MongoDB _id
       const hasMongoId =
         editingProduct &&
         editingProduct._id &&
         String(editingProduct._id).length === 24;
       if (hasMongoId) {
-        res = await adminApi.updateProduct(editingProduct._id, data);
+        await adminApi.updateProduct(editingProduct._id, data);
         setApiNotice({
           type: "success",
           text: "Product updated successfully in MongoDB!",
         });
       } else {
-        res = await adminApi.createProduct(data);
+        await adminApi.createProduct(data);
         setApiNotice({
           type: "success",
           text: "Product created and media uploaded successfully!",

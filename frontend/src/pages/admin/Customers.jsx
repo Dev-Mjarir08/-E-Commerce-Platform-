@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -17,7 +17,6 @@ import {
 import {
   fetchCustomers,
   updateCustomerStatus,
-  deleteCustomer,
   clearCustomerError
 } from "../../redux/slices/customerSlice";
 
@@ -39,7 +38,7 @@ const Customers = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
 
   // Fetch customers with current filters
-  const loadCustomers = () => {
+  const loadCustomers = useCallback(() => {
     dispatch(
       fetchCustomers({
         search: searchTerm.trim() || undefined,
@@ -49,7 +48,7 @@ const Customers = () => {
         limit: 50
       })
     );
-  };
+  }, [dispatch, searchTerm, selectedTier, selectedStatus, pagination.page]);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -57,7 +56,7 @@ const Customers = () => {
     }, 350);
 
     return () => clearTimeout(delayDebounce);
-  }, [searchTerm, selectedTier, selectedStatus, dispatch]);
+  }, [loadCustomers]);
 
   const handleToggleStatus = (e, customer) => {
     e.stopPropagation();

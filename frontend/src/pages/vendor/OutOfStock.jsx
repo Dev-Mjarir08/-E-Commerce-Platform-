@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import inventoryApi from "../../services/inventoryApi";
 import { useModal } from "../../context/ModalContext";
 import {
@@ -103,35 +103,33 @@ export default function OutOfStock() {
     },
   ]);
 
-  const fetchOutOfStock = useCallback(async () => {
-    try {
-      const res = await inventoryApi.getOutOfStock();
-      const list = res?.data?.products || res?.products || res?.data;
-      if (Array.isArray(list) && list.length > 0) {
-        setOutOfStockItems(list.map((p) => ({
-          id: p._id || p.id,
-          name: p.title || p.name,
-          sku: p.sku || `SKU-${p._id?.slice(-4)}`,
-          category: p.category?.name || p.category || "General",
-          lastStockedDate: p.updatedAt ? new Date(p.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Recently",
-          daysOutOfStock: 1,
-          estimatedLostRevenue: `₹${(p.basePrice || p.price || 500) * 5}`,
-          backorderRequests: 0,
-          supplier: p.brand || "Atelier Supplier",
-          supplierEmail: "supplier@atelier.com",
-          unitCost: `₹${p.basePrice || p.price || 0}`,
-          suggestedRestock: 50,
-          image: p.images?.[0]?.url || p.image || "https://images.unsplash.com/photo-1544816155-12df9643f363?w=100&auto=format&fit=crop&q=80"
-        })));
-      }
-    } catch {
-      // Keep fallback
-    }
-  }, []);
-
   useEffect(() => {
-    fetchOutOfStock();
-  }, [fetchOutOfStock]);
+    let active = true;
+    inventoryApi.getOutOfStock()
+      .then((res) => {
+        if (!active) return;
+        const list = res?.data?.products || res?.products || res?.data;
+        if (Array.isArray(list) && list.length > 0) {
+          setOutOfStockItems(list.map((p) => ({
+            id: p._id || p.id,
+            name: p.title || p.name,
+            sku: p.sku || `SKU-${p._id?.slice(-4)}`,
+            category: p.category?.name || p.category || "General",
+            lastStockedDate: p.updatedAt ? new Date(p.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Recently",
+            daysOutOfStock: 1,
+            estimatedLostRevenue: `₹${(p.basePrice || p.price || 500) * 5}`,
+            backorderRequests: 0,
+            supplier: p.brand || "Atelier Supplier",
+            supplierEmail: "supplier@atelier.com",
+            unitCost: `₹${p.basePrice || p.price || 0}`,
+            suggestedRestock: 50,
+            image: p.images?.[0]?.url || p.image || "https://images.unsplash.com/photo-1544816155-12df9643f363?w=100&auto=format&fit=crop&q=80"
+          })));
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   // Aggregate Calculations
   const totalOut = outOfStockItems.length;
@@ -191,7 +189,9 @@ export default function OutOfStock() {
             quantity: qty,
             reason: "Bulk vendor zero-stock replenishment"
           });
-        } catch {}
+        } catch {
+          // Continue bulk restocking remaining items
+        }
       }
       setOutOfStockItems((prev) => prev.filter((p) => !selectedItems.includes(p.id)));
       modalAlert({

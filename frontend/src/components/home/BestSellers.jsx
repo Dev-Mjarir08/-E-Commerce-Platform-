@@ -7,22 +7,19 @@ import { ProductCard } from '../product/ProductCard';
 
 export const BestSellers = ({ onQuickView, onShowToast }) => {
   const { products: contextProducts } = useShopData();
-  const [bestSellerProducts, setBestSellerProducts] = useState(() => (
-    Array.isArray(contextProducts) && contextProducts.length > 0 ? contextProducts : []
-  ));
-  const [loading, setLoading] = useState(() => (
-    !Array.isArray(contextProducts) || contextProducts.length === 0
-  ));
+  const [apiProducts, setApiProducts] = useState(null);
+  const [isFetching, setIsFetching] = useState(true);
   const [activeTab, setActiveTab] = useState('ALL');
 
   const tabs = ['ALL', 'ELECTRONICS', 'CLOTHING', 'ACCESSORIES', 'FOOTWEAR'];
 
-  useEffect(() => {
-    if (Array.isArray(contextProducts) && contextProducts.length > 0) {
-      setBestSellerProducts(contextProducts);
-      setLoading(false);
-    }
-  }, [contextProducts]);
+  const bestSellerProducts = useMemo(() => {
+    if (Array.isArray(apiProducts) && apiProducts.length > 0) return apiProducts;
+    if (Array.isArray(contextProducts) && contextProducts.length > 0) return contextProducts;
+    return [];
+  }, [apiProducts, contextProducts]);
+
+  const loading = isFetching && bestSellerProducts.length === 0;
 
   useEffect(() => {
     let isCancelled = false;
@@ -32,19 +29,14 @@ export const BestSellers = ({ onQuickView, onShowToast }) => {
         const res = await productApi.getProducts({ limit: 16 });
         const list = res?.data || res?.products;
         if (!isCancelled && Array.isArray(list) && list.length > 0) {
-          setBestSellerProducts(list);
-          setLoading(false);
-          return;
+          setApiProducts(list);
         }
       } catch (err) {
         console.warn('API error fetching best sellers, using context:', err);
-      }
-
-      if (!isCancelled) {
-        if (contextProducts && contextProducts.length > 0) {
-          setBestSellerProducts(contextProducts);
+      } finally {
+        if (!isCancelled) {
+          setIsFetching(false);
         }
-        setLoading(false);
       }
     };
 
@@ -53,7 +45,7 @@ export const BestSellers = ({ onQuickView, onShowToast }) => {
     return () => {
       isCancelled = true;
     };
-  }, [contextProducts]);
+  }, []);
 
   const filteredProducts = useMemo(() => {
     if (activeTab === 'ALL') return bestSellerProducts.slice(0, 8);

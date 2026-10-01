@@ -131,7 +131,7 @@ export const ProductDetails = () => {
           <div className="text-center space-y-3">
             <div className="w-8 h-8 border-2 border-[#111111] border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-xs font-mono uppercase tracking-[0.2em] text-[#666666]">
-              Retrieving Atelier Creation...
+              Retrieving Product Details...
             </p>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import bannerApi from "../../services/bannerApi";
 import { useModal } from "../../context/ModalContext";
 import {
@@ -96,33 +96,36 @@ const Banners = () => {
   const [selectedBanner, setSelectedBanner] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  const fetchLiveBanners = useCallback(async () => {
-    try {
-      const res = await bannerApi.getBanners();
-      const list = res?.data || res;
-      if (Array.isArray(list) && list.length > 0) {
-        setBanners(list.map((b, idx) => ({
-          ...b,
-          id: b._id || b.id || idx + 1,
-          title: b.title,
-          subtitle: b.subtitle || "",
-          placement: b.placement || "Homepage Hero",
-          status: b.status || (b.isActive ? "published" : "draft"),
-          position: b.position ?? idx + 1,
-          startDate: b.startDate ? new Date(b.startDate).toISOString().split('T')[0] : "2026-09-01",
-          endDate: b.endDate ? new Date(b.endDate).toISOString().split('T')[0] : "2026-10-31",
-          clicks: b.clicks || 0,
-          image: b.image?.url || (typeof b.image === 'string' ? b.image : "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?auto=format&fit=crop&w=1200&q=80")
-        })));
-      }
-    } catch {
-      // Keep initial banners fallback
-    }
-  }, []);
-
   useEffect(() => {
-    fetchLiveBanners();
-  }, [fetchLiveBanners]);
+    let ignore = false;
+    async function load() {
+      try {
+        const res = await bannerApi.getBanners();
+        const list = res?.data || res;
+        if (!ignore && Array.isArray(list) && list.length > 0) {
+          setBanners(list.map((b, idx) => ({
+            ...b,
+            id: b._id || b.id || idx + 1,
+            title: b.title,
+            subtitle: b.subtitle || "",
+            placement: b.placement || "Homepage Hero",
+            status: b.status || (b.isActive ? "published" : "draft"),
+            position: b.position ?? idx + 1,
+            startDate: b.startDate ? new Date(b.startDate).toISOString().split('T')[0] : "2026-09-01",
+            endDate: b.endDate ? new Date(b.endDate).toISOString().split('T')[0] : "2026-10-31",
+            clicks: b.clicks || 0,
+            image: b.image?.url || (typeof b.image === 'string' ? b.image : "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?auto=format&fit=crop&w=1200&q=80")
+          })));
+        }
+      } catch {
+        // Keep initial banners fallback
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const [form, setForm] = useState({
     title: "",
@@ -225,7 +228,9 @@ const Banners = () => {
         status: nextStatus,
         isActive: nextStatus === "published"
       });
-    } catch {}
+    } catch {
+      // Ignore update error and proceed with local optimistic update
+    }
 
     setBanners((current) =>
       current.map((banner) =>
@@ -252,7 +257,9 @@ const Banners = () => {
 
     try {
       await bannerApi.deleteBanner(id);
-    } catch {}
+    } catch {
+      // Ignore delete error and proceed with local deletion
+    }
     setBanners((current) => current.filter((banner) => banner.id !== id));
   };
 

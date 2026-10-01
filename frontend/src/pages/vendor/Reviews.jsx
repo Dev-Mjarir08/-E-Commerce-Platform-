@@ -113,7 +113,6 @@ export default function VendorReviews() {
   const [toastMessage, setToastMessage] = useState(null);
 
   const fetchReviews = async () => {
-    setLoading(true);
     try {
       const response = await vendorApi.getReviews();
       const data = response?.data?.reviews || response?.reviews || response?.data;
@@ -128,7 +127,22 @@ export default function VendorReviews() {
   };
 
   useEffect(() => {
-    fetchReviews();
+    let active = true;
+    vendorApi.getReviews()
+      .then((response) => {
+        if (!active) return;
+        const data = response?.data?.reviews || response?.reviews || response?.data;
+        if (Array.isArray(data) && data.length > 0) {
+          setReviews(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Using local fallback reviews:', err);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
   }, []);
 
   const handleOpenReply = (review) => {
@@ -162,7 +176,7 @@ export default function VendorReviews() {
       );
       setToastMessage('Reply submitted successfully.');
       setReplyModalOpen(false);
-    } catch (err) {
+    } catch {
       // Local optimistic update
       setReviews((prev) =>
         prev.map((r) =>
@@ -198,7 +212,7 @@ export default function VendorReviews() {
       await vendorApi.deleteReview(id);
       setReviews((prev) => prev.filter((r) => r._id !== id));
       setToastMessage('Review removed.');
-    } catch (err) {
+    } catch {
       setReviews((prev) => prev.filter((r) => r._id !== id));
       setToastMessage('Review removed (local).');
     } finally {

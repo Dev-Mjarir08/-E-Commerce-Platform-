@@ -164,19 +164,12 @@ const formatCurrency = (value) =>
 export const OrderTracking = () => {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(() => Boolean(id?.trim()));
+  const [error, setError] = useState(() => (!id?.trim() ? "A valid order reference is required to open tracking." : null));
 
   useEffect(() => {
+    if (!id?.trim()) return;
     let isMounted = true;
-    if (!id?.trim()) {
-      setError("A valid order reference is required to open tracking.");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
 
     orderApi.getTracking(id)
       .then((res) => {

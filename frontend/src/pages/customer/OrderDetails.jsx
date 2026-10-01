@@ -42,7 +42,6 @@ export const OrderDetails = () => {
   }, [triggerToast]);
 
   const fetchOrderDetails = useCallback(async () => {
-    setLoading(true);
     try {
       const response = await orderApi.getOrderById(id);
       const data = response?.data?.order || response?.data || response?.order || response;
@@ -59,10 +58,27 @@ export const OrderDetails = () => {
   }, [id, showToast]);
 
   useEffect(() => {
+    let active = true;
     if (id) {
-      fetchOrderDetails();
+      orderApi.getOrderById(id)
+        .then((response) => {
+          if (!active) return;
+          const data = response?.data?.order || response?.data || response?.order || response;
+          if (data && (data._id || data.orderNumber)) {
+            setOrder(data);
+          } else {
+            showToast('error', response?.message || 'Order not found');
+          }
+        })
+        .catch((error) => {
+          if (active) showToast('error', error.message || 'Failed to retrieve order details.');
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
     }
-  }, [id, fetchOrderDetails]);
+    return () => { active = false; };
+  }, [id, showToast]);
 
   const handleCancelOrder = async (e) => {
     e.preventDefault();

@@ -70,6 +70,37 @@ export const storeApi = {
   // PATCH /api/stores/:id/verification - Admin: Update store verification
   async updateStoreVerification(id, isVerified) {
     return api.patch(`/stores/${id}/verification`, { isVerified });
+  },
+
+  // Public: Get stores with optional query params
+  async getStores(params = {}) {
+    try {
+      const res = await api.get('/stores', { params });
+      return res.data?.data || res.data?.stores || res.data || (Array.isArray(res) ? res : []);
+    } catch (err) {
+      console.warn('getStores error:', err);
+      return [];
+    }
+  },
+
+  // Public: Get store by slug
+  async getStoreBySlug(slug) {
+    try {
+      const res = await api.get(`/stores/slug/${slug}`);
+      return res.data?.data || res.data?.store || res.data || null;
+    } catch {
+      return null;
+    }
+  },
+
+  // Public: Get products for a store by slug
+  async getStoreProducts(slug) {
+    try {
+      const res = await api.get('/products', { params: { store: slug } });
+      return res.data?.data || res.data?.products || (Array.isArray(res) ? res : []);
+    } catch {
+      return [];
+    }
   }
 };
 

@@ -68,7 +68,6 @@ export default function VendorInventory() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedItem, setSelectedItem] = useState(null);
   const [restockAmount, setRestockAmount] = useState("");
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     inventoryApi.getInventory().then((res) => {

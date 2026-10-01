@@ -120,11 +120,11 @@ const cartSlice = createSlice({
         return;
       }
       const code = String(action.payload).trim().toUpperCase();
-      if (code === 'M4M10' || code === 'WELCOME10' || code === 'ATELIER10') {
+      if (code === 'M4M10' || code === 'WELCOME10' || code === 'ATELIER10' || code === 'OMNIKART10' || code === 'OMNI10') {
         state.promoCode = code;
         state.discountPercent = 10;
         state.appliedCoupon = { code, discountType: 'percentage', discountValue: 10 };
-      } else if (code === 'PRIVILEGE20' || code === 'VIP20') {
+      } else if (code === 'PRIVILEGE20' || code === 'VIP20' || code === 'OMNIKART20' || code === 'OMNI20') {
         state.promoCode = code;
         state.discountPercent = 20;
         state.appliedCoupon = { code, discountType: 'percentage', discountValue: 20 };

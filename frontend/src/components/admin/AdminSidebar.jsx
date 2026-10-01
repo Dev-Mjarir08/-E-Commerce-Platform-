@@ -185,15 +185,15 @@ const AdminSidebar = ({
       <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="w-10 h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-sm">
-            M4
+            OK
           </div>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0">
               <span className="font-bold text-white tracking-wide text-sm truncate">
-                M4M PLATFORM
+                OMNIKART
               </span>
               <span className="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">
-                Admin Portal
+                Admin Suite
               </span>
             </div>
           )}

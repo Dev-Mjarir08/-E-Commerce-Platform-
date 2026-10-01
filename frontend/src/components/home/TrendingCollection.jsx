@@ -55,6 +55,7 @@ export const TrendingCollection = ({ onShopCollection }) => {
           <div>
             <Link
               to="/shop?filter=featured"
+              onClick={onShopCollection}
               className="inline-flex items-center gap-2.5 bg-[#111111] text-m4m-bg text-[11px] font-mono uppercase tracking-[0.22em] px-8 py-4 hover:bg-[#2B2B2B] transition-all duration-300 group"
             >
               <span>SHOP FEATURED COLLECTION</span>

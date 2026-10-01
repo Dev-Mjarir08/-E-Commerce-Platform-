@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -23,13 +23,12 @@ const Reviews = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedRating, setSelectedRating] = useState("all");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
   const [error, setError] = useState("");
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
-      setLoading(true);
       setError("");
 
       const response = await adminApi.getAdminReviews({
@@ -50,11 +49,20 @@ const Reviews = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedStatus, selectedRating]);
 
   useEffect(() => {
-    fetchReviews();
-  }, [selectedStatus, selectedRating]);
+    let ignore = false;
+    async function load() {
+      if (!ignore) {
+        await fetchReviews();
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, [fetchReviews]);
 
   const filteredReviews = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();

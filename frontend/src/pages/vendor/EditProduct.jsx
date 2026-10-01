@@ -299,9 +299,10 @@ export default function EditProduct({ onBack }) {
             </button>
             <button
               onClick={handleSave}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all cursor-pointer"
+              disabled={saving}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/10 active:scale-95 transition-all cursor-pointer disabled:opacity-60"
             >
-              <FaSave className="text-xs" /> Save Changes
+              <FaSave className="text-xs" /> {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>

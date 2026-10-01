@@ -9,7 +9,7 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
   const dispatch = useDispatch();
   const cartItems = useSelector((state) => state.cart.items);
   const wishlistItems = useSelector((state) => state.wishlist.items);
-  const { user, isAuthenticated } = useSelector((state) => state.auth || {});
+  const { user } = useSelector((state) => state.auth || {});
 
   const totalCartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const totalWishlistCount = wishlistItems.length;
@@ -57,10 +57,10 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
 
           <Link to="/" className="flex flex-col group shrink-0">
             <h1 className="font-serif text-2xl sm:text-3xl tracking-[0.2em] uppercase text-[#111111] font-normal leading-none">
-              ATELIER
+              OMNIKART
             </h1>
             <span className="block text-[8px] sm:text-[9px] font-mono tracking-[0.3em] text-[#8E877F] uppercase mt-1 group-hover:text-[#111111] transition-colors">
-              CURATED GLOBAL MARKETPLACE
+              MULTI-VENDOR MARKETPLACE
             </span>
           </Link>
         </div>
@@ -104,6 +104,7 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
           {/* Wishlist Button */}
           <Link
             to="/wishlist"
+            onClick={onOpenWishlist}
             className="h-9 w-9 rounded-full hover:bg-[#111111]/5 transition-colors flex items-center justify-center relative"
             aria-label="Wishlist"
             title="Wishlist Archive"
@@ -229,9 +230,9 @@ export const Navbar = ({ onOpenSearch, onOpenWishlist }) => {
           <div>
             <div className="flex justify-between items-center pb-5 border-b border-[#E5E3DF] mb-6">
               <div>
-                <h2 className="font-serif text-xl tracking-widest uppercase">ATELIER</h2>
+                <h2 className="font-serif text-xl tracking-widest uppercase">OMNIKART</h2>
                 <span className="text-[9px] font-mono tracking-widest text-[#8E877F] uppercase">
-                  INDEPENDENT FASHION
+                  MULTI-VENDOR MARKETPLACE
                 </span>
               </div>
               <button

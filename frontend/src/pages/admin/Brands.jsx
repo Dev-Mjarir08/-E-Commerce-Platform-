@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import brandApi from "../../services/brandApi";
 import { useModal } from "../../context/ModalContext";
 import {
@@ -119,32 +119,35 @@ const Brands = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingBrand, setEditingBrand] = useState(null);
 
-  const fetchLiveBrands = useCallback(async () => {
-    try {
-      const res = await brandApi.getBrands();
-      const list = res?.data || res;
-      if (Array.isArray(list) && list.length > 0) {
-        setBrands(list.map((b) => ({
-          ...b,
-          id: b._id || b.id,
-          name: b.name,
-          slug: b.slug,
-          category: b.category || "General",
-          products: b.productCount || b.products || 0,
-          status: b.isActive === false || b.status === "inactive" ? "inactive" : "active",
-          featured: Boolean(b.isFeatured ?? b.featured),
-          description: b.description || "",
-          logo: b.logo || b.name?.charAt(0)?.toUpperCase() || "B"
-        })));
-      }
-    } catch {
-      // Keep initial brands fallback
-    }
-  }, []);
-
   useEffect(() => {
-    fetchLiveBrands();
-  }, [fetchLiveBrands]);
+    let ignore = false;
+    async function load() {
+      try {
+        const res = await brandApi.getBrands();
+        const list = res?.data || res;
+        if (!ignore && Array.isArray(list) && list.length > 0) {
+          setBrands(list.map((b) => ({
+            ...b,
+            id: b._id || b.id,
+            name: b.name,
+            slug: b.slug,
+            category: b.category || "General",
+            products: b.productCount || b.products || 0,
+            status: b.isActive === false || b.status === "inactive" ? "inactive" : "active",
+            featured: Boolean(b.isFeatured ?? b.featured),
+            description: b.description || "",
+            logo: b.logo || b.name?.charAt(0)?.toUpperCase() || "B"
+          })));
+        }
+      } catch {
+        // Keep initial brands fallback
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const [form, setForm] = useState({
     name: "",
@@ -277,7 +280,9 @@ const Brands = () => {
     const nextStatus = brand?.status === "active" ? "inactive" : "active";
     try {
       await brandApi.updateBrand(id, { status: nextStatus, isActive: nextStatus === "active" });
-    } catch {}
+    } catch {
+      // Ignore update error and proceed with local update
+    }
     setBrands((current) =>
       current.map((b) =>
         b.id === id ? { ...b, status: nextStatus } : b
@@ -290,7 +295,9 @@ const Brands = () => {
     const nextFeatured = !brand?.featured;
     try {
       await brandApi.updateBrand(id, { featured: nextFeatured, isFeatured: nextFeatured });
-    } catch {}
+    } catch {
+      // Ignore update error and proceed with local update
+    }
     setBrands((current) =>
       current.map((b) =>
         b.id === id ? { ...b, featured: nextFeatured } : b
@@ -314,7 +321,9 @@ const Brands = () => {
 
     try {
       await brandApi.deleteBrand(id);
-    } catch {}
+    } catch {
+      // Ignore delete error and proceed with local delete
+    }
     setBrands((current) => current.filter((item) => item.id !== id));
   };
 

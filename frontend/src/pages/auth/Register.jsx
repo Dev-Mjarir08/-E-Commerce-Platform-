@@ -182,10 +182,10 @@ const Register = () => {
 
           <Link to="/" className="text-center group">
             <h1 className="font-serif text-2xl sm:text-3xl tracking-[0.2em] uppercase text-[#111111] font-normal leading-none">
-              ATELIER
+              OMNIKART
             </h1>
             <span className="block text-[8px] font-mono tracking-[0.35em] text-[#8E877F] uppercase mt-1">
-              INDEPENDENT FASHION SAAS
+              MULTI-VENDOR MARKETPLACE
             </span>
           </Link>
 
@@ -212,7 +212,7 @@ const Register = () => {
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 bg-[#FFFFFF]/15 backdrop-blur-md border border-white/20 px-3 py-1.5 text-[9px] font-mono uppercase tracking-[0.25em] text-[#F8F7F4]">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>ATELIER MEMBERSHIP COLLECTIVE</span>
+                <span>OMNIKART SELLER & SHOPPER COLLECTIVE</span>
               </div>
               <h2 className="font-serif text-4xl xl:text-5xl font-normal tracking-tight uppercase leading-tight text-[#FFFFFF]">
                 Join the <br />
@@ -709,8 +709,8 @@ const Register = () => {
                     className="w-3.5 h-3.5 text-[#111111] border-[#E5E3DF] rounded-none focus:ring-0 cursor-pointer accent-[#111111] mt-0.5"
                   />
                   <span className="text-[11px] text-[#666666] font-sans leading-relaxed">
-                    I agree to the Atelier{' '}
-                    <span className="text-[#111111] underline">Terms of Privilege</span> &{' '}
+                    I agree to the OmniKart{' '}
+                    <span className="text-[#111111] underline">Terms of Service</span> &{' '}
                     <span className="text-[#111111] underline">Privacy Policy</span>.
                   </span>
                 </label>
@@ -731,8 +731,8 @@ const Register = () => {
                   <>
                     <span>
                       {accountType === 'vendor'
-                        ? 'ESTABLISH ATELIER STOREFRONT'
-                        : 'REGISTER CLIENT MEMBERSHIP'}
+                        ? 'ESTABLISH SELLER STOREFRONT'
+                        : 'REGISTER CLIENT ACCOUNT'}
                     </span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </>
@@ -743,7 +743,7 @@ const Register = () => {
             {/* Login Switch Link */}
             <div className="mt-8 pt-6 border-t border-[#E5E3DF] text-center space-y-3">
               <p className="text-xs text-[#666666] font-sans">
-                Already registered with Atelier?
+                Already registered with OmniKart?
               </p>
               <Link
                 to="/login"
@@ -758,7 +758,7 @@ const Register = () => {
 
       {/* Footer */}
       <footer className="border-t border-[#E5E3DF] py-4 px-4 text-center text-[10px] font-mono uppercase tracking-widest text-[#8E877F] bg-[#FAF9F6]">
-        SECURE 256-BIT ENCRYPTION • ATELIER GLOBAL CONCIERGE
+        SECURE 256-BIT ENCRYPTION • OMNIKART GLOBAL SUPPORT
       </footer>
     </div>
   );

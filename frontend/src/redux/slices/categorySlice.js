@@ -207,7 +207,7 @@ export const toggleCategoryStatus = createAsyncThunk(
         );
 
       const nextIsActive =
-        !Boolean(category?.isActive);
+        !category?.isActive;
 
       const response =
         await categoryService.updateCategoryStatus(

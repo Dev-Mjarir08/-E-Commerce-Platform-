@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -31,8 +31,7 @@ const VendorDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchVendorDetails = async () => {
-    setIsLoading(true);
+  const fetchVendorDetails = useCallback(async () => {
     setError(null);
     try {
       const response = await adminApi.getVendorById(id);
@@ -48,12 +47,32 @@ const VendorDetails = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
+    let active = true;
     if (id) {
-      fetchVendorDetails();
+      adminApi.getVendorById(id)
+        .then((response) => {
+          if (!active) return;
+          const resData = response?.data || response;
+          if (resData && (resData.user || resData.store)) {
+            setData(resData);
+          } else {
+            setError('Vendor record could not be loaded from database.');
+          }
+        })
+        .catch((err) => {
+          if (active) {
+            console.error('Error fetching vendor details:', err);
+            setError(err?.message || 'Failed to load vendor details from backend.');
+          }
+        })
+        .finally(() => {
+          if (active) setIsLoading(false);
+        });
     }
+    return () => { active = false; };
   }, [id]);
 
   const getStatusBadge = (status) => {

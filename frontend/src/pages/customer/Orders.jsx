@@ -28,27 +28,24 @@ export const Orders = () => {
     triggerToast(text, type);
   }, [triggerToast]);
 
-  const fetchOrders = useCallback(async (status) => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (status && status !== 'all') {
-        params.status = status;
-      }
-      const response = await orderApi.getMyOrders(params);
-      if (response && response.data) {
-        setOrders(response.data.orders || []);
-      }
-    } catch (error) {
-      showToast('error', error.message || 'Failed to fetch order history.');
-    } finally {
-      setLoading(false);
-    }
-  }, [showToast]);
 
   useEffect(() => {
-    fetchOrders(selectedStatus);
-  }, [fetchOrders, selectedStatus]);
+    let active = true;
+    const params = selectedStatus && selectedStatus !== 'all' ? { status: selectedStatus } : {};
+    orderApi.getMyOrders(params)
+      .then((response) => {
+        if (active && response && response.data) {
+          setOrders(response.data.orders || []);
+        }
+      })
+      .catch((error) => {
+        if (active) showToast('error', error.message || 'Failed to fetch order history.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, [selectedStatus, showToast]);
 
   const getStatusBadge = (status) => {
     switch (status) {

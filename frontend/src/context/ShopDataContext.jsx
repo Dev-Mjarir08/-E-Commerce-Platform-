@@ -12,7 +12,9 @@ const getStoredProducts = () => {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
-  } catch {}
+  } catch {
+    // Ignore storage parse errors
+  }
   return [];
 };
 
@@ -25,8 +27,6 @@ export const ShopDataProvider = ({ children }) => {
 
   // Initial load of live catalog data from MongoDB
   const loadInitialData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
     try {
       const [productRes, categoryRes, storeRes] = await Promise.allSettled([
         productApi.getProducts({ limit: 100 }),
@@ -86,7 +86,13 @@ export const ShopDataProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    loadInitialData();
+    let ignore = false;
+    async function init() {
+      if (!ignore) {
+        await loadInitialData();
+      }
+    }
+    init();
 
     const handleUpdate = () => {
       loadInitialData();
@@ -96,6 +102,7 @@ export const ShopDataProvider = ({ children }) => {
     window.addEventListener('focus', handleUpdate);
 
     return () => {
+      ignore = true;
       window.removeEventListener('shop:products-updated', handleUpdate);
       window.removeEventListener('focus', handleUpdate);
     };

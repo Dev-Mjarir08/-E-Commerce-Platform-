@@ -256,7 +256,7 @@ export const CartDrawer = ({ onOpenCheckout }) => {
                     type="text"
                     value={promoInput}
                     onChange={(e) => setPromoInput(e.target.value)}
-                    placeholder="PROMO CODE (e.g. ZALIMA789)"
+                    placeholder="PROMO CODE (e.g. OMNIKART10)"
                     disabled={isApplying}
                     className="flex-1 text-[11px] font-mono uppercase tracking-wider px-3 py-2 border border-[#E5E3DF] focus:outline-none focus:border-[#111111] bg-[#F8F7F4]"
                   />

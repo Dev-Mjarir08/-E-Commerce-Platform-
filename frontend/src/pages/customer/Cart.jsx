@@ -423,7 +423,7 @@ export const Cart = () => {
                       type="text"
                       value={promoInput}
                       onChange={(e) => setPromoInput(e.target.value)}
-                      placeholder="e.g. ZALIMA789"
+                      placeholder="e.g. OMNIKART10"
                       disabled={isApplying}
                       className="flex-1 bg-[#F8F7F4] border border-[#E5E3DF] px-3 py-2.5 text-xs font-mono uppercase tracking-wider text-[#111111] focus:outline-none focus:border-[#111111] transition-colors placeholder:text-[#A09A93]"
                     />

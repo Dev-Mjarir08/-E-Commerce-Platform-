@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import productApi from '../../services/productApi';
@@ -7,19 +7,16 @@ import { ProductCard } from '../product/ProductCard';
 
 export const NewArrivals = ({ onQuickView, onShowToast }) => {
   const { products: contextProducts } = useShopData();
-  const [newArrivalProducts, setNewArrivalProducts] = useState(() => (
-    Array.isArray(contextProducts) && contextProducts.length > 0 ? contextProducts.slice(0, 8) : []
-  ));
-  const [loading, setLoading] = useState(() => (
-    !Array.isArray(contextProducts) || contextProducts.length === 0
-  ));
+  const [apiProducts, setApiProducts] = useState(null);
+  const [isFetching, setIsFetching] = useState(true);
 
-  useEffect(() => {
-    if (Array.isArray(contextProducts) && contextProducts.length > 0) {
-      setNewArrivalProducts(contextProducts.slice(0, 8));
-      setLoading(false);
-    }
-  }, [contextProducts]);
+  const newArrivalProducts = useMemo(() => {
+    if (Array.isArray(apiProducts) && apiProducts.length > 0) return apiProducts.slice(0, 8);
+    if (Array.isArray(contextProducts) && contextProducts.length > 0) return contextProducts.slice(0, 8);
+    return [];
+  }, [apiProducts, contextProducts]);
+
+  const loading = isFetching && newArrivalProducts.length === 0;
 
   useEffect(() => {
     let isCancelled = false;
@@ -29,19 +26,14 @@ export const NewArrivals = ({ onQuickView, onShowToast }) => {
         const res = await productApi.getProducts({ limit: 8, sort: '-createdAt' });
         const list = res?.data || res?.products;
         if (!isCancelled && Array.isArray(list) && list.length > 0) {
-          setNewArrivalProducts(list.slice(0, 8));
-          setLoading(false);
-          return;
+          setApiProducts(list);
         }
       } catch (err) {
         console.warn('API error fetching new arrivals, using context:', err);
-      }
-
-      if (!isCancelled) {
-        if (contextProducts && contextProducts.length > 0) {
-          setNewArrivalProducts(contextProducts.slice(0, 8));
+      } finally {
+        if (!isCancelled) {
+          setIsFetching(false);
         }
-        setLoading(false);
       }
     };
 
@@ -50,7 +42,7 @@ export const NewArrivals = ({ onQuickView, onShowToast }) => {
     return () => {
       isCancelled = true;
     };
-  }, [contextProducts]);
+  }, []);
 
   return (
     <section id="new-arrivals" className="py-16 md:py-24 max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-12 border-b border-m4m-border">

@@ -168,8 +168,9 @@ export const Wishlist = () => {
 
   // Sample curated recommendations for empty state
   const recommendedItems = useMemo(() => {
-    return catalogProducts.slice(0, 3);
-  }, []);
+    const list = (shopProducts && shopProducts.length > 0) ? shopProducts : (adminProducts || []);
+    return list.slice(0, 3);
+  }, [shopProducts, adminProducts]);
 
   return (
     <div className="min-h-screen bg-[#F8F7F4] text-[#111111] py-10 md:py-16 px-4 sm:px-6 lg:px-12 font-sans">

@@ -17,13 +17,12 @@ export const OrderSuccess = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
   const [paymentVerified, setPaymentVerified] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(() => Boolean(sessionId));
 
   useEffect(() => {
     window.scrollTo(0, 0);
 
     if (sessionId) {
-      setIsVerifying(true);
       paymentApi.verifyPayment({ orderId: id, sessionId })
         .then((res) => {
           if (res && res.isPaid) {
@@ -68,7 +67,7 @@ export const OrderSuccess = () => {
             CONSIGNMENT REFERENCE NUMBER
           </span>
           <span className="font-mono text-lg font-bold text-[#111111] tracking-wider block">
-            {id ? (id.startsWith('ATL-') ? id : id.toUpperCase()) : 'ATL-CONFIRMED'}
+            {id ? (id.startsWith('OMNI-') || id.startsWith('ATL-') ? id : id.toUpperCase()) : 'OMNI-CONFIRMED'}
           </span>
           {paymentVerified && (
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-mono uppercase tracking-wider mt-2">

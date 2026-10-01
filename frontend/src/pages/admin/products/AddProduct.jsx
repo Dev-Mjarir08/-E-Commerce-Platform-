@@ -58,7 +58,7 @@ const AddProduct = () => {
       .catch(() => {});
   }, []);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     title: '',
     slug: '',
     description: '',
@@ -85,7 +85,7 @@ const AddProduct = () => {
     tags: ['luxury', 'new-arrival'],
     isFeatured: false,
     isActive: true
-  });
+  }));
 
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newTagInput, setNewTagInput] = useState('');
