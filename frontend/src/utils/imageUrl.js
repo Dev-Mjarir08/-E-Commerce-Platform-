@@ -92,8 +92,12 @@ export const getImageUrl = (source, fallback = DEFAULT_PRODUCT_FALLBACK) => {
   // If relative path from backend uploads directory
   if (url.startsWith('/uploads/') || url.startsWith('uploads/')) {
     const cleanPath = url.startsWith('/') ? url : `/${url}`;
-    // Prefer VITE_BACKEND_URL or default local port 8081
-    const backendBase = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+    // Prefer VITE_BACKEND_URL, or derive from VITE_API_URL, or fallback to localhost
+    let backendBase = import.meta.env.VITE_BACKEND_URL;
+    if (!backendBase && import.meta.env.VITE_API_URL) {
+      backendBase = import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
+    }
+    backendBase = backendBase || 'http://localhost:8081';
     return `${backendBase}${cleanPath}`;
   }
 

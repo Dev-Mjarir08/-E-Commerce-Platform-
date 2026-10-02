@@ -51,15 +51,18 @@ app.get('/api/health', (req, res) => {
 // Primary API Routes
 app.use(router);
 
-const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
-});
+const PORT = process.env.PORT || 8081;
 
-// Global rejection handler
-process.on('unhandledRejection', (err) => {
-  console.error(`Unhandled Rejection: ${err.message}`);
-  server.close(() => process.exit(1));
-});
+if (process.env.VERCEL !== '1') {
+  const server = app.listen(PORT, () => {
+    console.log(`Server is running at http://localhost:${PORT}`);
+  });
+
+  // Global rejection handler
+  process.on('unhandledRejection', (err) => {
+    console.error(`Unhandled Rejection: ${err.message}`);
+    server.close(() => process.exit(1));
+  });
+}
 
 export default app;
